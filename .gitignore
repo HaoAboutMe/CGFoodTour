@@ -35,3 +35,6 @@ build/
 # Uploaded images (outside project default path may differ)
 /uploads/
 /uploads/images/
+
+# Sensitive configuration files (containing passwords, tokens, keys)
+src/main/resources/application-dev.yaml

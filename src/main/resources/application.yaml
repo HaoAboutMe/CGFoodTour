@@ -1,0 +1,18 @@
+# Master Configuration File
+spring:
+  profiles:
+    active: dev # Mặc định kích hoạt profile 'dev' khi chạy máy cục bộ
+  application:
+    name: cgfoodtour
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# Default security baseline: disable swagger-ui in other profiles unless explicitly enabled
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
