@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CanGiuoc FoodTour - Developer Testing Console</title>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Sign-In SDK for Google Auth testing -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root {
+            --bg-primary: #0a0b0d;
+            --bg-secondary: #12141c;
+            --bg-glass: rgba(18, 20, 28, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --accent-cyan: #00f2fe;
+            --accent-purple: #9b51e0;
+            --accent-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            --accent-gradient-purple: linear-gradient(135deg, #7f00ff 0%, #e100ff 100%);
+            --text-primary: #f5f6f8;
+            --text-secondary: #8f9cae;
+            --success: #27ae60;
+            --error: #eb5757;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styling */
+        aside {
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            z-index: 10;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--accent-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #000;
+            font-size: 18px;
+        }
+
+        .logo-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .menu-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .menu-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-btn:hover {
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .menu-btn.active {
+            color: #fff;
+            background: var(--accent-gradient);
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.25);
+        }
+
+        /* Token Status Block */
+        .token-status-wrapper {
+            margin-top: auto;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            font-size: 12px;
+        }
+
+        .token-status-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--error);
+            display: inline-block;
+        }
+
+        .status-indicator.active {
+            background-color: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .token-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .small-btn {
+            flex: 1;
+            padding: 6px;
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .small-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Main Console Layout */
+        main {
+            display: grid;
+            grid-template-rows: 70px 1fr;
+            height: 100vh;
+        }
+
+        header {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .user-chip img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-cyan);
+        }
+
+        .content-area {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            overflow: hidden;
+        }
+
+        /* Form Area styling */
+        .workspace {
+            padding: 32px;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Glass Cards */
+        .card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 18px;
+            color: var(--text-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 8px;
+        }
+
+        .method-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .method-post { background: rgba(39, 174, 96, 0.15); color: #2ecc71; }
+        .method-get { background: rgba(52, 152, 219, 0.15); color: #3498db; }
+        .method-put { background: rgba(241, 196, 15, 0.15); color: #f1c40f; }
+        .method-patch { background: rgba(155, 81, 224, 0.15); color: #9b51e0; }
+        .method-delete { background: rgba(231, 76, 60, 0.15); color: #e74c3c; }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="email"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            background-color: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.1);
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .btn-submit {
+            background: var(--accent-gradient);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: #000;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.35);
+        }
+
+        /* Avatar preview styling */
+        .avatar-upload-preview {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .avatar-preview-img {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-cyan);
+            background-color: #222;
+        }
+
+        /* Logging & Console Panel */
+        .console-panel {
+            background-color: #0d0f15;
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .console-header {
+            padding: 16px 24px;
+            background-color: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .console-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+        }
+
+        .clear-console-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            font-size: 11px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .clear-console-btn:hover {
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .console-body {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .log-entry {
+            border-left: 3px solid var(--accent-cyan);
+            padding-left: 12px;
+            margin-bottom: 8px;
+        }
+
+        .log-entry.success {
+            border-color: var(--success);
+        }
+
+        .log-entry.error {
+            border-color: var(--error);
+        }
+
+        .log-meta {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .log-request-info {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .log-data {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 6px;
+            padding: 10px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            color: #39ff14; /* Matrix Green */
+        }
+
+        .log-data.error-data {
+            color: #ff4a4a;
+        }
+
+        /* User List table in Admin Section */
+        .user-table-wrapper {
+            overflow-x: auto;
+            margin-top: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.01);
+        }
+
+        .action-icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .action-edit {
+            color: #f1c40f;
+            background-color: rgba(241, 196, 15, 0.1);
+        }
+
+        .action-delete {
+            color: #e74c3c;
+            background-color: rgba(231, 76, 60, 0.1);
+            margin-left: 6px;
+        }
+
+        .action-edit:hover { background-color: rgba(241, 196, 15, 0.2); }
+        .action-delete:hover { background-color: rgba(231, 76, 60, 0.2); }
+
+        .role-chip {
+            background-color: rgba(0, 242, 254, 0.1);
+            color: var(--accent-cyan);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+
+        /* Overlay for custom modal alerts */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 480px;
+            max-width: 90%;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: modalScale 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modalScale {
+            from { transform: scale(0.9); }
+            to { transform: scale(1); }
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .secondary-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .secondary-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside>
+        <div class="logo-area">
+            <div class="logo-icon">C</div>
+            <div class="logo-title">CanGiuoc Dev</div>
+        </div>
+
+        <div class="menu-label">Testing Suites</div>
+        <div class="menu-items">
+            <button class="menu-btn active" onclick="switchTab('auth')">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                Authentication
+            </button>
+            <button class="menu-btn" onclick="switchTab('profile')">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                My Profile
+            </button>
+            <button class="menu-btn" onclick="switchTab('admin')">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                Admin Suite
+            </button>
+        </div>
+
+        <div class="token-status-wrapper">
+            <div class="token-status-title">
+                <span>Auth Token</span>
+                <span id="status-dot" class="status-indicator"></span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-secondary); word-break: break-all;" id="token-preview">
+                No active token
+            </div>
+            <div class="token-actions">
+                <button class="small-btn" onclick="refreshToken()">Refresh</button>
+                <button class="small-btn" style="color: var(--error);" onclick="clearAuth()">Clear</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main>
+        <header>
+            <div class="header-title" id="header-text">Authentication Testing Suite</div>
+            <div class="user-chip" id="user-chip" style="display: none;">
+                <img id="user-avatar" src="https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg" alt="User Avatar">
+                <span id="user-name">Guest</span>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <!-- Form Area (Left) -->
+            <div class="workspace">
+                
+                <!-- AUTH TAB -->
+                <div id="tab-auth" class="tab-content active">
+                    <h2>Authentication Suite</h2>
+
+                    <!-- Login -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Login / Authentication</span>
+                            <span class="method-badge method-post">POST /api/auth/token</span>
+                        </div>
+                        <form id="form-login" onsubmit="handleLogin(event)">
+                            <div class="form-group">
+                                <label for="login-email">Email</label>
+                                <input type="email" id="login-email" required placeholder="user@gmail.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="login-password">Password</label>
+                                <input type="password" id="login-password" required placeholder="••••••••">
+                            </div>
+                            <button type="submit" class="btn-submit">Authenticate</button>
+                        </form>
+                    </div>
+
+                    <!-- Register -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Register User</span>
+                            <span class="method-badge method-post">POST /api/users</span>
+                        </div>
+                        <form id="form-register" onsubmit="handleRegister(event)">
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="reg-username">Username</label>
+                                    <input type="text" id="reg-username" required placeholder="john_doe">
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-email">Email</label>
+                                    <input type="email" id="reg-email" required placeholder="john@gmail.com">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="reg-first">First Name</label>
+                                    <input type="text" id="reg-first" placeholder="John">
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-last">Last Name</label>
+                                    <input type="text" id="reg-last" placeholder="Doe">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="reg-password">Password (min 8 chars)</label>
+                                    <input type="password" id="reg-password" required placeholder="••••••••">
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-dob">Date of Birth</label>
+                                    <input type="date" id="reg-dob" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-submit">Register Account</button>
+                        </form>
+                    </div>
+
+                    <!-- Verify Email -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Verify Email Token</span>
+                            <span class="method-badge method-get">GET /api/auth/verify-email</span>
+                        </div>
+                        <form id="form-verify" onsubmit="handleVerifyEmail(event)">
+                            <div class="form-group">
+                                <label for="verify-token">Verification Token</label>
+                                <input type="text" id="verify-token" required placeholder="Paste UUID token from logs or email">
+                            </div>
+                            <button type="submit" class="btn-submit">Submit Verification</button>
+                        </form>
+                    </div>
+
+                    <!-- Resend Verification -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Resend Verification Email</span>
+                            <span class="method-badge method-post">POST /api/auth/resend-verification</span>
+                        </div>
+                        <form id="form-resend" onsubmit="handleResendVerification(event)">
+                            <div class="form-group">
+                                <label for="resend-email">Email Address</label>
+                                <input type="email" id="resend-email" required placeholder="john@gmail.com">
+                            </div>
+                            <button type="submit" class="btn-submit">Resend Link</button>
+                        </form>
+                    </div>
+
+                    <!-- Forgot & Reset Password -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Forgot Password (Request OTP)</span>
+                            <span class="method-badge method-post">POST /api/auth/forgot-password</span>
+                        </div>
+                        <form id="form-forgot" onsubmit="handleForgotPassword(event)">
+                            <div class="form-group">
+                                <label for="forgot-email">Email</label>
+                                <input type="email" id="forgot-email" required placeholder="john@gmail.com">
+                            </div>
+                            <button type="submit" class="btn-submit">Send Reset OTP</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Reset Password with OTP</span>
+                            <span class="method-badge method-post">POST /api/auth/reset-password</span>
+                        </div>
+                        <form id="form-reset" onsubmit="handleResetPassword(event)">
+                            <div class="form-group">
+                                <label for="reset-email">Email</label>
+                                <input type="email" id="reset-email" required placeholder="john@gmail.com">
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="reset-otp">6-Digit OTP</label>
+                                    <input type="text" id="reset-otp" required placeholder="123456" maxlength="6">
+                                </div>
+                                <div class="form-group">
+                                    <label for="reset-password">New Password</label>
+                                    <input type="password" id="reset-password" required placeholder="••••••••">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-submit">Reset Password</button>
+                        </form>
+                    </div>
+
+                    <!-- Google Authentication -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Google Sign-In Authentication</span>
+                            <span class="method-badge method-post">POST /api/auth/google-login</span>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <label>Method A: Auto Sign-In (Requires real Client ID configured in Google Console)</label>
+                            <div id="g_id_onload"
+                                 data-client_id="YOUR_GOOGLE_CLIENT_ID"
+                                 data-context="signin"
+                                 data-ux_mode="popup"
+                                 data-callback="onGoogleSignIn"
+                                 data-auto_prompt="false">
+                            </div>
+                            <div class="g_id_signin" data-type="standard"></div>
+                        </div>
+                        <form id="form-google-token" onsubmit="handleGoogleTokenSubmit(event)">
+                            <div class="form-group">
+                                <label for="google-id-token">Method B: Paste Google ID Token Manually</label>
+                                <textarea id="google-id-token" rows="3" required placeholder="Paste Google raw idToken JWT here..."></textarea>
+                            </div>
+                            <button type="submit" class="btn-submit">Login with Google Token</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- PROFILE TAB -->
+                <div id="tab-profile" class="tab-content">
+                    <h2>Profile Management</h2>
+
+                    <!-- View Profile Info -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>My Profile Information</span>
+                            <span class="method-badge method-get">GET /api/users/me</span>
+                        </div>
+                        <button class="btn-submit" onclick="getMyProfile()">Retrieve Current Profile</button>
+                    </div>
+
+                    <!-- Upload Avatar -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Upload Avatar</span>
+                            <span class="method-badge method-patch">PATCH /api/users/me/avatar</span>
+                        </div>
+                        <form id="form-avatar" onsubmit="handleUploadAvatar(event)">
+                            <div class="avatar-upload-preview">
+                                <img id="avatar-form-preview" class="avatar-preview-img" src="https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg" alt="Preview">
+                                <div>
+                                    <p style="font-size: 13px; font-weight:600;" id="avatar-file-name">No file selected</p>
+                                    <p style="font-size: 11px; color: var(--text-secondary);">Only Image formats. Max 2MB.</p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="avatar-file">Select Image File</label>
+                                <input type="file" id="avatar-file" accept="image/*" required onchange="previewAvatarFile(event)">
+                            </div>
+                            <button type="submit" class="btn-submit">Upload to Cloudinary</button>
+                        </form>
+                    </div>
+
+                    <!-- Update info -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Update Profile Info</span>
+                            <span class="method-badge method-put">PUT /api/users/me</span>
+                        </div>
+                        <form id="form-update-profile" onsubmit="handleUpdateProfile(event)">
+                            <div class="form-group">
+                                <label for="up-username">Username</label>
+                                <input type="text" id="up-username" required placeholder="john_doe">
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="up-first">First Name</label>
+                                    <input type="text" id="up-first" placeholder="John">
+                                </div>
+                                <div class="form-group">
+                                    <label for="up-last">Last Name</label>
+                                    <input type="text" id="up-last" placeholder="Doe">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="up-dob">Date of Birth</label>
+                                <input type="date" id="up-dob" required>
+                            </div>
+                            <button type="submit" class="btn-submit">Update Information</button>
+                        </form>
+                    </div>
+
+                    <!-- Change Password -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Change Password</span>
+                            <span class="method-badge method-put">PUT /api/users/me/change-password</span>
+                        </div>
+                        <form id="form-change-password" onsubmit="handleChangePassword(event)">
+                            <div class="form-group">
+                                <label for="pwd-old">Old Password</label>
+                                <input type="password" id="pwd-old" required placeholder="••••••••">
+                            </div>
+                            <div class="form-group">
+                                <label for="pwd-new">New Password (min 8 chars)</label>
+                                <input type="password" id="pwd-new" required placeholder="••••••••">
+                            </div>
+                            <button type="submit" class="btn-submit">Change Password</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ADMIN TAB -->
+                <div id="tab-admin" class="tab-content">
+                    <h2>Admin Suite</h2>
+
+                    <div class="card">
+                        <div class="card-title">
+                            <span>All Registered Users</span>
+                            <span class="method-badge method-get">GET /api/users</span>
+                        </div>
+                        <button class="btn-submit" onclick="adminListUsers()" style="margin-bottom: 16px;">Refresh User List</button>
+                        <div class="user-table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Avatar</th>
+                                        <th>Username / Email</th>
+                                        <th>Name</th>
+                                        <th>Roles</th>
+                                        <th>Verified</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; color: var(--text-secondary);">Click "Refresh User List" to load users.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Logger Panel (Right) -->
+            <div class="console-panel">
+                <div class="console-header">
+                    <div class="console-title">API Response Log</div>
+                    <button class="clear-console-btn" onclick="clearConsole()">Clear Logs</button>
+                </div>
+                <div class="console-body" id="console-body">
+                    <div style="color: var(--text-secondary); text-align: center; margin-top: 40px;">
+                        Interactive console. Trigger any API form to see JSON payloads and server responses.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for Admin Edit User Roles/Details -->
+    <div class="modal" id="edit-user-modal">
+        <div class="modal-card">
+            <div class="modal-title">Edit User (Admin Authorization)</div>
+            <form id="form-admin-edit" onsubmit="handleAdminEditSubmit(event)">
+                <input type="hidden" id="admin-edit-userid">
+                <div class="form-group">
+                    <label for="admin-edit-username">Username</label>
+                    <input type="text" id="admin-edit-username" required>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label for="admin-edit-first">First Name</label>
+                        <input type="text" id="admin-edit-first">
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-edit-last">Last Name</label>
+                        <input type="text" id="admin-edit-last">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="admin-edit-dob">Date of Birth</label>
+                    <input type="date" id="admin-edit-dob">
+                </div>
+                <div class="form-group">
+                    <label>Assign Roles</label>
+                    <div style="display: flex; gap: 16px; margin-top: 8px;">
+                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color:#fff;">
+                            <input type="checkbox" id="role-user-chk" value="USER"> USER
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color:#fff;">
+                            <input type="checkbox" id="role-admin-chk" value="ADMIN"> ADMIN
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="secondary-btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-submit" style="width: auto;">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Set Client ID dynamically if it is configured in backend, or fallback
+        const API_BASE = window.location.port === '8080' ? '/api' : 'http://localhost:8080/api';
+        let token = localStorage.getItem('jwtToken') || '';
+        let refreshTokenVal = localStorage.getItem('refreshToken') || '';
+
+        // Initial setup
+        window.addEventListener('DOMContentLoaded', () => {
+            updateTokenUI();
+            if (token) {
+                getMyProfileSilently();
+            }
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            // Set active menu button
+            const activeBtn = Array.from(document.querySelectorAll('.menu-btn')).find(btn => btn.textContent.toLowerCase().includes(tabId));
+            if (activeBtn) activeBtn.classList.add('active');
+
+            // Set active tab content
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            // Update header text
+            const titleMap = {
+                'auth': 'Authentication Testing Suite',
+                'profile': 'My Profile Management & Uploads',
+                'admin': 'Admin Control Room'
+            };
+            document.getElementById('header-text').textContent = titleMap[tabId];
+        }
+
+        // Logger helper
+        function logConsole(method, url, requestBody, responseData, isSuccess = true) {
+            const consoleBody = document.getElementById('console-body');
+            const placeholder = consoleBody.querySelector('div[style*="text-align: center"]');
+            if (placeholder) placeholder.remove();
+
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${isSuccess ? 'success' : 'error'}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const meta = document.createElement('div');
+            meta.className = 'log-meta';
+            meta.innerHTML = `<span>[${timestamp}]</span> <span>HTTP STATUS: ${isSuccess ? '200 OK' : 'FAILED'}</span>`;
+            
+            const reqInfo = document.createElement('div');
+            reqInfo.className = 'log-request-info';
+            reqInfo.textContent = `${method} ${url}`;
+
+            const reqBodyDiv = document.createElement('div');
+            reqBodyDiv.style.marginBottom = '6px';
+            reqBodyDiv.innerHTML = `<span style="color: var(--text-secondary);">Request Payload:</span>` +
+                `<pre class="log-data" style="color: #61afef;">${requestBody ? JSON.stringify(requestBody, null, 2) : 'None (No Body)'}</pre>`;
+
+            const respDiv = document.createElement('div');
+            respDiv.innerHTML = `<span style="color: var(--text-secondary);">Response Data:</span>` +
+                `<pre class="log-data ${isSuccess ? '' : 'error-data'}">${JSON.stringify(responseData, null, 2)}</pre>`;
+
+            entry.appendChild(meta);
+            entry.appendChild(reqInfo);
+            entry.appendChild(reqBodyDiv);
+            entry.appendChild(respDiv);
+            
+            consoleBody.appendChild(entry);
+            consoleBody.scrollTop = consoleBody.scrollHeight;
+        }
+
+        function clearConsole() {
+            document.getElementById('console-body').innerHTML = '<div style="color: var(--text-secondary); text-align: center; margin-top: 40px;">Console cleared.</div>';
+        }
+
+        // API Call Helper
+        async function makeRequest(method, endpoint, body = null, isMultipart = false) {
+            const url = API_BASE + endpoint;
+            const headers = {};
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            let requestOptions = {
+                method: method,
+                headers: headers
+            };
+
+            if (body) {
+                if (isMultipart) {
+                    requestOptions.body = body; // let browser set content-type with boundary automatically
+                } else {
+                    headers['Content-Type'] = 'application/json';
+                    requestOptions.body = JSON.stringify(body);
+                }
+            }
+
+            try {
+                const response = await fetch(url, requestOptions);
+                let data;
+                
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    data = await response.json();
+                } else {
+                    data = { message: await response.text() };
+                }
+
+                if (response.ok) {
+                    logConsole(method, endpoint, body, data, true);
+                    return { success: true, data: data };
+                } else {
+                    logConsole(method, endpoint, body, data, false);
+                    return { success: false, error: data };
+                }
+            } catch (err) {
+                logConsole(method, endpoint, body, { error: err.message }, false);
+                return { success: false, error: err.message };
+            }
+        }
+
+        // Auth management
+        function saveAuth(accessToken, refToken) {
+            token = accessToken;
+            refreshTokenVal = refToken;
+            localStorage.setItem('jwtToken', accessToken);
+            localStorage.setItem('refreshToken', refToken);
+            updateTokenUI();
+            getMyProfileSilently();
+        }
+
+        function clearAuth() {
+            token = '';
+            refreshTokenVal = '';
+            localStorage.removeItem('jwtToken');
+            localStorage.removeItem('refreshToken');
+            updateTokenUI();
+            
+            document.getElementById('user-chip').style.display = 'none';
+            document.getElementById('user-name').textContent = 'Guest';
+            document.getElementById('avatar-form-preview').src = 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg';
+        }
+
+        function updateTokenUI() {
+            const preview = document.getElementById('token-preview');
+            const dot = document.getElementById('status-dot');
+            if (token) {
+                preview.textContent = token.substring(0, 20) + '...' + token.substring(token.length - 20);
+                dot.className = 'status-indicator active';
+            } else {
+                preview.textContent = 'No active token';
+                dot.className = 'status-indicator';
+            }
+        }
+
+        // --- Tab Actions ---
+
+        // Login
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            const res = await makeRequest('POST', '/auth/token', { email, password });
+            if (res.success && res.data.result) {
+                saveAuth(res.data.result.token, res.data.result.refreshToken || '');
+                alert('Login Successful!');
+            } else {
+                alert('Login Failed: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+
+        // Register
+        async function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('reg-username').value;
+            const email = document.getElementById('reg-email').value;
+            const firstname = document.getElementById('reg-first').value;
+            const lastname = document.getElementById('reg-last').value;
+            const password = document.getElementById('reg-password').value;
+            const dateOfBirth = document.getElementById('reg-dob').value;
+
+            const res = await makeRequest('POST', '/users', {
+                username, email, firstname, lastname, password, dateOfBirth
+            });
+            if (res.success) {
+                alert('Registration successful! Please check your email or server log for the activation link.');
+            } else {
+                alert('Registration Failed: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+
+        // Verify Email
+        async function handleVerifyEmail(e) {
+            e.preventDefault();
+            const val = document.getElementById('verify-token').value;
+            const res = await makeRequest('GET', `/auth/verify-email?token=${encodeURIComponent(val)}`);
+            if (res.success) {
+                alert('Email verification complete!');
+            } else {
+                alert('Verification Failed: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+
+        // Resend Verification
+        async function handleResendVerification(e) {
+            e.preventDefault();
+            const email = document.getElementById('resend-email').value;
+            const res = await makeRequest('POST', `/auth/resend-verification?email=${encodeURIComponent(email)}`);
+            if (res.success) {
+                alert('Verification email resent successfully!');
+            } else {
+                alert('Failed to resend: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+
+        // Forgot Password
+        async function handleForgotPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById('forgot-email').value;
+            const res = await makeRequest('POST', '/auth/forgot-password', { email });
+            if (res.success) {
+                alert('Password reset OTP sent to email!');
+            } else {
+                alert('Request Failed: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+
+        // Reset Password
+        async function handleResetPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById('reset-email').value;
+            const otp = document.getElementById('reset-otp').value;
+            const newPassword = document.getElementById('reset-password').value;
+            const res = await makeRequest('POST', '/auth/reset-password', { email, otp, newPassword });
+            if (res.success) {
+                alert('Password reset successfully!');
+            } else {
+                alert('Reset Failed: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+
+        // Manual Google Token Login
+        async function handleGoogleTokenSubmit(e) {
+            e.preventDefault();
+            const tokenVal = document.getElementById('google-id-token').value;
+            const res = await makeRequest('POST', '/auth/google-login', { idToken: tokenVal });
+            if (res.success && res.data.result) {
+                saveAuth(res.data.result.token, res.data.result.refreshToken || '');
+                alert('Logged in via Google token!');
+            } else {
+                alert('Google Sign-in failed: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+
+        // Auto Google Sign-In SDK callback
+        function onGoogleSignIn(googleResponse) {
+            const idToken = googleResponse.credential;
+            document.getElementById('google-id-token').value = idToken;
+            logConsole('GOOGLE SDK CALLBACK', 'ID Token Received', null, { idToken: idToken }, true);
+        }
+
+        // Refresh token
+        async function refreshToken() {
+            if (!refreshTokenVal) {
+                alert('No refresh token available. Please authenticate first.');
+                return;
+            }
+            const res = await makeRequest('POST', '/auth/refresh', { token: refreshTokenVal });
+            if (res.success && res.data.result) {
+                saveAuth(res.data.result.token, res.data.result.refreshToken || refreshTokenVal);
+                alert('Token Refreshed Successfully!');
+            } else {
+                alert('Refresh Failed: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+
+        // Get Current Profile
+        async function getMyProfile() {
+            const res = await makeRequest('GET', '/users/me');
+            if (res.success && res.data.result) {
+                populateProfileForms(res.data.result);
+                alert('Profile details loaded successfully!');
+            } else {
+                alert('Failed to retrieve profile: ' + (res.error.message || 'Are you authenticated?'));
+            }
+        }
+
+        // Populate forms silently on login/refresh
+        async function getMyProfileSilently() {
+            const res = await makeRequest('GET', '/users/me');
+            if (res.success && res.data.result) {
+                populateProfileForms(res.data.result);
+            }
+        }
+
+        function populateProfileForms(userData) {
+            // Update Top Header User Info
+            document.getElementById('user-chip').style.display = 'flex';
+            document.getElementById('user-name').textContent = userData.username;
+            if (userData.avatarUrl) {
+                document.getElementById('user-avatar').src = userData.avatarUrl;
+                document.getElementById('avatar-form-preview').src = userData.avatarUrl;
+            }
+
+            // Fill Update profile form fields
+            document.getElementById('up-username').value = userData.username || '';
+            document.getElementById('up-first').value = userData.firstname || '';
+            document.getElementById('up-last').value = userData.lastname || '';
+            document.getElementById('up-dob').value = userData.dateOfBirth || '';
+        }
+
+        // Avatar file preview change
+        function previewAvatarFile(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('avatar-file-name').textContent = file.name;
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    document.getElementById('avatar-form-preview').src = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Upload Avatar
+        async function handleUploadAvatar(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('avatar-file');
+            if (fileInput.files.length === 0) {
+                alert('Please select an image file first.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            const res = await makeRequest('PATCH', '/users/me/avatar', formData, true);
+            if (res.success && res.data.result) {
+                populateProfileForms(res.data.result);
+                alert('Avatar updated successfully!');
+            } else {
+                alert('Upload Failed: ' + (res.error.message || 'Check console logs.'));
+            }
+        }
+
+        // Update profile
+        async function handleUpdateProfile(e) {
+            e.preventDefault();
+            const username = document.getElementById('up-username').value;
+            const firstname = document.getElementById('up-first').value;
+            const lastname = document.getElementById('up-last').value;
+            const dateOfBirth = document.getElementById('up-dob').value;
+
+            const res = await makeRequest('PUT', '/users/me', {
+                username, firstname, lastname, dateOfBirth
+            });
+            if (res.success && res.data.result) {
+                populateProfileForms(res.data.result);
+                alert('Profile updated successfully!');
+            } else {
+                alert('Update Failed: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+
+        // Change password
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            const oldPassword = document.getElementById('pwd-old').value;
+            const newPassword = document.getElementById('pwd-new').value;
+
+            const res = await makeRequest('PUT', '/users/me/change-password', { oldPassword, newPassword });
+            if (res.success) {
+                alert('Password changed successfully! Please login again with your new password.');
+                clearAuth();
+                switchTab('auth');
+            } else {
+                alert('Password change failed: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+
+        // --- Admin Functions ---
+
+        // List Users
+        async function adminListUsers() {
+            const res = await makeRequest('GET', '/users');
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
+
+            if (res.success && res.data.result) {
+                const users = res.data.result;
+                if (users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No users registered yet.</td></tr>';
+                    return;
+                }
+                users.forEach(u => {
+                    const avatarSrc = u.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg';
+                    const roleChips = (u.roles || []).map(r => `<span class="role-chip">${r.name}</span>`).join('');
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><img src="${avatarSrc}" alt="avatar" style="width:36px; height:36px; border-radius:50%; object-fit:cover;"></td>
+                        <td>
+                            <div style="font-weight:600;">${u.username}</div>
+                            <div style="font-size:11px; color:var(--text-secondary);">${u.email}</div>
+                        </td>
+                        <td>${u.firstname || ''} ${u.lastname || ''}</td>
+                        <td>${roleChips}</td>
+                        <td><span style="color: ${u.emailVerified ? 'var(--success)' : 'var(--error)'}; font-weight:600;">${u.emailVerified ? 'YES' : 'NO'}</span></td>
+                        <td>
+                            <button class="action-icon-btn action-edit" onclick="openAdminEditModal('${u.id}', '${u.username}', '${u.firstname || ''}', '${u.lastname || ''}', '${u.dateOfBirth || ''}', ${JSON.stringify(u.roles)})">Edit</button>
+                            <button class="action-icon-btn action-delete" onclick="adminDeleteUser('${u.id}')">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--error);">Failed to retrieve users. Ensure you have the ADMIN role.</td></tr>';
+                alert('Access Denied: ' + (res.error.message || 'Only admin has privilege to read user table.'));
+            }
+        }
+
+        // Open Modal
+        function openAdminEditModal(id, username, first, last, dob, roles) {
+            document.getElementById('admin-edit-userid').value = id;
+            document.getElementById('admin-edit-username').value = username;
+            document.getElementById('admin-edit-first').value = first;
+            document.getElementById('admin-edit-last').value = last;
+            document.getElementById('admin-edit-dob').value = dob;
+            
+            // Check roles
+            const roleNames = roles.map(r => r.name);
+            document.getElementById('role-user-chk').checked = roleNames.includes('USER');
+            document.getElementById('role-admin-chk').checked = roleNames.includes('ADMIN');
+
+            document.getElementById('edit-user-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('edit-user-modal').classList.remove('active');
+        }
+
+        // Handle Admin Edit Submit
+        async function handleAdminEditSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('admin-edit-userid').value;
+            const username = document.getElementById('admin-edit-username').value;
+            const firstname = document.getElementById('admin-edit-first').value;
+            const lastname = document.getElementById('admin-edit-last').value;
+            const dateOfBirth = document.getElementById('admin-edit-dob').value;
+            
+            const roles = [];
+            if (document.getElementById('role-user-chk').checked) roles.push('USER');
+            if (document.getElementById('role-admin-chk').checked) roles.push('ADMIN');
+
+            const res = await makeRequest('PUT', `/users/${id}`, {
+                username, firstname, lastname, dateOfBirth, roles
+            });
+
+            if (res.success) {
+                alert('User information updated successfully by Admin!');
+                closeModal();
+                adminListUsers();
+            } else {
+                alert('Update Failed: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+
+        // Delete user
+        async function adminDeleteUser(userId) {
+            if (!confirm('Are you absolutely sure you want to delete this user? This cannot be undone.')) {
+                return;
+            }
+            const res = await makeRequest('DELETE', `/users/${userId}`);
+            if (res.success) {
+                alert('User deleted successfully!');
+                adminListUsers();
+            } else {
+                alert('Deletion Failed: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+    </script>
+</body>
+</html>
