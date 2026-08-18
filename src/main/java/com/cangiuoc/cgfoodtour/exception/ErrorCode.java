@@ -23,7 +23,11 @@ public enum ErrorCode {
     INVALID_OTP(1014, "Invalid or expired OTP", HttpStatus.BAD_REQUEST),
     EMAIL_SEND_FAILED(1015, "Failed to send email. Please check SMTP/mail server settings.", HttpStatus.INTERNAL_SERVER_ERROR),
     GOOGLE_TOKEN_INVALID(1016, "Google ID token is invalid or expired", HttpStatus.BAD_REQUEST),
-    PASSWORD_INCORRECT(1017, "Incorrect password", HttpStatus.BAD_REQUEST);
+    PASSWORD_INCORRECT(1017, "Incorrect password", HttpStatus.BAD_REQUEST),
+    INVALID_FILE(1018, "Invalid file", HttpStatus.BAD_REQUEST),
+    FILE_TOO_LARGE(1019, "File too large (Max 2MB)", HttpStatus.BAD_REQUEST),
+    UNSUPPORTED_MEDIA_TYPE(1020, "Unsupported media type", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
+    UPLOAD_FAILED(1021, "Upload failed", HttpStatus.INTERNAL_SERVER_ERROR);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

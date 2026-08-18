@@ -15,4 +15,5 @@ public class SuccessMessage {
     public static final String UPDATE_USER_SUCCESS = "User information updated successfully.";
     public static final String CHANGE_PASSWORD_SUCCESS = "Password changed successfully.";
     public static final String DELETE_USER_SUCCESS = "User deleted successfully.";
+    public static final String UPLOAD_AVATAR_SUCCESS = "Avatar uploaded successfully.";
 }

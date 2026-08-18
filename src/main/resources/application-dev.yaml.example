@@ -56,6 +56,14 @@ springdoc:
     display-request-duration: true
   show-actuator: false
 
+# Cloudinary Configuration
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:YOUR_CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY:YOUR_CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET:YOUR_CLOUDINARY_API_SECRET}
+  folder: cgfoodtour/avatars
+  default-avatar-url: https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg
+
 # Development Logging Configuration
 logging:
   level:

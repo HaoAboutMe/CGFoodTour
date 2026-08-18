@@ -22,6 +22,7 @@ public class UserResponse
     String lastname;
     String email;
     LocalDate dateOfBirth;
+    String avatarUrl;
     Boolean enabled;
     Boolean emailVerified;
     Set<RoleResponse> roles;

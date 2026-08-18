@@ -8,8 +8,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -17,11 +19,13 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
-public class UserController {
+public class UserController
+{
     UserService userService;
 
     @PostMapping("/users")
-    public ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request) {
+    public ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request)
+    {
         ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
         apiResponse.setResult(userService.createUser(request));
         apiResponse.setMessage(SuccessMessage.REGISTER_SUCCESS);
@@ -29,7 +33,8 @@ public class UserController {
     }
 
     @GetMapping("/users")
-    public ApiResponse<List<UserResponse>> getUsers() {
+    public ApiResponse<List<UserResponse>> getUsers()
+    {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         log.info("Username: {}", authentication.getName());
         log.info("Roles: {}", authentication.getAuthorities());
@@ -41,7 +46,8 @@ public class UserController {
     }
 
     @GetMapping("/users/me")
-    public ApiResponse<UserResponse> getCurrentUser() {
+    public ApiResponse<UserResponse> getCurrentUser()
+    {
         return ApiResponse.<UserResponse>builder()
                 .result(userService.getCurrentUser())
                 .message(SuccessMessage.GET_USER_SUCCESS)
@@ -49,7 +55,8 @@ public class UserController {
     }
 
     @GetMapping("/users/{userId}")
-    public ApiResponse<UserResponse> getUserById(@PathVariable("userId") String userId) {
+    public ApiResponse<UserResponse> getUserById(@PathVariable("userId") String userId)
+    {
         ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
         apiResponse.setResult(userService.getUserById(userId));
         apiResponse.setMessage(SuccessMessage.GET_USER_SUCCESS);
@@ -58,7 +65,8 @@ public class UserController {
 
     @PutMapping("/users/{userId}")
     public ApiResponse<UserResponse> updateUser(@PathVariable("userId") String userId,
-            @RequestBody UserUpdateRequest request) {
+            @RequestBody UserUpdateRequest request)
+    {
         ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
         apiResponse.setResult(userService.updateUser(request, userId));
         apiResponse.setMessage(SuccessMessage.UPDATE_USER_SUCCESS);
@@ -66,7 +74,8 @@ public class UserController {
     }
 
     @PutMapping("/users/me")
-    public ApiResponse<UserResponse> updateCurrentUser(@RequestBody MyInfoUpdateRequest request) {
+    public ApiResponse<UserResponse> updateCurrentUser(@RequestBody MyInfoUpdateRequest request)
+    {
         return ApiResponse.<UserResponse>builder()
                 .result(userService.updateMyInfo(request))
                 .message(SuccessMessage.UPDATE_USER_SUCCESS)
@@ -75,15 +84,26 @@ public class UserController {
 
     // Endpoint Change Password
     @PutMapping("/users/me/change-password")
-    public ApiResponse<UserResponse> changePassword(@RequestBody ChangePasswordRequest request) {
+    public ApiResponse<UserResponse> changePassword(@RequestBody ChangePasswordRequest request)
+    {
         return ApiResponse.<UserResponse>builder()
                 .result(userService.changePassword(request))
                 .message(SuccessMessage.CHANGE_PASSWORD_SUCCESS)
                 .build();
     }
 
+    @PatchMapping(value = "/users/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<UserResponse> updateAvatar(@RequestParam("file") MultipartFile file)
+    {
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.updateAvatar(file))
+                .message(SuccessMessage.UPLOAD_AVATAR_SUCCESS)
+                .build();
+    }
+
     @DeleteMapping("/users/{userId}")
-    public ApiResponse<String> deleteUser(@PathVariable("userId") String userId) {
+    public ApiResponse<String> deleteUser(@PathVariable("userId") String userId)
+    {
         ApiResponse<String> apiResponse = new ApiResponse<>();
         userService.deleteUser(userId);
         apiResponse.setResult("User deleted successfully!");

@@ -20,12 +20,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -42,6 +47,11 @@ public class UserService
 
     PasswordEncoder passwordEncoder;
     EmailService emailService;
+    CloudinaryService cloudinaryService;
+
+    @NonFinal
+    @Value("${cloudinary.default-avatar-url}")
+    String defaultAvatarUrl;
 
     public UserResponse createUser(UserCreationRequest request)
     {
@@ -51,6 +61,8 @@ public class UserService
         }
         User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setAvatarUrl(defaultAvatarUrl);
+        user.setAvatarPublicId(null);
         user.setEnabled(false);  // Tài khoản chưa được kích hoạt
         user.setEmailVerified(false);  // Email chưa được xác thực
 
@@ -235,6 +247,44 @@ public class UserService
             log.error("You can manually activate this account by calling the API:");
             log.error("GET http://localhost:8080/api/auth/verify-email?token={}", token);
             log.error("==========================================================================");
+        }
+    }
+
+    @Transactional
+    public UserResponse updateAvatar(MultipartFile file) {
+        var context = SecurityContextHolder.getContext().getAuthentication();
+        String email = context.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if (file.isEmpty()) {
+            throw new AppException(ErrorCode.INVALID_FILE);
+        }
+        if (file.getSize() > 2 * 1024 * 1024) {
+            throw new AppException(ErrorCode.FILE_TOO_LARGE);
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new AppException(ErrorCode.UNSUPPORTED_MEDIA_TYPE);
+        }
+
+        try {
+            // Delete old avatar if present
+            if (user.getAvatarPublicId() != null && !user.getAvatarPublicId().isEmpty()) {
+                cloudinaryService.deleteImage(user.getAvatarPublicId());
+            }
+
+            // Upload new avatar
+            Map uploadResult = cloudinaryService.uploadImage(file);
+            String newUrl = (String) uploadResult.get("secure_url");
+            String newPublicId = (String) uploadResult.get("public_id");
+
+            user.setAvatarUrl(newUrl);
+            user.setAvatarPublicId(newPublicId);
+            return userMapper.toUserResponse(userRepository.save(user));
+        } catch (IOException e) {
+            log.error("Failed to upload avatar to Cloudinary", e);
+            throw new AppException(ErrorCode.UPLOAD_FAILED);
         }
     }
 }
