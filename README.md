@@ -75,7 +75,7 @@ jwt:
     ```bash
     ./mvnw spring-boot:run
     ```
-    *Hoặc chạy trực tiếp file `BuildPcCheckerApplication.java` từ IDE (IntelliJ IDEA).*
+    *Hoặc chạy trực tiếp file `CgFoodTourApplication.java` từ IDE (IntelliJ IDEA).*
 
 3.  **Dữ liệu mặc định (Admin Seed):** Khi chạy lần đầu, hệ thống sẽ tự động khởi tạo tài khoản Admin:
     *   **Email:** `haoaboutme@gmail.com`
@@ -94,7 +94,7 @@ Sau khi server khởi động thành công (mặc định tại port `8080` vớ
 ## 📁 Cấu Trúc Thư Mục
 
 ```text
-src/main/java/com/j2ee/buildpcchecker/
+src/main/java/com/cangiuoc/cgfoodtour/
 ├── configuration/     # Cấu hình Security, Swagger, CORS, JWT Decoder, Init Admin
 ├── controller/        # Các REST API Endpoints (Auth, Users, Roles, Permissions)
 ├── dto/               # Data Transfer Objects (Request/Response)
