@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sign-In - Can Giuoc Food Tour</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.15);
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.06);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.1);
+            --error: #ef4444;
+            --error-bg: rgba(239, 68, 68, 0.1);
+            --code-bg: #090d16;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #a5b4fc, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .config-section {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .config-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .config-input-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .config-input {
+            flex: 1;
+            background: var(--code-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .config-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .config-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .config-btn:hover {
+            background: #4f46e5;
+            transform: translateY(-1px);
+        }
+
+        .login-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            border: 1px dashed var(--card-border);
+            border-radius: 16px;
+            margin-bottom: 35px;
+            background: rgba(99, 102, 241, 0.02);
+        }
+
+        .google-btn-wrapper {
+            margin-top: 15px;
+            min-height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-top: 15px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .status-badge.show {
+            opacity: 1;
+        }
+
+        .status-badge.success {
+            background: var(--success-bg);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-badge.error {
+            background: var(--error-bg);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        @media (min-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .result-panel {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .panel-body {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--code-bg);
+        }
+
+        pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: #38bdf8;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 250px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Customize Scrollbar */
+        pre::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        pre::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        pre::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        pre::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .tip-box {
+            margin-top: 30px;
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 0.85rem;
+            color: #c7d2fe;
+            line-height: 1.5;
+        }
+
+        .tip-box strong {
+            color: #a5b4fc;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Google Sign-In Gateway</h1>
+            <p>Trang kiểm thử xác thực OAuth2 dành cho dự án Can Giuoc Food Tour</p>
+        </div>
+
+        <div class="config-section">
+            <div class="config-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                Google OAuth Client ID
+            </div>
+            <div class="config-input-group">
+                <input type="text" id="clientIdInput" class="config-input" value="67816974872-eok51h832a8cmtap66egjvs88gp2gm5p.apps.googleusercontent.com" placeholder="Nhập Google Client ID của bạn tại đây...">
+                <button onclick="reloadGoogleButton()" class="config-btn">Cập nhật</button>
+            </div>
+        </div>
+
+        <div class="login-box">
+            <h3 style="margin-bottom: 12px; font-weight: 600;">Đăng nhập với Google</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; text-align: center;">Click nút dưới đây để bắt đầu đăng nhập bằng tài khoản Google</p>
+            
+            <div class="google-btn-wrapper">
+                <div id="googleBtnContainer"></div>
+            </div>
+
+            <div id="statusBadge" class="status-badge">
+                <span id="statusText"></span>
+            </div>
+        </div>
+
+        <div class="results-grid">
+            <div class="result-panel">
+                <div class="panel-header">
+                    <span class="panel-title">1. Google ID Token (JWT)</span>
+                    <button class="copy-btn" onclick="copyToClipboard('googleTokenText')">Copy</button>
+                </div>
+                <div class="panel-body">
+                    <pre id="googleTokenText">Chưa có dữ liệu. Vui lòng đăng nhập...</pre>
+                </div>
+            </div>
+
+            <div class="result-panel">
+                <div class="panel-header">
+                    <span class="panel-title">2. API Backend Response (System JWT)</span>
+                    <button class="copy-btn" onclick="copyToClipboard('backendResponseText')">Copy</button>
+                </div>
+                <div class="panel-body">
+                    <pre id="backendResponseText">Chưa có dữ liệu. Đang đợi nhận Google ID Token...</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="tip-box">
+            📌 <strong>Lưu ý quan trọng:</strong> 
+            Để luồng đăng nhập hoạt động chính xác, hãy đảm bảo rằng API Server Spring Boot của bạn đang chạy tại địa chỉ <strong>http://localhost:8080/api</strong> và trình duyệt đang mở file này từ địa chỉ/giao thức được cấu hình trong <strong>Authorized JavaScript origins</strong> trên Google Cloud Console (ví dụ: chạy qua Live Server hoặc host local).
+        </div>
+    </div>
+
+    <!-- Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <script>
+        // Hàm callback sau khi đăng nhập thành công qua Google
+        function handleCredentialResponse(response) {
+            const idToken = response.credential;
+            
+            // Hiển thị Google ID Token lên giao diện
+            document.getElementById('googleTokenText').innerText = idToken;
+            
+            // Cập nhật trạng thái
+            showStatus("Đăng nhập Google thành công! Đang gửi ID Token lên Backend...", "success");
+            
+            // Gửi ID Token lên Backend Spring Boot
+            sendTokenToBackend(idToken);
+        }
+
+        // Gửi token lên Backend Spring Boot
+        function sendTokenToBackend(idToken) {
+            const backendUrl = "http://localhost:8080/api/auth/google-login";
+            
+            document.getElementById('backendResponseText').innerText = "Đang gửi request lên Backend...";
+            
+            fetch(backendUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ idToken: idToken })
+            })
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(err => { throw err; });
+                }
+                return res.json();
+            })
+            .then(data => {
+                // Đăng nhập thành công, hiển thị JSON response chứa JWT hệ thống
+                document.getElementById('backendResponseText').innerText = JSON.stringify(data, null, 4);
+                showStatus("Đăng nhập Backend thành công! Đã nhận System JWT Token.", "success");
+            })
+            .catch(error => {
+                // Đăng nhập thất bại
+                document.getElementById('backendResponseText').innerText = typeof error === 'object' ? JSON.stringify(error, null, 4) : error;
+                showStatus("Xác thực với Backend thất bại. Hãy chắc chắn backend đã được bật và cấu hình đúng Client ID.", "error");
+            });
+        }
+
+        // Hiển thị trạng thái
+        function showStatus(message, type) {
+            const badge = document.getElementById('statusBadge');
+            const text = document.getElementById('statusText');
+            
+            badge.className = "status-badge show " + type;
+            text.innerText = message;
+        }
+
+        // Khởi tạo nút Google Sign-in
+        function initGoogleSignIn(clientId) {
+            try {
+                google.accounts.id.initialize({
+                    client_id: clientId,
+                    callback: handleCredentialResponse
+                });
+                
+                google.accounts.id.renderButton(
+                    document.getElementById("googleBtnContainer"),
+                    { 
+                        theme: "filled_blue", 
+                        size: "large",
+                        text: "signin_with",
+                        shape: "pill"
+                    }
+                );
+            } catch (e) {
+                console.error("Lỗi khởi tạo Google Sign-in:", e);
+                showStatus("Không thể tải Google SDK. Hãy kiểm tra kết nối mạng hoặc tắt các extension chặn quảng cáo.", "error");
+            }
+        }
+
+        // Cập nhật Client ID và render lại nút bấm
+        function reloadGoogleButton() {
+            const clientId = document.getElementById('clientIdInput').value.trim();
+            if (!clientId) {
+                alert("Vui lòng nhập Client ID hợp lệ!");
+                return;
+            }
+            
+            // Xoá nút cũ và dựng lại
+            document.getElementById("googleBtnContainer").innerHTML = "";
+            initGoogleSignIn(clientId);
+            showStatus("Đã cập nhật Google Client ID mới!", "success");
+        }
+
+        // Tự động khởi tạo sau khi SDK tải xong
+        window.onload = function() {
+            setTimeout(() => {
+                const defaultClientId = document.getElementById('clientIdInput').value;
+                initGoogleSignIn(defaultClientId);
+            }, 1000);
+        };
+
+        // Sao chép văn bản vào clipboard
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            if (text.startsWith("Chưa có") || text.startsWith("Đang đợi")) {
+                alert("Không có dữ liệu để sao chép!");
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Đã sao chép vào bộ nhớ tạm!");
+            }).catch(err => {
+                console.error("Lỗi sao chép:", err);
+            });
+        }
+    </script>
+</body>
+</html>
