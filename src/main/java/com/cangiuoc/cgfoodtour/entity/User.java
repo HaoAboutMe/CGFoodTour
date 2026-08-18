@@ -26,6 +26,8 @@ public class User
     String email;
     String password;
     LocalDate dateOfBirth;
+    String avatarUrl;
+    String avatarPublicId;
 
     @Builder.Default
     Boolean enabled = false;  // Tài khoản chưa được kích hoạt mặc định
