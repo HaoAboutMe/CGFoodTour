@@ -38,3 +38,6 @@ build/
 
 # Sensitive configuration files (containing passwords, tokens, keys)
 src/main/resources/application-dev.yaml
+
+# Local developer testing web interface
+src/main/resources/static/index.html
