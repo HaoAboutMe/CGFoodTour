@@ -27,7 +27,8 @@ public enum ErrorCode {
     INVALID_FILE(1018, "Invalid file", HttpStatus.BAD_REQUEST),
     FILE_TOO_LARGE(1019, "File too large (Max 2MB)", HttpStatus.BAD_REQUEST),
     UNSUPPORTED_MEDIA_TYPE(1020, "Unsupported media type", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
-    UPLOAD_FAILED(1021, "Upload failed", HttpStatus.INTERNAL_SERVER_ERROR);
+    UPLOAD_FAILED(1021, "Upload failed", HttpStatus.INTERNAL_SERVER_ERROR),
+    FACEBOOK_TOKEN_INVALID(1022, "Facebook access token is invalid or expired", HttpStatus.BAD_REQUEST);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

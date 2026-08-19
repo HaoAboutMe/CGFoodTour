@@ -3,6 +3,7 @@ package com.cangiuoc.cgfoodtour.service;
 import com.cangiuoc.cgfoodtour.dto.request.AuthenticationRequest;
 import com.cangiuoc.cgfoodtour.dto.request.ForgotPasswordRequest;
 import com.cangiuoc.cgfoodtour.dto.request.GoogleLoginRequest;
+import com.cangiuoc.cgfoodtour.dto.request.FacebookLoginRequest;
 import com.cangiuoc.cgfoodtour.dto.request.IntrospectRequest;
 import com.cangiuoc.cgfoodtour.dto.request.LogOutRequest;
 import com.cangiuoc.cgfoodtour.dto.request.RefreshRequest;
@@ -12,7 +13,10 @@ import com.cangiuoc.cgfoodtour.dto.response.IntrospectResponse;
 import com.cangiuoc.cgfoodtour.repository.RoleRepository;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.HashSet;
+import org.springframework.web.client.RestTemplate;
 import com.cangiuoc.cgfoodtour.entity.InvalidatedToken;
 import com.cangiuoc.cgfoodtour.entity.PasswordResetOtp;
 import com.cangiuoc.cgfoodtour.entity.User;
@@ -74,6 +78,10 @@ public class AuthenticationService
     @NonFinal
     @Value("${app.google.client-id}")
     protected String GOOGLE_CLIENT_ID;
+
+    @NonFinal
+    @Value("${app.facebook.app-secret}")
+    protected String FACEBOOK_APP_SECRET;
 
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException
     {
@@ -385,5 +393,156 @@ public class AuthenticationService
                 .isAuthenticated(true)
                 .token(token)
                 .build();
+    }
+
+    @Transactional
+    public AuthenticationResponse facebookAuthenticate(FacebookLoginRequest request) {
+        String accessToken = request.getAccessToken();
+
+        // 1. Fetch user profile from Facebook Graph API
+        String fbUrl = "https://graph.facebook.com/me?fields=id,name,first_name,last_name,email,picture.type(large)&access_token=" + accessToken;
+        if (FACEBOOK_APP_SECRET != null && !FACEBOOK_APP_SECRET.isBlank() && !FACEBOOK_APP_SECRET.contains("Thay thế")) {
+            String appSecretProof = generateAppSecretProof(accessToken, FACEBOOK_APP_SECRET);
+            if (appSecretProof != null) {
+                fbUrl += "&appsecret_proof=" + appSecretProof;
+            }
+        }
+        RestTemplate restTemplate = new RestTemplate();
+        Map<String, Object> fbResponse;
+        try {
+            fbResponse = restTemplate.getForObject(fbUrl, Map.class);
+        } catch (Exception e) {
+            log.error("Failed to verify Facebook access token", e);
+            throw new AppException(ErrorCode.FACEBOOK_TOKEN_INVALID);
+        }
+
+        if (fbResponse == null || !fbResponse.containsKey("id")) {
+            throw new AppException(ErrorCode.FACEBOOK_TOKEN_INVALID);
+        }
+
+        String facebookId = (String) fbResponse.get("id");
+        String name = (String) fbResponse.get("name");
+        String firstName = (String) fbResponse.get("first_name");
+        String lastName = (String) fbResponse.get("last_name");
+        String email = (String) fbResponse.get("email");
+
+        // Extract avatar URL from Facebook picture object if present
+        String avatarUrl = null;
+        if (fbResponse.containsKey("picture")) {
+            Map<String, Object> picture = (Map<String, Object>) fbResponse.get("picture");
+            if (picture != null && picture.containsKey("data")) {
+                Map<String, Object> data = (Map<String, Object>) picture.get("data");
+                if (data != null && data.containsKey("url")) {
+                    avatarUrl = (String) data.get("url");
+                }
+            }
+        }
+
+        // 2. Logic 1: Find user by facebookId
+        Optional<User> existingUserOpt = userRepository.findByFacebookId(facebookId);
+        User user = null;
+        if (existingUserOpt.isPresent()) {
+            User existingUser = existingUserOpt.get();
+            // Check if we need to sync/update email
+            if (email != null && existingUser.getEmail().startsWith("fb_")) {
+                // Check if the real email is already taken by another user
+                if (!userRepository.existsByEmail(email)) {
+                    existingUser.setEmail(email);
+                }
+            }
+            // Auto update name / avatar if changed
+            if (avatarUrl != null && (existingUser.getAvatarUrl() == null || existingUser.getAvatarUrl().startsWith("https://platform-lookaside.fbsbx.com"))) {
+                existingUser.setAvatarUrl(avatarUrl);
+            }
+            // Ensure enabled/verified
+            if (!existingUser.getEnabled() || !existingUser.getEmailVerified()) {
+                existingUser.setEnabled(true);
+                existingUser.setEmailVerified(true);
+            }
+            user = userRepository.save(existingUser);
+        }
+
+        // 3. Logic 2: If not found by facebookId, but we have a valid email from FB, find by email
+        if (user == null && email != null) {
+            Optional<User> emailUserOpt = userRepository.findByEmail(email);
+            if (emailUserOpt.isPresent()) {
+                User existingUser = emailUserOpt.get();
+                // Link this existing account to Facebook ID
+                existingUser.setFacebookId(facebookId);
+                if (avatarUrl != null && existingUser.getAvatarUrl() == null) {
+                    existingUser.setAvatarUrl(avatarUrl);
+                }
+                if (!existingUser.getEnabled() || !existingUser.getEmailVerified()) {
+                    existingUser.setEnabled(true);
+                    existingUser.setEmailVerified(true);
+                }
+                user = userRepository.save(existingUser);
+            }
+        }
+
+        // 4. Logic 3: If still not found, create a new User
+        if (user == null) {
+            String finalEmail = email;
+            if (finalEmail == null) {
+                // Generate virtual email
+                finalEmail = "fb_" + facebookId + "@cangiuocfoodtour.com";
+            }
+
+            String baseUsername = name != null ? name : (email != null ? email.split("@")[0] : "fb_" + facebookId);
+            String username = baseUsername;
+            int count = 1;
+            while (userRepository.existsByUsername(username)) {
+                username = baseUsername + count++;
+            }
+
+            var roles = new HashSet<com.cangiuoc.cgfoodtour.entity.Role>();
+            roleRepository.findById("USER").ifPresent(roles::add);
+
+            User newUser = User.builder()
+                    .facebookId(facebookId)
+                    .username(username)
+                    .email(finalEmail)
+                    .firstname(firstName)
+                    .lastname(lastName)
+                    .enabled(true)
+                    .emailVerified(true)
+                    .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+                    .roles(roles)
+                    .avatarUrl(avatarUrl)
+                    .build();
+            user = userRepository.save(newUser);
+        }
+
+        // 5. Check if account is disabled
+        if (!user.getEnabled()) {
+            throw new AppException(ErrorCode.ACCOUNT_DISABLED);
+        }
+
+        // 6. Generate application JWT token
+        var token = generateToken(user);
+        return AuthenticationResponse.builder()
+                .isAuthenticated(true)
+                .token(token)
+                .build();
+    }
+
+    private String generateAppSecretProof(String accessToken, String appSecret) {
+        try {
+            javax.crypto.Mac sha256HMAC = javax.crypto.Mac.getInstance("HmacSHA256");
+            javax.crypto.spec.SecretKeySpec secretKey = new javax.crypto.spec.SecretKeySpec(appSecret.getBytes("UTF-8"), "HmacSHA256");
+            sha256HMAC.init(secretKey);
+            byte[] hash = sha256HMAC.doFinal(accessToken.getBytes("UTF-8"));
+            
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            log.warn("Failed to generate appsecret_proof", e);
+            return null;
+        }
     }
 }

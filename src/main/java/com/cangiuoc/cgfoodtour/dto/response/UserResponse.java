@@ -23,6 +23,7 @@ public class UserResponse
     String email;
     LocalDate dateOfBirth;
     String avatarUrl;
+    String facebookId;
     Boolean enabled;
     Boolean emailVerified;
     Set<RoleResponse> roles;

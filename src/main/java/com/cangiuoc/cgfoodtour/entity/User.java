@@ -28,6 +28,7 @@ public class User
     LocalDate dateOfBirth;
     String avatarUrl;
     String avatarPublicId;
+    String facebookId;
 
     @Builder.Default
     Boolean enabled = false;  // Tài khoản chưa được kích hoạt mặc định
