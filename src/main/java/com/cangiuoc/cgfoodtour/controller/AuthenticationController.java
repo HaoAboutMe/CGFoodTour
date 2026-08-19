@@ -42,6 +42,15 @@ public class AuthenticationController {
                 .build();
     }
 
+    @PostMapping("/facebook-login")
+    ApiResponse<AuthenticationResponse> facebookLogin(@RequestBody @Valid com.cangiuoc.cgfoodtour.dto.request.FacebookLoginRequest request) {
+        var result = authenticationService.facebookAuthenticate(request);
+        return ApiResponse.<AuthenticationResponse>builder()
+                .result(result)
+                .message(SuccessMessage.FACEBOOK_LOGIN_SUCCESS)
+                .build();
+    }
+
     @PostMapping("/introspect")
     ApiResponse<IntrospectResponse> introspect(@RequestBody IntrospectRequest request)
             throws ParseException, JOSEException {

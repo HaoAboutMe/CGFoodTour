@@ -4,6 +4,7 @@ public class SuccessMessage {
     public static final String REGISTER_SUCCESS = "Registration successful. Please check your email to activate your account.";
     public static final String LOGIN_SUCCESS = "Login successful.";
     public static final String GOOGLE_LOGIN_SUCCESS = "Google login successful.";
+    public static final String FACEBOOK_LOGIN_SUCCESS = "Facebook login successful.";
     public static final String LOGOUT_SUCCESS = "Logout successful.";
     public static final String REFRESH_TOKEN_SUCCESS = "Token refreshed successfully.";
     public static final String INTROSPECT_SUCCESS = "Token verification successful.";

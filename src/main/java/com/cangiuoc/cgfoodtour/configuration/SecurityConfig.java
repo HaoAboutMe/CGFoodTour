@@ -24,7 +24,7 @@ public class SecurityConfig {
                         "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh",
                         "/auth/verify-email", "/auth/resend-verification",
                         "/auth/forgot-password", "/auth/reset-password",
-                        "/auth/google-login"
+                        "/auth/google-login", "/auth/facebook-login"
         };
 
         private final String[] SWAGGER_WHITELIST = {

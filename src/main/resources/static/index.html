@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Google Sign-In SDK for Google Auth testing -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Facebook SDK for Facebook Auth testing -->
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
     <style>
         :root {
             --bg-primary: #0a0b0d;
@@ -804,6 +806,29 @@
                             <button type="submit" class="btn-submit">Login with Google Token</button>
                         </form>
                     </div>
+
+                    <!-- Facebook Authentication -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Facebook Sign-In Authentication</span>
+                            <span class="method-badge method-post">POST /api/auth/facebook-login</span>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <label>Method A: Login via Facebook Popup SDK</label>
+                            <div style="margin-top: 10px;">
+                                <button type="button" class="btn-submit" onclick="loginWithFacebookSDK()" style="background: linear-gradient(135deg, #1877f2 0%, #166fe5 100%); width: auto; padding: 10px 20px;">
+                                    Login with Facebook SDK
+                                </button>
+                            </div>
+                        </div>
+                        <form id="form-facebook-token" onsubmit="handleFacebookTokenSubmit(event)">
+                            <div class="form-group">
+                                <label for="facebook-access-token">Method B: Paste Facebook Access Token Manually</label>
+                                <textarea id="facebook-access-token" rows="3" required placeholder="Paste Facebook raw user access token here..."></textarea>
+                            </div>
+                            <button type="submit" class="btn-submit">Login with Facebook Token</button>
+                        </form>
+                    </div>
                 </div>
 
                 <!-- PROFILE TAB -->
@@ -987,6 +1012,16 @@
         const API_BASE = window.location.port === '8080' ? '/api' : 'http://localhost:8080/api';
         let token = localStorage.getItem('jwtToken') || '';
         let refreshTokenVal = localStorage.getItem('refreshToken') || '';
+
+        // Facebook SDK Initialization
+        window.fbAsyncInit = function() {
+            FB.init({
+                appId      : 'YOUR_APP_FB_ID',
+                cookie     : true,
+                xfbml      : true,
+                version    : 'v18.0'
+            });
+        };
 
         // Initial setup
         window.addEventListener('DOMContentLoaded', () => {
@@ -1242,6 +1277,37 @@
             const idToken = googleResponse.credential;
             document.getElementById('google-id-token').value = idToken;
             logConsole('GOOGLE SDK CALLBACK', 'ID Token Received', null, { idToken: idToken }, true);
+        }
+
+        // Facebook Login SDK Popup
+        function loginWithFacebookSDK() {
+            if (typeof FB === 'undefined') {
+                alert('Facebook SDK is not loaded yet or blocked by your browser/adblocker.');
+                return;
+            }
+            FB.login(function(response) {
+                if (response.authResponse) {
+                    const fbAccessToken = response.authResponse.accessToken;
+                    document.getElementById('facebook-access-token').value = fbAccessToken;
+                    logConsole('FACEBOOK SDK CALLBACK', 'Access Token Received', null, { accessToken: fbAccessToken }, true);
+                } else {
+                    alert('User cancelled login or did not fully authorize.');
+                    logConsole('FACEBOOK SDK CALLBACK', 'Login Failed', null, { error: 'User cancelled or unauthorized' }, false);
+                }
+            }, {scope: 'public_profile,email'});
+        }
+
+        // Handle Manual Facebook Token Submit
+        async function handleFacebookTokenSubmit(e) {
+            e.preventDefault();
+            const tokenVal = document.getElementById('facebook-access-token').value;
+            const res = await makeRequest('POST', '/auth/facebook-login', { accessToken: tokenVal });
+            if (res.success && res.data.result) {
+                saveAuth(res.data.result.token, res.data.result.refreshToken || '');
+                alert('Logged in via Facebook token!');
+            } else {
+                alert('Facebook Sign-in failed: ' + (res.error.message || 'Check logs.'));
+            }
         }
 
         // Refresh token
