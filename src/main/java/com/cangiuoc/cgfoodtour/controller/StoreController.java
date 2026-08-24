@@ -4,12 +4,14 @@ import com.cangiuoc.cgfoodtour.dto.request.ApiResponse;
 import com.cangiuoc.cgfoodtour.dto.request.RatingRequest;
 import com.cangiuoc.cgfoodtour.dto.request.ReportClosedRequest;
 import com.cangiuoc.cgfoodtour.dto.request.StoreRequest;
+import com.cangiuoc.cgfoodtour.dto.request.RejectStoreRequest;
 import com.cangiuoc.cgfoodtour.dto.response.StoreResponse;
 import com.cangiuoc.cgfoodtour.service.StoreService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,18 +24,29 @@ import java.util.List;
 public class StoreController {
     StoreService storeService;
 
+    private String getCurrentUserEmail() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+            return auth.getName();
+        }
+        return null;
+    }
+
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<StoreResponse> createStore(@RequestBody @Valid StoreRequest request) {
+        String email = getCurrentUserEmail();
         return ApiResponse.<StoreResponse>builder()
-                .result(storeService.createStore(request))
-                .message("Store created successfully")
+                .result(storeService.createStore(request, email))
+                .message("Store submitted successfully and is pending approval")
                 .build();
     }
 
     @GetMapping
     public ApiResponse<List<StoreResponse>> getStores(@RequestParam(value = "categoryId", required = false) Integer categoryId) {
+        String email = getCurrentUserEmail();
         return ApiResponse.<List<StoreResponse>>builder()
-                .result(storeService.getStores(categoryId))
+                .result(storeService.getStores(categoryId, email))
                 .message("Stores retrieved successfully")
                 .build();
     }
@@ -56,31 +69,37 @@ public class StoreController {
 
     @GetMapping("/{id}")
     public ApiResponse<StoreResponse> getStore(@PathVariable String id) {
+        String email = getCurrentUserEmail();
         return ApiResponse.<StoreResponse>builder()
-                .result(storeService.getStore(id))
+                .result(storeService.getStore(id, email))
                 .message("Store retrieved successfully")
                 .build();
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<StoreResponse> updateStore(@PathVariable String id, @RequestBody @Valid StoreRequest request) {
+        String email = getCurrentUserEmail();
         return ApiResponse.<StoreResponse>builder()
-                .result(storeService.updateStore(id, request))
-                .message("Store updated successfully")
+                .result(storeService.updateStore(id, request, email))
+                .message("Store updated successfully and is pending approval")
                 .build();
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<Void> deleteStore(@PathVariable String id) {
-        storeService.deleteStore(id);
+        String email = getCurrentUserEmail();
+        storeService.deleteStore(id, email);
         return ApiResponse.<Void>builder()
                 .message("Store deleted successfully")
                 .build();
     }
 
     @PostMapping("/{id}/rate")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<StoreResponse> rateStore(@PathVariable String id, @RequestBody @Valid RatingRequest request) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        String email = getCurrentUserEmail();
         return ApiResponse.<StoreResponse>builder()
                 .result(storeService.rateStore(id, request.getRatingLevel(), email))
                 .message("Store rated successfully")
@@ -88,11 +107,30 @@ public class StoreController {
     }
 
     @PostMapping("/{id}/report-closed")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<StoreResponse> reportClosed(@PathVariable String id, @RequestBody @Valid ReportClosedRequest request) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        String email = getCurrentUserEmail();
         return ApiResponse.<StoreResponse>builder()
                 .result(storeService.reportClosed(id, request, email))
                 .message("Store status reported successfully")
+                .build();
+    }
+
+    @PostMapping("/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<StoreResponse> approveStore(@PathVariable String id) {
+        return ApiResponse.<StoreResponse>builder()
+                .result(storeService.approveStore(id))
+                .message("Store approved successfully")
+                .build();
+    }
+
+    @PostMapping("/{id}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<StoreResponse> rejectStore(@PathVariable String id, @RequestBody @Valid RejectStoreRequest request) {
+        return ApiResponse.<StoreResponse>builder()
+                .result(storeService.rejectStore(id, request.getReason()))
+                .message("Store rejected successfully")
                 .build();
     }
 }

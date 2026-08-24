@@ -8,6 +8,8 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,10 +21,20 @@ import java.util.List;
 public class FoodItemController {
     FoodItemService foodItemService;
 
+    private String getCurrentUserEmail() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+            return auth.getName();
+        }
+        return null;
+    }
+
     @PostMapping("/store/{storeId}")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<FoodItemResponse> createFoodItem(@PathVariable String storeId, @RequestBody @Valid FoodItemRequest request) {
+        String email = getCurrentUserEmail();
         return ApiResponse.<FoodItemResponse>builder()
-                .result(foodItemService.createFoodItem(storeId, request))
+                .result(foodItemService.createFoodItem(storeId, request, email))
                 .message("Food item created successfully")
                 .build();
     }
@@ -44,16 +56,20 @@ public class FoodItemController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<FoodItemResponse> updateFoodItem(@PathVariable Long id, @RequestBody @Valid FoodItemRequest request) {
+        String email = getCurrentUserEmail();
         return ApiResponse.<FoodItemResponse>builder()
-                .result(foodItemService.updateFoodItem(id, request))
+                .result(foodItemService.updateFoodItem(id, request, email))
                 .message("Food item updated successfully")
                 .build();
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<Void> deleteFoodItem(@PathVariable Long id) {
-        foodItemService.deleteFoodItem(id);
+        String email = getCurrentUserEmail();
+        foodItemService.deleteFoodItem(id, email);
         return ApiResponse.<Void>builder()
                 .message("Food item deleted successfully")
                 .build();

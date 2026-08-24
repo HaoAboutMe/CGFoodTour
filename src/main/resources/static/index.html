@@ -662,7 +662,7 @@
                             <span>Login / Authentication</span>
                             <span class="method-badge method-post">POST /api/auth/token</span>
                         </div>
-                        <form id="form-login" onsubmit="handleLogin(event)">
+                        <form id="form-login" onsubmit="handleLogin(event); return false;">
                             <div class="form-group">
                                 <label for="login-email">Email</label>
                                 <input type="email" id="login-email" required placeholder="user@gmail.com">
@@ -681,7 +681,7 @@
                             <span>Register User</span>
                             <span class="method-badge method-post">POST /api/users</span>
                         </div>
-                        <form id="form-register" onsubmit="handleRegister(event)">
+                        <form id="form-register" onsubmit="handleRegister(event); return false;">
                             <div class="row">
                                 <div class="form-group">
                                     <label for="reg-username">Username</label>
@@ -722,7 +722,7 @@
                             <span>Verify Email Token</span>
                             <span class="method-badge method-get">GET /api/auth/verify-email</span>
                         </div>
-                        <form id="form-verify" onsubmit="handleVerifyEmail(event)">
+                        <form id="form-verify" onsubmit="handleVerifyEmail(event); return false;">
                             <div class="form-group">
                                 <label for="verify-token">Verification Token</label>
                                 <input type="text" id="verify-token" required placeholder="Paste UUID token from logs or email">
@@ -737,7 +737,7 @@
                             <span>Resend Verification Email</span>
                             <span class="method-badge method-post">POST /api/auth/resend-verification</span>
                         </div>
-                        <form id="form-resend" onsubmit="handleResendVerification(event)">
+                        <form id="form-resend" onsubmit="handleResendVerification(event); return false;">
                             <div class="form-group">
                                 <label for="resend-email">Email Address</label>
                                 <input type="email" id="resend-email" required placeholder="john@gmail.com">
@@ -752,7 +752,7 @@
                             <span>Forgot Password (Request OTP)</span>
                             <span class="method-badge method-post">POST /api/auth/forgot-password</span>
                         </div>
-                        <form id="form-forgot" onsubmit="handleForgotPassword(event)">
+                        <form id="form-forgot" onsubmit="handleForgotPassword(event); return false;">
                             <div class="form-group">
                                 <label for="forgot-email">Email</label>
                                 <input type="email" id="forgot-email" required placeholder="john@gmail.com">
@@ -766,7 +766,7 @@
                             <span>Reset Password with OTP</span>
                             <span class="method-badge method-post">POST /api/auth/reset-password</span>
                         </div>
-                        <form id="form-reset" onsubmit="handleResetPassword(event)">
+                        <form id="form-reset" onsubmit="handleResetPassword(event); return false;">
                             <div class="form-group">
                                 <label for="reset-email">Email</label>
                                 <input type="email" id="reset-email" required placeholder="john@gmail.com">
@@ -802,7 +802,7 @@
                             </div>
                             <div class="g_id_signin" data-type="standard"></div>
                         </div>
-                        <form id="form-google-token" onsubmit="handleGoogleTokenSubmit(event)">
+                        <form id="form-google-token" onsubmit="handleGoogleTokenSubmit(event); return false;">
                             <div class="form-group">
                                 <label for="google-id-token">Method B: Paste Google ID Token Manually</label>
                                 <textarea id="google-id-token" rows="3" required placeholder="Paste Google raw idToken JWT here..."></textarea>
@@ -825,7 +825,7 @@
                                 </button>
                             </div>
                         </div>
-                        <form id="form-facebook-token" onsubmit="handleFacebookTokenSubmit(event)">
+                        <form id="form-facebook-token" onsubmit="handleFacebookTokenSubmit(event); return false;">
                             <div class="form-group">
                                 <label for="facebook-access-token">Method B: Paste Facebook Access Token Manually</label>
                                 <textarea id="facebook-access-token" rows="3" required placeholder="Paste Facebook raw user access token here..."></textarea>
@@ -854,7 +854,7 @@
                             <span>Upload Avatar</span>
                             <span class="method-badge method-patch">PATCH /api/users/me/avatar</span>
                         </div>
-                        <form id="form-avatar" onsubmit="handleUploadAvatar(event)">
+                        <form id="form-avatar" onsubmit="handleUploadAvatar(event); return false;">
                             <div class="avatar-upload-preview">
                                 <img id="avatar-form-preview" class="avatar-preview-img" src="https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg" alt="Preview">
                                 <div>
@@ -876,7 +876,7 @@
                             <span>Update Profile Info</span>
                             <span class="method-badge method-put">PUT /api/users/me</span>
                         </div>
-                        <form id="form-update-profile" onsubmit="handleUpdateProfile(event)">
+                        <form id="form-update-profile" onsubmit="handleUpdateProfile(event); return false;">
                             <div class="form-group">
                                 <label for="up-username">Username</label>
                                 <input type="text" id="up-username" required placeholder="john_doe">
@@ -905,7 +905,7 @@
                             <span>Change Password</span>
                             <span class="method-badge method-put">PUT /api/users/me/change-password</span>
                         </div>
-                        <form id="form-change-password" onsubmit="handleChangePassword(event)">
+                        <form id="form-change-password" onsubmit="handleChangePassword(event); return false;">
                             <div class="form-group">
                                 <label for="pwd-old">Old Password</label>
                                 <input type="password" id="pwd-old" required placeholder="••••••••">
@@ -949,6 +949,34 @@
                             </table>
                         </div>
                     </div>
+
+                    <!-- Store Approval Card -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Pending Store Submissions</span>
+                            <span class="method-badge method-get">GET /v1/stores</span>
+                        </div>
+                        <button class="btn-submit" onclick="adminListPendingStores()" style="margin-bottom: 16px;">Refresh Submissions</button>
+                        <div class="user-table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Category</th>
+                                        <th>Owner</th>
+                                        <th>Address / Landmark</th>
+                                        <th>Hours</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stores-approval-table-body">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; color: var(--text-secondary);">Click "Refresh Submissions" to load pending stores.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- FOOD TOUR TAB -->
@@ -965,25 +993,69 @@
                             <span>Create / Manage Category (Admin)</span>
                             <span class="method-badge method-post">POST /v1/categories</span>
                         </div>
-                        <form id="form-create-category" onsubmit="handleCreateCategory(event)">
+                        <form id="form-create-category" onsubmit="handleCreateCategory(event); return false;">
                             <div class="row">
                                 <div class="form-group">
                                     <label for="cat-name">Category Name</label>
                                     <input type="text" id="cat-name" required placeholder="e.g. Bánh Mì">
                                 </div>
                                 <div class="form-group">
-                                    <label for="cat-icon">Icon Class/Url</label>
-                                    <input type="text" id="cat-icon" placeholder="e.g. fa-bread-slice">
+                                    <label for="cat-icon">Icon (FontAwesome)</label>
+                                    <select id="cat-icon" required>
+                                        <option value="fa-utensils">Utensils 🍴 (Nhà hàng)</option>
+                                        <option value="fa-bread-slice" selected>Bread 🍞 (Bánh mì)</option>
+                                        <option value="fa-hamburger">Burger 🍔 (Hamburger)</option>
+                                        <option value="fa-pizza-slice">Pizza 🍕 (Pizza)</option>
+                                        <option value="fa-coffee">Coffee ☕ (Cà phê)</option>
+                                        <option value="fa-ice-cream">Ice Cream 🍦 (Kem)</option>
+                                        <option value="fa-drumstick-bite">Chicken 🍗 (Thịt gà)</option>
+                                        <option value="fa-fish">Fish 🐟 (Hải sản)</option>
+                                        <option value="fa-store">Store 🏪 (Cửa hàng)</option>
+                                        <option value="fa-bowl-rice">Rice 🍚 (Cơm)</option>
+                                        <option value="fa-beer">Beer 🍺 (Bia)</option>
+                                        <option value="fa-glass-martini-alt">Drink 🍸 (Nước giải khát)</option>
+                                    </select>
                                 </div>
                             </div>
                             <button type="submit" class="btn-submit">Create Category</button>
                         </form>
                     </div>
 
+                    <!-- My Stores Section -->
+                    <div class="card" id="my-stores-card">
+                        <div class="card-title">
+                            <span>My Submitted Stores</span>
+                            <span class="method-badge method-get">GET /v1/stores</span>
+                        </div>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                            Here are the stores you have submitted. You can check their verification status and moderation comments.
+                        </p>
+                        <div class="user-table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Category</th>
+                                        <th>Status</th>
+                                        <th>Details / Feedback</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="my-stores-table-body">
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; color: var(--text-secondary);">
+                                            Please log in to view your submitted stores.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <!-- Store Section -->
                     <div class="card">
                         <div class="card-title">
-                            <span>Create Store (Admin)</span>
+                            <span>Submit Store (User/Owner)</span>
                             <span class="method-badge method-post">POST /v1/stores</span>
                         </div>
                         <form id="form-create-store" onsubmit="handleCreateStore(event); return false;">
@@ -1033,14 +1105,28 @@
                                     <input type="text" id="store-close" placeholder="e.g. 20:00">
                                 </div>
                             </div>
-                            <button type="submit" class="btn-submit">Create Store</button>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="store-price-min">Price Min (VND)</label>
+                                    <input type="number" id="store-price-min" value="0" placeholder="e.g. 10000">
+                                </div>
+                                <div class="form-group">
+                                    <label for="store-price-max">Price Max (VND)</label>
+                                    <input type="number" id="store-price-max" value="0" placeholder="e.g. 50000">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="store-banner-url">Banner Image URL</label>
+                                <input type="text" id="store-banner-url" placeholder="e.g. https://example.com/banner.jpg">
+                            </div>
+                            <button type="submit" class="btn-submit">Submit Store for Review</button>
                         </form>
                     </div>
 
                     <!-- Update Store Section -->
                     <div class="card">
                         <div class="card-title">
-                            <span>Update Store (Admin)</span>
+                            <span>Update Store (Owner/Admin)</span>
                             <span class="method-badge method-put">PUT /v1/stores/{id}</span>
                         </div>
                         <div class="form-group">
@@ -1051,6 +1137,7 @@
                         </div>
                         <form id="form-update-store" onsubmit="handleUpdateStore(event); return false;" style="display: none;">
                             <input type="hidden" id="store-update-id">
+                            <div id="store-update-status-badge" style="margin-bottom: 16px; padding: 10px; border-radius: 8px; font-weight: 600; display: none;"></div>
                             <div class="row">
                                 <div class="form-group">
                                     <label for="store-update-name">Store Name</label>
@@ -1096,6 +1183,20 @@
                                     <label for="store-update-close">Close Time</label>
                                     <input type="text" id="store-update-close" required>
                                 </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="store-update-price-min">Price Min (VND)</label>
+                                    <input type="number" id="store-update-price-min" value="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="store-update-price-max">Price Max (VND)</label>
+                                    <input type="number" id="store-update-price-max" value="0">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="store-update-banner-url">Banner Image URL</label>
+                                <input type="text" id="store-update-banner-url">
                             </div>
                             <div style="display: flex; gap: 16px;">
                                 <button type="submit" class="btn-submit">Save Store Details</button>
@@ -1279,6 +1380,7 @@
         const API_BASE = window.location.port === '8080' ? '/api' : 'http://localhost:8080/api';
         let token = localStorage.getItem('jwtToken') || '';
         let refreshTokenVal = localStorage.getItem('refreshToken') || '';
+        let currentUser = null;
 
         // Facebook SDK Initialization
         window.fbAsyncInit = function() {
@@ -1320,6 +1422,9 @@
 
             if (tabId === 'foodtour') {
                 loadFoodTourData();
+            } else if (tabId === 'admin') {
+                adminListUsers();
+                adminListPendingStores();
             }
         }
 
@@ -1445,6 +1550,7 @@
         function clearAuth() {
             token = '';
             refreshTokenVal = '';
+            currentUser = null;
             localStorage.removeItem('jwtToken');
             localStorage.removeItem('refreshToken');
             updateTokenUI();
@@ -1452,6 +1558,8 @@
             document.getElementById('user-chip').style.display = 'none';
             document.getElementById('user-name').textContent = 'Guest';
             document.getElementById('avatar-form-preview').src = 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg';
+
+            populateMyStoresTable();
         }
 
         function updateTokenUI() {
@@ -1639,6 +1747,7 @@
         }
 
         function populateProfileForms(userData) {
+            currentUser = userData;
             // Update Top Header User Info
             document.getElementById('user-chip').style.display = 'flex';
             document.getElementById('user-name').textContent = userData.username;
@@ -1652,6 +1761,9 @@
             document.getElementById('up-first').value = userData.firstname || '';
             document.getElementById('up-last').value = userData.lastname || '';
             document.getElementById('up-dob').value = userData.dateOfBirth || '';
+
+            // Update my stores list
+            populateMyStoresTable();
         }
 
         // Avatar file preview change
@@ -1783,6 +1895,8 @@
                         select.appendChild(opt);
                     });
                 });
+
+                populateMyStoresTable();
             }
         }
 
@@ -1817,8 +1931,12 @@
             const openTime = formatTimeHHmm(document.getElementById('store-open').value);
             const closeTime = formatTimeHHmm(document.getElementById('store-close').value);
 
+            const priceMin = parseFloat(document.getElementById('store-price-min').value) || 0;
+            const priceMax = parseFloat(document.getElementById('store-price-max').value) || 0;
+            const bannerImageUrl = document.getElementById('store-banner-url').value;
+
             const res = await makeRequest('POST', '/v1/stores', {
-                name, categoryId, landmarkNote, latitude, longitude, addressLine, phoneNumber, openTime, closeTime
+                name, categoryId, landmarkNote, latitude, longitude, addressLine, phoneNumber, openTime, closeTime, priceMin, priceMax, bannerImageUrl
             });
             if (res.success) {
                 alert('Store created successfully!');
@@ -1849,6 +1967,30 @@
             document.getElementById('store-update-phone').value = store.phoneNumber || '';
             document.getElementById('store-update-open').value = store.openTime || '';
             document.getElementById('store-update-close').value = store.closeTime || '';
+            document.getElementById('store-update-price-min').value = store.priceMin !== null ? store.priceMin : 0;
+            document.getElementById('store-update-price-max').value = store.priceMax !== null ? store.priceMax : 0;
+            document.getElementById('store-update-banner-url').value = store.bannerImageUrl || '';
+
+            // Handle status badge
+            const badge = document.getElementById('store-update-status-badge');
+            if (store.status) {
+                badge.style.display = 'block';
+                let statusText = `Status: ${store.status}`;
+                if (store.status === 'REJECTED' && store.rejectionReason) {
+                    statusText += ` (Reason: ${store.rejectionReason})`;
+                    badge.style.backgroundColor = 'rgba(231, 76, 60, 0.2)';
+                    badge.style.color = '#e74c3c';
+                } else if (store.status === 'PENDING') {
+                    badge.style.backgroundColor = 'rgba(241, 196, 15, 0.2)';
+                    badge.style.color = '#f1c40f';
+                } else {
+                    badge.style.backgroundColor = 'rgba(46, 204, 113, 0.2)';
+                    badge.style.color = '#2ecc71';
+                }
+                badge.textContent = statusText;
+            } else {
+                badge.style.display = 'none';
+            }
 
             form.style.display = 'block';
         }
@@ -1870,8 +2012,12 @@
             const openTime = formatTimeHHmm(document.getElementById('store-update-open').value);
             const closeTime = formatTimeHHmm(document.getElementById('store-update-close').value);
 
+            const priceMin = parseFloat(document.getElementById('store-update-price-min').value) || 0;
+            const priceMax = parseFloat(document.getElementById('store-update-price-max').value) || 0;
+            const bannerImageUrl = document.getElementById('store-update-banner-url').value;
+
             const res = await makeRequest('PUT', `/v1/stores/${id}`, {
-                name, categoryId, landmarkNote, latitude, longitude, addressLine, phoneNumber, openTime, closeTime
+                name, categoryId, landmarkNote, latitude, longitude, addressLine, phoneNumber, openTime, closeTime, priceMin, priceMax, bannerImageUrl
             });
             if (res.success) {
                 alert('Store updated successfully!');
@@ -2130,6 +2276,148 @@
                 adminListUsers();
             } else {
                 alert('Deletion Failed: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+
+        // Store Approval Workflows
+        async function adminListPendingStores() {
+            const res = await makeRequest('GET', '/v1/stores');
+            const tbody = document.getElementById('stores-approval-table-body');
+            tbody.innerHTML = '';
+
+            if (res.success && res.data.result) {
+                const pendingStores = res.data.result.filter(s => s.status === 'PENDING');
+                if (pendingStores.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No pending store submissions.</td></tr>';
+                    return;
+                }
+                pendingStores.forEach(s => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>
+                            <div style="font-weight:600;">${s.name}</div>
+                            <div style="font-size:11px; color:var(--text-secondary);">ID: ${s.id}</div>
+                        </td>
+                        <td>${s.categoryName || 'N/A'}</td>
+                        <td>${s.ownerUsername || s.ownerId || 'N/A'}</td>
+                        <td>
+                            <div>${s.addressLine || 'N/A'}</div>
+                            <div style="font-size:11px; font-style:italic; color:var(--accent-cyan);">${s.landmarkNote || ''}</div>
+                        </td>
+                        <td>${s.openTime || 'N/A'} - ${s.closeTime || 'N/A'}</td>
+                        <td>
+                            <button class="action-icon-btn action-edit" onclick="adminApproveStore('${s.id}')" style="background:rgba(46, 204, 113, 0.2); color:#2ecc71; padding: 4px 8px; font-size:12px; margin-bottom: 4px;">Approve</button>
+                            <button class="action-icon-btn action-delete" onclick="adminRejectStore('${s.id}')" style="background:rgba(231, 76, 60, 0.2); color:#e74c3c; padding: 4px 8px; font-size:12px;">Reject</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--error);">Failed to retrieve pending stores. Ensure you have the ADMIN role.</td></tr>';
+            }
+        }
+
+        async function adminApproveStore(storeId) {
+            if (!confirm('Are you sure you want to APPROVE this store?')) return;
+            const res = await makeRequest('POST', `/v1/stores/${storeId}/approve`, {});
+            if (res.success) {
+                alert('Store approved successfully!');
+                adminListPendingStores();
+                loadFoodTourData();
+            } else {
+                alert('Failed to approve store: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+
+        async function adminRejectStore(storeId) {
+            const reason = prompt('Please enter the reason for rejection (this will be visible to the store owner):');
+            if (reason === null) return;
+            if (!reason.trim()) {
+                alert('Rejection reason is required.');
+                return;
+            }
+            const res = await makeRequest('POST', `/v1/stores/${storeId}/reject`, { reason: reason.trim() });
+            if (res.success) {
+                alert('Store rejected successfully.');
+                adminListPendingStores();
+                loadFoodTourData();
+            } else {
+                alert('Failed to reject store: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+
+        // My Submitted Stores rendering and selection helper
+        function populateMyStoresTable() {
+            const tbody = document.getElementById('my-stores-table-body');
+            if (!tbody) return;
+
+            if (!token || !currentUser) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">Please log in to view your submitted stores.</td></tr>';
+                return;
+            }
+
+            const myStores = foodtourStores.filter(st => 
+                (st.ownerId && currentUser.id && st.ownerId.toString() === currentUser.id.toString()) || 
+                (st.ownerEmail && currentUser.email && st.ownerEmail.toLowerCase() === currentUser.email.toLowerCase())
+            );
+
+            if (myStores.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">You have not submitted any stores yet.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+            myStores.forEach(st => {
+                let statusLabel = st.status || 'PENDING';
+                let badgeStyle = 'background: rgba(241, 196, 15, 0.2); color: #f1c40f; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block;';
+                
+                if (statusLabel === 'APPROVED') {
+                    badgeStyle = 'background: rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block;';
+                } else if (statusLabel === 'REJECTED') {
+                    badgeStyle = 'background: rgba(231, 76, 60, 0.2); color: #e74c3c; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block;';
+                }
+
+                const feedback = statusLabel === 'REJECTED' 
+                    ? `<span style="color: #e74c3c; font-weight: 500;">❌ Rejected: ${st.rejectionReason || 'No feedback provided'}</span>` 
+                    : (statusLabel === 'PENDING' ? '<span style="color: var(--text-secondary);">Under review by moderation team</span>' : '<span style="color: #2ecc71; font-weight: 500;">✅ Live on CanGiuoc FoodTour</span>');
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div style="font-weight: 600; color: var(--text-primary);">${st.name}</div>
+                        <div style="font-size: 10px; color: var(--text-secondary);">ID: ${st.id}</div>
+                    </td>
+                    <td>${st.categoryName || 'N/A'}</td>
+                    <td>
+                        <span style="${badgeStyle}">${statusLabel}</span>
+                    </td>
+                    <td style="font-size: 12px; max-width: 250px; word-break: break-word;">
+                        ${feedback}
+                    </td>
+                    <td>
+                        <button class="action-icon-btn action-edit" onclick="editMyStore('${st.id}')" style="background: rgba(0, 210, 255, 0.2); color: #00d2ff; padding: 4px 8px; font-size: 12px; cursor: pointer; border: none; border-radius: 4px;">
+                            Edit / Re-submit
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function editMyStore(storeId) {
+            const selectEl = document.getElementById('store-update-select');
+            if (selectEl) {
+                selectEl.value = storeId;
+                onStoreSelectChangeForUpdate(storeId);
+                
+                const updateCard = selectEl.closest('.card');
+                if (updateCard) {
+                    updateCard.scrollIntoView({ behavior: 'smooth' });
+                    updateCard.style.boxShadow = '0 0 15px var(--accent-cyan)';
+                    setTimeout(() => {
+                        updateCard.style.boxShadow = '';
+                    }, 1500);
+                }
             }
         }
     </script>

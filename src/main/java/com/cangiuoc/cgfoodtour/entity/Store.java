@@ -1,5 +1,6 @@
 package com.cangiuoc.cgfoodtour.entity;
 
+import com.cangiuoc.cgfoodtour.enums.StoreStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -61,7 +62,19 @@ public class Store {
 
     @Column(name = "is_verified")
     @Builder.Default
-    Boolean isVerified = true;
+    Boolean isVerified = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    User owner;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
+    StoreStatus status = StoreStatus.PENDING;
+
+    @Column(name = "rejection_reason")
+    String rejectionReason;
 
     // Denormalized counters
     @Column(name = "count_very_satisfied")
