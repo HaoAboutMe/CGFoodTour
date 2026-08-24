@@ -1,43 +1,28 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### STS ###
-.apt_generated
+# IDEs and Editors
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.project
 .classpath
 .factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
+# OS files
+Thumbs.db
+.DS_Store
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+# Frontend / Node.js dependencies & builds
+node_modules/
+/frontend/node_modules/
+/frontend/dist/
+/frontend/build/
+/frontend/.next/
+/frontend/out/
+/frontend/.svelte-kit/
+/frontend/.nuxt/
+
+# Root level build files (in case they were generated previously)
+target/
 build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
-
-# Uploaded images (outside project default path may differ)
-/uploads/
-/uploads/images/
-
-# Sensitive configuration files (containing passwords, tokens, keys)
-src/main/resources/application-dev.yaml
-
-# Local developer testing web interface
-src/main/resources/static/index.html
