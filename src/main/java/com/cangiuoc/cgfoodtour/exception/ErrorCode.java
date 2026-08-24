@@ -28,7 +28,12 @@ public enum ErrorCode {
     FILE_TOO_LARGE(1019, "File too large (Max 2MB)", HttpStatus.BAD_REQUEST),
     UNSUPPORTED_MEDIA_TYPE(1020, "Unsupported media type", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
     UPLOAD_FAILED(1021, "Upload failed", HttpStatus.INTERNAL_SERVER_ERROR),
-    FACEBOOK_TOKEN_INVALID(1022, "Facebook access token is invalid or expired", HttpStatus.BAD_REQUEST);
+    FACEBOOK_TOKEN_INVALID(1022, "Facebook access token is invalid or expired", HttpStatus.BAD_REQUEST),
+    CATEGORY_NOT_FOUND(1030, "Category not found", HttpStatus.NOT_FOUND),
+    STORE_NOT_FOUND(1031, "Store not found", HttpStatus.NOT_FOUND),
+    FOOD_ITEM_NOT_FOUND(1032, "Food item not found", HttpStatus.NOT_FOUND),
+    REPORT_ALREADY_SUBMITTED(1033, "You have already reported this store closed today", HttpStatus.BAD_REQUEST),
+    GPS_OUT_OF_RANGE(1034, "You must be within 100m of the store to report it closed", HttpStatus.BAD_REQUEST);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;
