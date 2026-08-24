@@ -617,6 +617,10 @@
                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                 Admin Suite
             </button>
+            <button class="menu-btn" onclick="switchTab('foodtour')">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-10 10c0 5.523 4.477 10 10 10s10-4.477 10-10S17.523 2 12 2zm1 10h-2v-4h2v4zm0 4h-2v-2h2v2z"></path></svg>
+                Food Tour Suite
+            </button>
         </div>
 
         <div class="token-status-wrapper">
@@ -947,6 +951,269 @@
                     </div>
                 </div>
 
+                <!-- FOOD TOUR TAB -->
+                <div id="tab-foodtour" class="tab-content">
+                    <h2>Food Tour Suite</h2>
+
+                    <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+                        <button class="btn-submit" onclick="loadFoodTourData()" style="width: auto;">🔄 Refresh Loaded Data</button>
+                    </div>
+
+                    <!-- Category Section -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Create / Manage Category (Admin)</span>
+                            <span class="method-badge method-post">POST /v1/categories</span>
+                        </div>
+                        <form id="form-create-category" onsubmit="handleCreateCategory(event)">
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="cat-name">Category Name</label>
+                                    <input type="text" id="cat-name" required placeholder="e.g. Bánh Mì">
+                                </div>
+                                <div class="form-group">
+                                    <label for="cat-icon">Icon Class/Url</label>
+                                    <input type="text" id="cat-icon" placeholder="e.g. fa-bread-slice">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-submit">Create Category</button>
+                        </form>
+                    </div>
+
+                    <!-- Store Section -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Create Store (Admin)</span>
+                            <span class="method-badge method-post">POST /v1/stores</span>
+                        </div>
+                        <form id="form-create-store" onsubmit="handleCreateStore(event); return false;">
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="store-name">Store Name</label>
+                                    <input type="text" id="store-name" required placeholder="e.g. Bánh Mì Ba Lẹ">
+                                </div>
+                                <div class="form-group">
+                                    <label for="store-category-select">Category</label>
+                                    <select id="store-category-select" required>
+                                        <option value="">-- Select Category --</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="store-desc">Landmark Note</label>
+                                <textarea id="store-desc" rows="2" placeholder="e.g. Gần ngã tư Chợ Trạm, đối diện tiệm vàng Kim Phụng..."></textarea>
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="store-lat">Latitude</label>
+                                    <input type="text" id="store-lat" placeholder="e.g. 10.603417">
+                                </div>
+                                <div class="form-group">
+                                    <label for="store-lng">Longitude</label>
+                                    <input type="text" id="store-lng" placeholder="e.g. 106.669812">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="store-address">Address Line</label>
+                                    <input type="text" id="store-address" placeholder="e.g. 128 Quốc Lộ 50, Cần Giuộc">
+                                </div>
+                                <div class="form-group">
+                                    <label for="store-phone">Phone Number</label>
+                                    <input type="text" id="store-phone" placeholder="e.g. 0888105940">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="store-open">Open Time</label>
+                                    <input type="text" id="store-open" placeholder="e.g. 05:00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="store-close">Close Time</label>
+                                    <input type="text" id="store-close" placeholder="e.g. 20:00">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-submit">Create Store</button>
+                        </form>
+                    </div>
+
+                    <!-- Update Store Section -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Update Store (Admin)</span>
+                            <span class="method-badge method-put">PUT /v1/stores/{id}</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="store-update-select">Select Store to Edit</label>
+                            <select id="store-update-select" onchange="onStoreSelectChangeForUpdate(this.value)">
+                                <option value="">-- Choose Store to Edit --</option>
+                            </select>
+                        </div>
+                        <form id="form-update-store" onsubmit="handleUpdateStore(event); return false;" style="display: none;">
+                            <input type="hidden" id="store-update-id">
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="store-update-name">Store Name</label>
+                                    <input type="text" id="store-update-name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="store-update-category-select">Category</label>
+                                    <select id="store-update-category-select" required>
+                                        <option value="">-- Select Category --</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="store-update-desc">Landmark Note</label>
+                                <textarea id="store-update-desc" rows="3" required></textarea>
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="store-update-lat">Latitude</label>
+                                    <input type="text" id="store-update-lat">
+                                </div>
+                                <div class="form-group">
+                                    <label for="store-update-lng">Longitude</label>
+                                    <input type="text" id="store-update-lng">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="store-update-address">Address Line</label>
+                                    <input type="text" id="store-update-address" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="store-update-phone">Phone Number</label>
+                                    <input type="text" id="store-update-phone">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="store-update-open">Open Time</label>
+                                    <input type="text" id="store-update-open" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="store-update-close">Close Time</label>
+                                    <input type="text" id="store-update-close" required>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 16px;">
+                                <button type="submit" class="btn-submit">Save Store Details</button>
+                                <button type="button" class="btn-submit" style="background: rgba(231, 76, 60, 0.2); color: #e74c3c; width: auto;" onclick="handleDeleteStore()">Delete Store</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Food Item Section -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Add Food Item to Store (Admin)</span>
+                            <span class="method-badge method-post">POST /v1/food-items/store/{storeId}</span>
+                        </div>
+                        <form id="form-create-food-item" onsubmit="handleCreateFoodItem(event); return false;">
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="food-store-select">Select Store</label>
+                                    <select id="food-store-select" required>
+                                        <option value="">-- Choose Store --</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="food-name">Food Item Name</label>
+                                    <input type="text" id="food-name" required placeholder="e.g. Bánh mì đặc biệt">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="food-price">Price (VND)</label>
+                                    <input type="number" id="food-price" required placeholder="e.g. 25000">
+                                </div>
+                                <div class="form-group">
+                                    <label for="food-image">Image URL</label>
+                                    <input type="text" id="food-image" placeholder="Paste image url...">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="food-desc">Description (or tags)</label>
+                                <textarea id="food-desc" rows="2" placeholder="e.g. Nhiều chả, pate tự làm thơm béo..."></textarea>
+                            </div>
+                            <button type="submit" class="btn-submit">Add Food Item</button>
+                        </form>
+                    </div>
+
+                    <!-- Store Ratings & Reports -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Rate / Report Store Closed (User)</span>
+                            <span class="method-badge method-post">POST /v1/stores/{id}/(rate | report-closed)</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="action-store-select">Select Store</label>
+                            <select id="action-store-select" required>
+                                <option value="">-- Choose Store --</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Rate Form -->
+                        <form id="form-rate-store" onsubmit="handleRateStore(event); return false;" style="margin-bottom: 24px;">
+                            <div class="row" style="align-items: flex-end;">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label for="rating-level-select">Select Satisfaction Level</label>
+                                    <select id="rating-level-select" required>
+                                        <option value="VERY_SATISFIED">Very Satisfied (Hài lòng)</option>
+                                        <option value="NORMAL">Normal (Bình thường)</option>
+                                        <option value="NOT_SATISFIED">Not Satisfied (Không hài lòng)</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn-submit">Submit 1-Touch Rate</button>
+                            </div>
+                        </form>
+
+                        <!-- Report Closed Form -->
+                        <form id="form-report-closed" onsubmit="handleReportClosed(event); return false;">
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="report-lat">Your Current Latitude</label>
+                                    <input type="text" id="report-lat" required placeholder="e.g. 10.603417">
+                                </div>
+                                <div class="form-group">
+                                    <label for="report-lng">Your Current Longitude</label>
+                                    <input type="text" id="report-lng" required placeholder="e.g. 106.669812">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #f44336 0%, #e91e63 100%); color:#fff; box-shadow: 0 4px 15px rgba(244, 67, 54, 0.2);">
+                                📍 Report Store Closed Today (Requires &lt;100m GPS range)
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Discover & Ranking -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Random Picker & Leaderboard</span>
+                            <span class="method-badge method-get">GET /v1/stores/...</span>
+                        </div>
+                        <div class="row" style="margin-bottom: 24px;">
+                            <div>
+                                <label for="random-cat-select">Filter Category (Optional)</label>
+                                <select id="random-cat-select">
+                                    <option value="">-- All Categories --</option>
+                                </select>
+                                <button type="button" class="btn-submit" onclick="handleGetRandomStore()" style="margin-top: 10px;">🎲 Roll Random Store</button>
+                            </div>
+                            <div style="display: flex; align-items: flex-end;">
+                                <button type="button" class="btn-submit" onclick="handleGetRanking()" style="height: 42px;">🏆 Show Leaderboard / Ranking</button>
+                            </div>
+                        </div>
+
+                        <!-- Result Display Box -->
+                        <div id="foodtour-display-box" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; min-height: 100px; display: none;">
+                            <h4 id="display-box-title" style="margin-bottom: 12px; color: var(--accent-cyan);">Result</h4>
+                            <div id="display-box-content" style="font-size: 13px; line-height: 1.6;"></div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Logger Panel (Right) -->
@@ -1016,7 +1283,7 @@
         // Facebook SDK Initialization
         window.fbAsyncInit = function() {
             FB.init({
-                appId      : 'YOUR_APP_FB_ID',
+                appId      : 'YOUR_FB_ID',
                 cookie     : true,
                 xfbml      : true,
                 version    : 'v18.0'
@@ -1046,9 +1313,14 @@
             const titleMap = {
                 'auth': 'Authentication Testing Suite',
                 'profile': 'My Profile Management & Uploads',
-                'admin': 'Admin Control Room'
+                'admin': 'Admin Control Room',
+                'foodtour': 'Food Tour Exploration & Store Management'
             };
             document.getElementById('header-text').textContent = titleMap[tabId];
+
+            if (tabId === 'foodtour') {
+                loadFoodTourData();
+            }
         }
 
         // Logger helper
@@ -1136,6 +1408,28 @@
                 logConsole(method, endpoint, body, { error: err.message }, false);
                 return { success: false, error: err.message };
             }
+        }
+
+        function formatTimeHHmm(timeStr) {
+            if (!timeStr) return null;
+            const clean = timeStr.trim();
+            if (/^\d{2}:\d{2}$/.test(clean)) {
+                return clean;
+            }
+            if (/^\d{2}:\d{2}:\d{2}$/.test(clean)) {
+                return clean.substring(0, 5);
+            }
+            const parts = clean.split(':');
+            if (parts.length >= 2) {
+                const hour = parts[0].padStart(2, '0');
+                const min = parts[1].padStart(2, '0');
+                return `${hour}:${min}`;
+            }
+            const num = parseInt(clean);
+            if (!isNaN(num) && num >= 0 && num <= 23) {
+                return `${num.toString().padStart(2, '0')}:00`;
+            }
+            return clean;
         }
 
         // Auth management
@@ -1426,6 +1720,316 @@
                 switchTab('auth');
             } else {
                 alert('Password change failed: ' + (res.error.message || 'Check logs.'));
+            }
+        }
+
+        // --- Food Tour Suite Functions ---
+        let foodtourCategories = [];
+        let foodtourStores = [];
+
+        async function loadFoodTourData() {
+            // Load Categories
+            const catRes = await makeRequest('GET', '/v1/categories');
+            if (catRes.success && catRes.data.result) {
+                foodtourCategories = catRes.data.result;
+                
+                // Populate dropdowns
+                const selectors = [
+                    'store-category-select',
+                    'store-update-category-select',
+                    'random-cat-select'
+                ];
+                selectors.forEach(selId => {
+                    const select = document.getElementById(selId);
+                    if (!select) return;
+                    
+                    // Keep first option
+                    const firstOption = select.options[0];
+                    select.innerHTML = '';
+                    select.appendChild(firstOption);
+                    
+                    foodtourCategories.forEach(cat => {
+                        const opt = document.createElement('option');
+                        opt.value = cat.id;
+                        opt.textContent = `${cat.name} (Priority: ${cat.displayOrder})`;
+                        select.appendChild(opt);
+                    });
+                });
+            }
+
+            // Load Stores
+            const storeRes = await makeRequest('GET', '/v1/stores');
+            if (storeRes.success && storeRes.data.result) {
+                foodtourStores = storeRes.data.result;
+                
+                // Populate dropdowns
+                const selectors = [
+                    'store-update-select',
+                    'food-store-select',
+                    'action-store-select'
+                ];
+                selectors.forEach(selId => {
+                    const select = document.getElementById(selId);
+                    if (!select) return;
+                    
+                    const firstOption = select.options[0];
+                    select.innerHTML = '';
+                    select.appendChild(firstOption);
+                    
+                    foodtourStores.forEach(st => {
+                        const opt = document.createElement('option');
+                        opt.value = st.id;
+                        opt.textContent = `${st.name} [Category: ${st.categoryName || 'Unknown'}]`;
+                        select.appendChild(opt);
+                    });
+                });
+            }
+        }
+
+        async function handleCreateCategory(e) {
+            e.preventDefault();
+            const name = document.getElementById('cat-name').value;
+            const icon = document.getElementById('cat-icon').value;
+            
+            const res = await makeRequest('POST', '/v1/categories', { name, icon });
+            if (res.success) {
+                alert('Category created successfully!');
+                document.getElementById('form-create-category').reset();
+                loadFoodTourData();
+            } else {
+                alert('Failed to create category: ' + (res.error.message || 'Access Denied?'));
+            }
+        }
+
+        async function handleCreateStore(e) {
+            e.preventDefault();
+            const name = document.getElementById('store-name').value;
+            const categoryId = parseInt(document.getElementById('store-category-select').value);
+            const landmarkNote = document.getElementById('store-desc').value;
+            
+            const latVal = document.getElementById('store-lat').value;
+            const lngVal = document.getElementById('store-lng').value;
+            const latitude = latVal ? parseFloat(latVal) : null;
+            const longitude = lngVal ? parseFloat(lngVal) : null;
+
+            const addressLine = document.getElementById('store-address').value;
+            const phoneNumber = document.getElementById('store-phone').value;
+            const openTime = formatTimeHHmm(document.getElementById('store-open').value);
+            const closeTime = formatTimeHHmm(document.getElementById('store-close').value);
+
+            const res = await makeRequest('POST', '/v1/stores', {
+                name, categoryId, landmarkNote, latitude, longitude, addressLine, phoneNumber, openTime, closeTime
+            });
+            if (res.success) {
+                alert('Store created successfully!');
+                document.getElementById('form-create-store').reset();
+                loadFoodTourData();
+            } else {
+                alert('Failed to create store: ' + (res.error.message || 'Access Denied?'));
+            }
+        }
+
+        function onStoreSelectChangeForUpdate(storeId) {
+            const form = document.getElementById('form-update-store');
+            if (!storeId) {
+                form.style.display = 'none';
+                return;
+            }
+
+            const store = foodtourStores.find(st => st.id.toString() === storeId);
+            if (!store) return;
+
+            document.getElementById('store-update-id').value = store.id;
+            document.getElementById('store-update-name').value = store.name || '';
+            document.getElementById('store-update-category-select').value = store.categoryId || '';
+            document.getElementById('store-update-desc').value = store.landmarkNote || '';
+            document.getElementById('store-update-lat').value = store.latitude !== null ? store.latitude : '';
+            document.getElementById('store-update-lng').value = store.longitude !== null ? store.longitude : '';
+            document.getElementById('store-update-address').value = store.addressLine || '';
+            document.getElementById('store-update-phone').value = store.phoneNumber || '';
+            document.getElementById('store-update-open').value = store.openTime || '';
+            document.getElementById('store-update-close').value = store.closeTime || '';
+
+            form.style.display = 'block';
+        }
+
+        async function handleUpdateStore(e) {
+            e.preventDefault();
+            const id = document.getElementById('store-update-id').value;
+            const name = document.getElementById('store-update-name').value;
+            const categoryId = parseInt(document.getElementById('store-update-category-select').value);
+            const landmarkNote = document.getElementById('store-update-desc').value;
+            
+            const latVal = document.getElementById('store-update-lat').value;
+            const lngVal = document.getElementById('store-update-lng').value;
+            const latitude = latVal ? parseFloat(latVal) : null;
+            const longitude = lngVal ? parseFloat(lngVal) : null;
+
+            const addressLine = document.getElementById('store-update-address').value;
+            const phoneNumber = document.getElementById('store-update-phone').value;
+            const openTime = formatTimeHHmm(document.getElementById('store-update-open').value);
+            const closeTime = formatTimeHHmm(document.getElementById('store-update-close').value);
+
+            const res = await makeRequest('PUT', `/v1/stores/${id}`, {
+                name, categoryId, landmarkNote, latitude, longitude, addressLine, phoneNumber, openTime, closeTime
+            });
+            if (res.success) {
+                alert('Store updated successfully!');
+                document.getElementById('form-update-store').reset();
+                document.getElementById('form-update-store').style.display = 'none';
+                document.getElementById('store-update-select').value = '';
+                loadFoodTourData();
+            } else {
+                alert('Failed to update store: ' + (res.error.message || 'Access Denied?'));
+            }
+        }
+
+        async function handleDeleteStore() {
+            const id = document.getElementById('store-update-id').value;
+            if (!id) return;
+            if (!confirm('Are you sure you want to delete this store? This will also cascade delete food items, ratings, and reports.')) {
+                return;
+            }
+
+            const res = await makeRequest('DELETE', `/v1/stores/${id}`);
+            if (res.success) {
+                alert('Store deleted successfully!');
+                document.getElementById('form-update-store').reset();
+                document.getElementById('form-update-store').style.display = 'none';
+                document.getElementById('store-update-select').value = '';
+                loadFoodTourData();
+            } else {
+                alert('Failed to delete store: ' + (res.error.message || 'Access Denied?'));
+            }
+        }
+
+        async function handleCreateFoodItem(e) {
+            e.preventDefault();
+            const storeId = document.getElementById('food-store-select').value;
+            const name = document.getElementById('food-name').value;
+            const price = parseFloat(document.getElementById('food-price').value);
+            const imageUrl = document.getElementById('food-image').value;
+            const description = document.getElementById('food-desc').value;
+
+            const res = await makeRequest('POST', `/v1/food-items/store/${storeId}`, {
+                name, price, imageUrl, description
+            });
+            if (res.success) {
+                alert('Food item added successfully!');
+                document.getElementById('form-create-food-item').reset();
+            } else {
+                alert('Failed to add food item: ' + (res.error.message || 'Access Denied?'));
+            }
+        }
+
+        async function handleRateStore(e) {
+            e.preventDefault();
+            const storeId = document.getElementById('action-store-select').value;
+            const ratingLevel = document.getElementById('rating-level-select').value;
+
+            if (!storeId) {
+                alert('Please select a store.');
+                return;
+            }
+
+            const res = await makeRequest('POST', `/v1/stores/${storeId}/rate`, { ratingLevel });
+            if (res.success && res.data.result) {
+                alert(`Rating submitted! Satisfaction Rate is now ${res.data.result.satisfactionRate}% (${res.data.result.totalVotes} votes)`);
+                loadFoodTourData();
+            } else {
+                alert('Failed to submit rating: ' + (res.error.message || 'Are you logged in?'));
+            }
+        }
+
+        async function handleReportClosed(e) {
+            e.preventDefault();
+            const storeId = document.getElementById('action-store-select').value;
+            const latitude = parseFloat(document.getElementById('report-lat').value);
+            const longitude = parseFloat(document.getElementById('report-lng').value);
+
+            if (!storeId) {
+                alert('Please select a store.');
+                return;
+            }
+
+            const res = await makeRequest('POST', `/v1/stores/${storeId}/report-closed`, { latitude, longitude });
+            if (res.success && res.data.result) {
+                const closedText = res.data.result.isReportedClosed ? 'YES (quán đã tạm nghỉ)' : 'NO (chưa đủ 3 báo cáo)';
+                alert(`Report submitted! Current reported closed status: ${closedText}`);
+            } else {
+                alert('Failed to submit report: ' + (res.error.message || 'GPS mismatch/múi giờ/đã báo cáo hôm nay. Check console.'));
+            }
+        }
+
+        async function handleGetRandomStore() {
+            const catId = document.getElementById('random-cat-select').value;
+            const endpoint = catId ? `/v1/stores/random?categoryId=${catId}` : '/v1/stores/random';
+            
+            const res = await makeRequest('GET', endpoint);
+            const box = document.getElementById('foodtour-display-box');
+            const title = document.getElementById('display-box-title');
+            const content = document.getElementById('display-box-content');
+            
+            box.style.display = 'block';
+            title.textContent = '🎲 Random Roll Result';
+
+            if (res.success && res.data.result) {
+                const s = res.data.result;
+                let foodHtml = '';
+                if (s.foodItems && s.foodItems.length > 0) {
+                    foodHtml = '<ul style="margin-left: 20px; margin-top: 6px;">' +
+                        s.foodItems.map(f => `<li>${f.name} - <b>${f.price.toLocaleString()} VND</b> (${f.description || 'no description'})</li>`).join('') +
+                        '</ul>';
+                } else {
+                    foodHtml = '<i>No food items listed.</i>';
+                }
+
+                content.innerHTML = `
+                    <div style="font-size: 15px; font-weight:700; color:#fff; margin-bottom:8px;">${s.name}</div>
+                    <div><b>Category:</b> ${s.categoryName || 'Unknown'}</div>
+                    <div><b>Satisfaction Rate:</b> <span style="color:var(--accent-cyan); font-weight:600;">${s.satisfactionRate}%</span> (${s.totalVotes} votes)</div>
+                    <div><b>Address:</b> ${s.addressLine || 'N/A'}</div>
+                    <div><b>Open Hours:</b> ${s.openTime || 'N/A'} - ${s.closeTime || 'N/A'}</div>
+                    <div><b>Reported Closed Today:</b> <span style="color: ${s.isReportedClosed ? 'var(--error)' : 'var(--success)'}; font-weight:600;">${s.isReportedClosed ? 'YES' : 'NO'}</span></div>
+                    <div style="margin-top:12px;"><b>Menu items:</b></div>
+                    ${foodHtml}
+                `;
+            } else {
+                content.textContent = 'No stores found or error occurred: ' + (res.error.message || 'check logs');
+            }
+        }
+
+        async function handleGetRanking() {
+            const res = await makeRequest('GET', '/v1/stores/ranking');
+            const box = document.getElementById('foodtour-display-box');
+            const title = document.getElementById('display-box-title');
+            const content = document.getElementById('display-box-content');
+            
+            box.style.display = 'block';
+            title.textContent = '🏆 Leaderboard / Top Satisfaction Stores (min 10 votes)';
+
+            if (res.success && res.data.result) {
+                const list = res.data.result;
+                if (list.length === 0) {
+                    content.textContent = 'No stores have qualified with at least 10 ratings yet.';
+                    return;
+                }
+
+                let html = '<ol style="margin-left: 20px;">';
+                list.forEach((s, idx) => {
+                    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx+1}`;
+                    html += `
+                        <li style="margin-bottom:10px;">
+                            <b>${medal} ${s.name}</b> (${s.categoryName}) - 
+                            <span style="color:var(--accent-cyan); font-weight:600;">${s.satisfactionRate}%</span> 
+                            satisfaction rate (${s.totalVotes} votes)
+                        </li>
+                    `;
+                });
+                html += '</ol>';
+                content.innerHTML = html;
+            } else {
+                content.textContent = 'Failed to load ranking: ' + (res.error.message || 'check logs');
             }
         }
 
