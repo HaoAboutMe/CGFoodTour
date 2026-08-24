@@ -92,7 +92,8 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiResponse> handlingDataIntegrityViolationException(DataIntegrityViolationException exception) {
         ApiResponse apiResponse = new ApiResponse();
         apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
-        String message = exception.getRootCause() != null ? exception.getRootCause().getMessage() : exception.getMessage();
+        String message = exception.getRootCause() != null ? exception.getRootCause().getMessage()
+                : exception.getMessage();
         apiResponse.setMessage("Database integrity violation: " + message);
 
         return ResponseEntity
