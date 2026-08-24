@@ -1,5 +1,6 @@
 package com.cangiuoc.cgfoodtour.entity;
 
+import com.cangiuoc.cgfoodtour.enums.StoreStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -70,7 +71,7 @@ public class Store {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
-    com.cangiuoc.cgfoodtour.enums.StoreStatus status = com.cangiuoc.cgfoodtour.enums.StoreStatus.PENDING;
+    StoreStatus status = StoreStatus.PENDING;
 
     @Column(name = "rejection_reason")
     String rejectionReason;

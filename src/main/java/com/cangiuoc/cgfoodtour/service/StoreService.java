@@ -22,10 +22,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,7 +47,7 @@ public class StoreService {
 
     private String normalizeCategoryName(String name) {
         if (name == null) return "store";
-        String normalized = java.text.Normalizer.normalize(name, java.text.Normalizer.Form.NFD);
+        String normalized = Normalizer.normalize(name, Normalizer.Form.NFD);
         normalized = normalized.replaceAll("\\p{M}", ""); // removes combining diacritical marks
         normalized = normalized.replace("đ", "d").replace("Đ", "d");
         normalized = normalized.toLowerCase().replaceAll("[^a-z0-9]", "");
@@ -74,7 +76,7 @@ public class StoreService {
         
         // Generate custom ID: normalized category name + UUID suffix
         String categoryPart = normalizeCategoryName(category.getName());
-        String uuidPart = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        String uuidPart = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         store.setId(categoryPart + uuidPart);
 
         store = storeRepository.save(store);
