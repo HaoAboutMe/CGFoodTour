@@ -28,6 +28,10 @@ public class StoreResponse {
     Double priceMax;
     String bannerImageUrl;
     Boolean isVerified;
+    String ownerId;
+    String ownerEmail;
+    String status;
+    String rejectionReason;
 
     // Counters
     Integer countVerySatisfied;

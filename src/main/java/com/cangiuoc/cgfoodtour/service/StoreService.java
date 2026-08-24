@@ -7,6 +7,7 @@ import com.cangiuoc.cgfoodtour.dto.response.FoodItemResponse;
 import com.cangiuoc.cgfoodtour.dto.response.StoreResponse;
 import com.cangiuoc.cgfoodtour.entity.*;
 import com.cangiuoc.cgfoodtour.enums.RatingLevel;
+import com.cangiuoc.cgfoodtour.enums.StoreStatus;
 import com.cangiuoc.cgfoodtour.exception.AppException;
 import com.cangiuoc.cgfoodtour.exception.ErrorCode;
 import com.cangiuoc.cgfoodtour.mapper.FoodItemMapper;
@@ -25,6 +26,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -50,13 +52,25 @@ public class StoreService {
         return normalized.isEmpty() ? "store" : normalized;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    private boolean isAdmin(User user) {
+        if (user == null || user.getRoles() == null) return false;
+        return user.getRoles().stream().anyMatch(role -> "ADMIN".equals(role.getName()));
+    }
+
     @Transactional
-    public StoreResponse createStore(StoreRequest request) {
+    public StoreResponse createStore(StoreRequest request, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+        
         Store store = storeMapper.toStore(request);
         store.setCategory(category);
+        store.setOwner(user);
+        store.setStatus(StoreStatus.PENDING);
+        store.setIsVerified(false);
+        store.setRejectionReason(null);
         
         // Generate custom ID: normalized category name + UUID suffix
         String categoryPart = normalizeCategoryName(category.getName());
@@ -67,47 +81,126 @@ public class StoreService {
         return toStoreResponse(store);
     }
 
-    public List<StoreResponse> getStores(Integer categoryId) {
-        List<Store> stores;
+    public List<StoreResponse> getStores(Integer categoryId, String email) {
+        User currentUser = email != null ? userRepository.findByEmail(email).orElse(null) : null;
+        boolean userIsAdmin = isAdmin(currentUser);
+
+        List<Store> allStores;
         if (categoryId != null) {
-            stores = storeRepository.findByCategoryId(categoryId);
+            allStores = storeRepository.findByCategoryId(categoryId);
         } else {
-            stores = storeRepository.findAll();
+            allStores = storeRepository.findAll();
         }
+
         List<StoreResponse> responses = new ArrayList<>();
-        for (Store store : stores) {
-            responses.add(toStoreResponse(store));
+        for (Store store : allStores) {
+            // Permission filter:
+            // 1. Admin can see all stores
+            // 2. Owner can see their own stores (even if pending/rejected)
+            // 3. Regular users can only see APPROVED stores
+            boolean canSee = userIsAdmin 
+                    || store.getStatus() == StoreStatus.APPROVED 
+                    || (currentUser != null && store.getOwner() != null && currentUser.getId().equals(store.getOwner().getId()));
+
+            if (canSee) {
+                responses.add(toStoreResponse(store));
+            }
         }
         return responses;
     }
 
-    public StoreResponse getStore(String id) {
+    public StoreResponse getStore(String id, String email) {
         Store store = storeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+
+        User currentUser = email != null ? userRepository.findByEmail(email).orElse(null) : null;
+        boolean userIsAdmin = isAdmin(currentUser);
+
+        boolean canSee = userIsAdmin 
+                || store.getStatus() == StoreStatus.APPROVED 
+                || (currentUser != null && store.getOwner() != null && currentUser.getId().equals(store.getOwner().getId()));
+
+        if (!canSee) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
         return toStoreResponse(store);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public StoreResponse updateStore(String id, StoreRequest request) {
+    public StoreResponse updateStore(String id, StoreRequest request, String email) {
         Store store = storeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        boolean userIsAdmin = isAdmin(user);
+        boolean isOwner = store.getOwner() != null && user.getId().equals(store.getOwner().getId());
+
+        if (!userIsAdmin && !isOwner) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
         
         storeMapper.updateStore(store, request);
         store.setCategory(category);
+
+        // If updated by owner, reset verification & status to pending for Admin review
+        if (!userIsAdmin) {
+            store.setStatus(StoreStatus.PENDING);
+            store.setIsVerified(false);
+            store.setRejectionReason(null);
+        }
+
         store = storeRepository.save(store);
         return toStoreResponse(store);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public void deleteStore(String id) {
-        if (!storeRepository.existsById(id)) {
-            throw new AppException(ErrorCode.STORE_NOT_FOUND);
+    public void deleteStore(String id, String email) {
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        boolean userIsAdmin = isAdmin(user);
+        boolean isOwner = store.getOwner() != null && user.getId().equals(store.getOwner().getId());
+
+        if (!userIsAdmin && !isOwner) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
         }
+
         storeRepository.deleteById(id);
+    }
+
+    @Transactional
+    public StoreResponse approveStore(String id) {
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+
+        store.setStatus(StoreStatus.APPROVED);
+        store.setIsVerified(true);
+        store.setRejectionReason(null);
+
+        store = storeRepository.save(store);
+        return toStoreResponse(store);
+    }
+
+    @Transactional
+    public StoreResponse rejectStore(String id, String reason) {
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+
+        store.setStatus(StoreStatus.REJECTED);
+        store.setIsVerified(false);
+        store.setRejectionReason(reason);
+
+        store = storeRepository.save(store);
+        return toStoreResponse(store);
     }
 
     // Rate 1-touch
@@ -186,6 +279,10 @@ public class StoreService {
             stores = storeRepository.findAll();
         }
 
+        stores = stores.stream()
+                .filter(s -> s.getStatus() == StoreStatus.APPROVED)
+                .collect(Collectors.toList());
+
         if (stores.isEmpty()) {
             throw new AppException(ErrorCode.STORE_NOT_FOUND);
         }
@@ -200,7 +297,9 @@ public class StoreService {
         List<Store> stores = storeRepository.findByTotalVotesGreaterThanEqualOrderBySatisfactionRateDescTotalVotesDesc(10);
         List<StoreResponse> responses = new ArrayList<>();
         for (Store store : stores) {
-            responses.add(toStoreResponse(store));
+            if (store.getStatus() == StoreStatus.APPROVED) {
+                responses.add(toStoreResponse(store));
+            }
         }
         return responses;
     }
