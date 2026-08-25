@@ -26,3 +26,10 @@ node_modules/
 # Root level build files (in case they were generated previously)
 target/
 build/
+
+# Environment files
+.env
+.env.*
+/frontend/.env
+/frontend/.env.*
+!.env.example
