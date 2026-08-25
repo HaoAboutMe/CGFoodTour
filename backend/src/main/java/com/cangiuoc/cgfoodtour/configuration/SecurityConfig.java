@@ -23,7 +23,7 @@ public class SecurityConfig {
                         "/users",
                         "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh",
                         "/auth/verify-email", "/auth/resend-verification",
-                        "/auth/forgot-password", "/auth/reset-password",
+                        "/auth/forgot-password", "/auth/verify-otp", "/auth/reset-password",
                         "/auth/google-login", "/auth/facebook-login"
         };
 
