@@ -37,7 +37,6 @@ export default function AuthModal({
   setForgotEmail,
   handleForgotPassword,
   resetEmail,
-  setResetEmail,
   resetOtp,
   setResetOtp,
   resetPassword,

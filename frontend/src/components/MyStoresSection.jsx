@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Store, Plus, Edit2, Trash2, X, ChevronLeft, MapPin, ClipboardList, PlusCircle, Utensils, Award } from 'lucide-react'
+import { Store, Plus, Edit2, Trash2, X, ChevronLeft, MapPin, PlusCircle, Utensils } from 'lucide-react'
 import MySubmissionsSection from './MySubmissionsSection'
 import MapPicker from './MapPicker'
 
@@ -38,8 +38,6 @@ export default function MyStoresSection({
   handleCreateStore,
   loading,
   // Add dish fields
-  foodStoreId,
-  setFoodStoreId,
   foodName,
   setFoodName,
   foodPrice,
@@ -48,7 +46,8 @@ export default function MyStoresSection({
   setFoodImage,
   foodDesc,
   setFoodDesc,
-  handleCreateFoodItem
+  handleCreateFoodItem,
+  loadGlobalData
 }) {
   const [isAddingNew, setIsAddingNew] = useState(false)
   const [activeSubTab, setActiveSubTab] = useState('stores') // 'stores' or 'submissions'
@@ -134,7 +133,10 @@ export default function MyStoresSection({
       {!editingStore && !isAddingNew && !managingDishesForStore && (
         <div className="flex items-center gap-4 border-b-3 border-black pb-2">
           <button
-            onClick={() => setActiveSubTab('stores')}
+            onClick={() => {
+              setActiveSubTab('stores')
+              if (loadGlobalData) loadGlobalData()
+            }}
             className={`px-4 py-2 text-xs font-black uppercase transition-all border-3 border-black ${
               activeSubTab === 'stores'
                 ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
@@ -144,7 +146,10 @@ export default function MyStoresSection({
             Quán Ăn Của Tôi
           </button>
           <button
-            onClick={() => setActiveSubTab('submissions')}
+            onClick={() => {
+              setActiveSubTab('submissions')
+              if (loadGlobalData) loadGlobalData()
+            }}
             className={`px-4 py-2 text-xs font-black uppercase transition-all border-3 border-black ${
               activeSubTab === 'submissions'
                 ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
@@ -301,21 +306,33 @@ export default function MyStoresSection({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-xs uppercase font-extrabold tracking-wider block">Giá Thấp Nhất (VND)</label>
-                <input
-                  type="number"
-                  value={editingStore.priceMin || 0}
-                  onChange={(e) => setEditingStore({ ...editingStore, priceMin: parseFloat(e.target.value) })}
-                  className="brutalist-input"
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={editingStore.priceMin === 0 ? '' : editingStore.priceMin / 1000}
+                    onChange={(e) => setEditingStore({ ...editingStore, priceMin: e.target.value === '' ? 0 : parseInt(e.target.value, 10) * 1000 || 0 })}
+                    className="brutalist-input pr-16"
+                    placeholder="0"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-xs text-neutral-400 pointer-events-none">
+                    .000đ
+                  </div>
+                </div>
               </div>
               <div className="space-y-2">
                 <label className="text-xs uppercase font-extrabold tracking-wider block">Giá Cao Nhất (VND)</label>
-                <input
-                  type="number"
-                  value={editingStore.priceMax || 0}
-                  onChange={(e) => setEditingStore({ ...editingStore, priceMax: parseFloat(e.target.value) })}
-                  className="brutalist-input"
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={editingStore.priceMax === 0 ? '' : editingStore.priceMax / 1000}
+                    onChange={(e) => setEditingStore({ ...editingStore, priceMax: e.target.value === '' ? 0 : parseInt(e.target.value, 10) * 1000 || 0 })}
+                    className="brutalist-input pr-16"
+                    placeholder="0"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-xs text-neutral-400 pointer-events-none">
+                    .000đ
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -486,21 +503,33 @@ export default function MyStoresSection({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-xs uppercase font-extrabold tracking-wider block">Giá Thấp Nhất (VND)</label>
-                <input
-                  type="number"
-                  value={storePriceMin}
-                  onChange={(e) => setStorePriceMin(parseInt(e.target.value) || 0)}
-                  className="brutalist-input"
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={storePriceMin === 0 ? '' : storePriceMin / 1000}
+                    onChange={(e) => setStorePriceMin(e.target.value === '' ? 0 : parseInt(e.target.value, 10) * 1000 || 0)}
+                    className="brutalist-input pr-16"
+                    placeholder="0"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-xs text-neutral-400 pointer-events-none">
+                    .000đ
+                  </div>
+                </div>
               </div>
               <div className="space-y-2">
                 <label className="text-xs uppercase font-extrabold tracking-wider block">Giá Cao Nhất (VND)</label>
-                <input
-                  type="number"
-                  value={storePriceMax}
-                  onChange={(e) => setStorePriceMax(parseInt(e.target.value) || 0)}
-                  className="brutalist-input"
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={storePriceMax === 0 ? '' : storePriceMax / 1000}
+                    onChange={(e) => setStorePriceMax(e.target.value === '' ? 0 : parseInt(e.target.value, 10) * 1000 || 0)}
+                    className="brutalist-input pr-16"
+                    placeholder="0"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-xs text-neutral-400 pointer-events-none">
+                    .000đ
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -552,14 +581,19 @@ export default function MyStoresSection({
 
               <div className="space-y-2">
                 <label className="text-xs uppercase font-extrabold tracking-wider block">Giá Bán (VND)</label>
-                <input
-                  type="number"
-                  required
-                  placeholder="Ví dụ: 25000"
-                  value={foodPrice}
-                  onChange={(e) => setFoodPrice(parseInt(e.target.value) || 0)}
-                  className="brutalist-input"
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    required
+                    placeholder="0"
+                    value={foodPrice === 0 ? '' : foodPrice / 1000}
+                    onChange={(e) => setFoodPrice(e.target.value === '' ? 0 : parseInt(e.target.value, 10) * 1000 || 0)}
+                    className="brutalist-input pr-16"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-xs text-neutral-400 pointer-events-none">
+                    .000đ
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -686,9 +720,18 @@ export default function MyStoresSection({
                           Đã Duyệt (Live)
                         </span>
                       ) : st.status === 'REJECTED' ? (
-                        <span className="brutalist-badge bg-[#fff5f5] text-[#c92a2a] border-[#c92a2a]">
-                          Bị Từ Chối
-                        </span>
+                        <div className="space-y-2">
+                          <div>
+                            <span className="brutalist-badge bg-[#fff5f5] text-[#c92a2a] border-[#c92a2a]">
+                              Bị Từ Chối
+                            </span>
+                          </div>
+                          {st.rejectionReason && (
+                            <div className="text-[11px] font-bold text-red-700 bg-red-50 p-2 border-2 border-red-400 rounded-sm italic">
+                              Lý do: “{st.rejectionReason}”
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <span className="brutalist-badge bg-[#fff9db] text-[#f59f00] border-[#f59f00]">
                           Chờ Phê Duyệt

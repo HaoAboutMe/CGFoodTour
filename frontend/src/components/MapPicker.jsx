@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { X, Layers, Search, MapPin } from 'lucide-react'
+import { X, Layers, Search } from 'lucide-react'
 
 // Fix default icon assets paths
 delete L.Icon.Default.prototype._getIconUrl;

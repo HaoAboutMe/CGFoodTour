@@ -22,8 +22,6 @@ import WidgetsSection from './components/WidgetsSection'
 import ProfileSection from './components/ProfileSection'
 import AdminSection from './components/AdminSection'
 import MyStoresSection from './components/MyStoresSection'
-import MyDishesSection from './components/MyDishesSection'
-import MySubmissionsSection from './components/MySubmissionsSection'
 
 const API_BASE = 'http://localhost:8080/api'
 
@@ -315,17 +313,52 @@ export default function App() {
     }
   }
 
-  // Time format helper
+  // Time format helper (Converts e.g. "4" -> "04:00", "4:30" -> "04:30", "17:30:00" -> "17:30")
   function formatTimeHHmm(timeStr) {
     if (!timeStr) return ''
-    const clean = timeStr.trim()
-    if (/^\d{2}:\d{2}$/.test(clean)) return clean
-    if (/^\d{2}:\d{2}:\d{2}$/.test(clean)) return clean.substring(0, 5)
-    
+    const clean = timeStr.toString().trim()
+    if (!clean) return ''
+
+    // Case 1: Just digits, e.g. "4", "04", "17"
+    if (/^\d+$/.test(clean)) {
+      let hour = parseInt(clean, 10)
+      if (hour < 0) hour = 0
+      if (hour > 23) hour = 23
+      return `${hour.toString().padStart(2, '0')}:00`
+    }
+
+    // Case 2: One colon, e.g. "4:30", "04:30", "17:05"
+    const hmRegex = /^(\d{1,2}):(\d{1,2})$/
+    if (hmRegex.test(clean)) {
+      const matches = clean.match(hmRegex)
+      let hour = parseInt(matches[1], 10)
+      let minute = parseInt(matches[2], 10)
+      if (hour < 0) hour = 0; if (hour > 23) hour = 23
+      if (minute < 0) minute = 0; if (minute > 59) minute = 59
+      return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
+    }
+
+    // Case 3: Two colons, e.g. "4:30:00"
+    const hmsRegex = /^(\d{1,2}):(\d{1,2}):(\d{1,2})$/
+    if (hmsRegex.test(clean)) {
+      const matches = clean.match(hmsRegex)
+      let hour = parseInt(matches[1], 10)
+      let minute = parseInt(matches[2], 10)
+      if (hour < 0) hour = 0; if (hour > 23) hour = 23
+      if (minute < 0) minute = 0; if (minute > 59) minute = 59
+      return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
+    }
+
+    // Fallback: if there's any colon but doesn't match above, try to pad parts
     const parts = clean.split(':')
     if (parts.length >= 2) {
-      return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`
+      let hour = parseInt(parts[0], 10) || 0
+      let minute = parseInt(parts[1], 10) || 0
+      if (hour < 0) hour = 0; if (hour > 23) hour = 23
+      if (minute < 0) minute = 0; if (minute > 59) minute = 59
+      return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
     }
+
     return clean
   }
 
@@ -721,9 +754,9 @@ export default function App() {
     setLoading(true)
     const res = await makeRequest('POST', '/v1/categories', {
       name: catName,
-      icon: catIcon
+      iconUrl: catIcon
     })
-    setLoading(true)
+    setLoading(false)
 
     if (res.success) {
       showToast(`Category "${catName}" added!`, 'success')
@@ -731,6 +764,40 @@ export default function App() {
       loadGlobalData()
     } else {
       showToast(res.error?.message || 'Failed to create category.', 'error')
+    }
+  }
+
+  // Update Category (Admin)
+  async function handleUpdateCategory(id, name, iconUrl) {
+    setLoading(true)
+    const res = await makeRequest('PUT', `/v1/categories/${id}`, {
+      name,
+      iconUrl
+    })
+    setLoading(false)
+
+    if (res.success) {
+      showToast('Cập nhật danh mục thành công!', 'success')
+      loadGlobalData()
+      return true
+    } else {
+      showToast(res.error?.message || 'Không thể cập nhật danh mục.', 'error')
+      return false
+    }
+  }
+
+  // Delete Category (Admin)
+  async function handleDeleteCategory(id) {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa danh mục này? Các quán ăn liên kết với danh mục này sẽ bị ảnh hưởng.")) return
+    setLoading(true)
+    const res = await makeRequest('DELETE', `/v1/categories/${id}`)
+    setLoading(false)
+
+    if (res.success) {
+      showToast('Xóa danh mục thành công!', 'success')
+      loadGlobalData()
+    } else {
+      showToast(res.error?.message || 'Không thể xóa danh mục.', 'error')
     }
   }
 
@@ -974,10 +1041,8 @@ export default function App() {
   }
 
   // Admin View - Reject store submission with reason
-  async function handleAdminReject(storeId) {
-    const reason = window.prompt('Specify the moderation feedback/rejection reason for this owner:')
-    if (reason === null) return
-    if (!reason.trim()) {
+  async function handleAdminReject(storeId, reason) {
+    if (!reason || !reason.trim()) {
       showToast('Rejection reason cannot be blank.', 'error')
       return
     }
@@ -1077,7 +1142,7 @@ export default function App() {
     if (tabId === 'admin') {
       loadAdminUsers()
       loadAdminPendingStores()
-    } else if (tabId === 'explore') {
+    } else if (tabId === 'explore' || tabId === 'my-stores') {
       loadGlobalData()
     }
   }
@@ -1190,7 +1255,7 @@ export default function App() {
                             : 'bg-white text-black hover:bg-neutral-50 active:translate-y-[1px]'
                         }`}
                       >
-                        {getCategoryIcon(cat.icon)}
+                        {getCategoryIcon(cat.icon || cat.iconUrl)}
                         {cat.name}
                       </button>
                     ))}
@@ -1318,8 +1383,6 @@ export default function App() {
             setStoreBannerUrl={setStoreBannerUrl}
             handleCreateStore={handleCreateStore}
             loading={loading}
-            foodStoreId={foodStoreId}
-            setFoodStoreId={setFoodStoreId}
             foodName={foodName}
             setFoodName={setFoodName}
             foodPrice={foodPrice}
@@ -1329,6 +1392,7 @@ export default function App() {
             foodDesc={foodDesc}
             setFoodDesc={setFoodDesc}
             handleCreateFoodItem={handleCreateFoodItem}
+            loadGlobalData={loadGlobalData}
           />
         )}
 
@@ -1375,6 +1439,12 @@ export default function App() {
             adminUserRoles={adminUserRoles}
             setAdminUserRoles={setAdminUserRoles}
             handleAdminUserEditSubmit={handleAdminUserEditSubmit}
+            categories={categories}
+            handleUpdateCategory={handleUpdateCategory}
+            handleDeleteCategory={handleDeleteCategory}
+            loadAdminUsers={loadAdminUsers}
+            loadAdminPendingStores={loadAdminPendingStores}
+            loadGlobalData={loadGlobalData}
           />
         )}
       </main>

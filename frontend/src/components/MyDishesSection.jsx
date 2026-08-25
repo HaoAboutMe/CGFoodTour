@@ -1,5 +1,5 @@
 import React from 'react'
-import { PlusCircle, Info, Utensils, IndianRupee } from 'lucide-react'
+import { PlusCircle, Info, Utensils } from 'lucide-react'
 
 export default function MyDishesSection({
   myStores,
@@ -103,14 +103,19 @@ export default function MyDishesSection({
 
               <div className="space-y-2">
                 <label className="text-xs uppercase font-extrabold tracking-wider block">Giá Bán (VND)</label>
-                <input
-                  type="number"
-                  required
-                  placeholder="Ví dụ: 25000"
-                  value={foodPrice}
-                  onChange={(e) => setFoodPrice(parseInt(e.target.value) || 0)}
-                  className="brutalist-input"
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    required
+                    placeholder="0"
+                    value={foodPrice === 0 ? '' : foodPrice / 1000}
+                    onChange={(e) => setFoodPrice(e.target.value === '' ? 0 : parseInt(e.target.value, 10) * 1000 || 0)}
+                    className="brutalist-input pr-16"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-xs text-neutral-400 pointer-events-none">
+                    .000đ
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">

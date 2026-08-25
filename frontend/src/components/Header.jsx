@@ -1,5 +1,5 @@
 import React from 'react'
-import { Shield, LogOut, Lock } from 'lucide-react'
+import { Shield, LogOut } from 'lucide-react'
 
 export default function Header({
   switchTab,
