@@ -33,3 +33,9 @@ build/
 /frontend/.env
 /frontend/.env.*
 !.env.example
+
+# Agent skills
+.agents/
+/frontend/.agents/
+skills-lock.json
+/frontend/skills-lock.json
