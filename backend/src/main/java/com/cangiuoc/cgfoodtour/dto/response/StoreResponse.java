@@ -30,6 +30,9 @@ public class StoreResponse {
     Boolean isVerified;
     String ownerId;
     String ownerEmail;
+    String ownerUsername;
+    String ownerFirstname;
+    String ownerLastname;
     String status;
     String rejectionReason;
 
