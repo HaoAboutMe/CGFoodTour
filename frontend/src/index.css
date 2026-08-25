@@ -1,111 +1,178 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  
+  --color-primary: #ff3e3e;
+  --color-primary-hover: #e11d48;
+  --color-secondary: #ffffff;
+  
+  --animate-fade-in-up: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
+@keyframes fade-in-up {
+  0% {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+/* Custom Base Styles */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  margin: 0;
+  font-family: var(--font-sans);
+  background-color: #f7f6f2; /* Brutalist warm off-white */
+  color: #111111; /* Ink black */
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+/* Neo-Brutalist Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+::-webkit-scrollbar-track {
+  background: #f7f6f2;
+  border-left: 3px solid #111111;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+::-webkit-scrollbar-thumb {
+  background: #ff3e3e;
+  border: 3px solid #111111;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
+::-webkit-scrollbar-thumb:hover {
+  background: #e11d48;
+}
+
+/* Brutalist Custom Helpers */
+.brutalist-card {
+  background-color: #ffffff;
+  border: 3px solid #111111;
   border-radius: 4px;
-  color: var(--text-h);
+  box-shadow: 4px 4px 0px 0px #111111;
+  transition: all 0.2s ease;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.brutalist-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px #111111;
+}
+
+.brutalist-btn-red {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ff3e3e;
+  color: #ffffff;
+  border: 3px solid #111111;
+  border-radius: 4px;
+  box-shadow: 4px 4px 0px 0px #111111;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 20px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  select-none: none;
+}
+
+.brutalist-btn-red:hover {
+  background-color: #e11d48;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px #111111;
+}
+
+.brutalist-btn-red:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px 0px #111111;
+}
+
+.brutalist-btn-white {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  color: #111111;
+  border: 3px solid #111111;
+  border-radius: 4px;
+  box-shadow: 4px 4px 0px 0px #111111;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 20px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  select-none: none;
+}
+
+.brutalist-btn-white:hover {
+  background-color: #f7f6f2;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px #111111;
+}
+
+.brutalist-btn-white:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px 0px #111111;
+}
+
+.brutalist-input {
+  width: 100%;
+  background-color: #ffffff;
+  border: 3px solid #111111;
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111111;
+  transition: all 0.2s ease;
+}
+
+.brutalist-input:focus {
+  outline: none;
+  background-color: #fff9f9;
+  box-shadow: inset 2px 2px 0px 0px rgba(0, 0, 0, 0.1);
+}
+
+.brutalist-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #111111;
+  border-radius: 2px;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  box-shadow: 1.5px 1.5px 0px 0px #111111;
+}
+
+/* Skeleton Loading animations */
+.brutalist-skeleton {
+  background: linear-gradient(90deg, #e4e2dd 25%, #eceae4 50%, #e4e2dd 75%);
+  background-size: 200% 100%;
+  animation: loading-skeleton 1.5s infinite;
+  border: 2px solid #111111;
+  border-radius: 4px;
+}
+
+@keyframes loading-skeleton {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
