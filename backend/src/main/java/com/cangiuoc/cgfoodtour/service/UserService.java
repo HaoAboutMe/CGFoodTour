@@ -275,7 +275,7 @@ public class UserService
             }
 
             // Upload new avatar
-            Map uploadResult = cloudinaryService.uploadImage(file);
+            Map uploadResult = cloudinaryService.uploadImage(file, "avatars");
             String newUrl = (String) uploadResult.get("secure_url");
             String newPublicId = (String) uploadResult.get("public_id");
 

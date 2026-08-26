@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Store, Plus, Edit2, Trash2, X, ChevronLeft, MapPin, PlusCircle, Utensils } from 'lucide-react'
 import MySubmissionsSection from './MySubmissionsSection'
 import MapPicker from './MapPicker'
@@ -48,6 +48,9 @@ export default function MyStoresSection({
   setFoodDesc,
   setFoodStoreId,
   handleCreateFoodItem,
+  handleUpdateFoodItem,
+  handleDeleteFoodItem,
+  handleUploadImage,
   loadGlobalData
 }) {
   const [isAddingNew, setIsAddingNew] = useState(false)
@@ -55,6 +58,23 @@ export default function MyStoresSection({
   const [managingDishesForStore, setManagingDishesForStore] = useState(null)
   const [isMapPickerOpen, setIsMapPickerOpen] = useState(false)
   const [mapPickerTarget, setMapPickerTarget] = useState(null) // 'add' or 'edit'
+  const [uploadingBanner, setUploadingBanner] = useState(false)
+  const [uploadingFood, setUploadingFood] = useState(false)
+  const [editingFood, setEditingFood] = useState(null)
+
+  useEffect(() => {
+    if (editingFood) {
+      setFoodName(editingFood.name || '')
+      setFoodPrice(editingFood.price || 0)
+      setFoodImage(editingFood.imageUrl || '')
+      setFoodDesc(editingFood.description || '')
+    } else {
+      setFoodName('')
+      setFoodPrice(0)
+      setFoodImage('')
+      setFoodDesc('')
+    }
+  }, [editingFood])
 
   if (loading) {
     return (
@@ -78,9 +98,49 @@ export default function MyStoresSection({
     setIsAddingNew(false)
   }
 
-  const onLocalCreateFoodItem = async (e) => {
+  const onLocalSubmitFoodItem = async (e) => {
     e.preventDefault()
-    await handleCreateFoodItem(e)
+    if (editingFood) {
+      const success = await handleUpdateFoodItem(editingFood.id, {
+        name: foodName,
+        price: foodPrice,
+        imageUrl: foodImage,
+        description: foodDesc
+      })
+      if (success) {
+        setEditingFood(null)
+      }
+    } else {
+      await handleCreateFoodItem(e)
+    }
+  }
+
+  const handleFileChange = async (e, type) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    if (type === 'banner') {
+      setUploadingBanner(true)
+      const url = await handleUploadImage(file, 'stores')
+      setUploadingBanner(false)
+      if (url) {
+        setStoreBannerUrl(url)
+      }
+    } else if (type === 'editBanner') {
+      setUploadingBanner(true)
+      const url = await handleUploadImage(file, 'stores')
+      setUploadingBanner(false)
+      if (url) {
+        setEditingStore({ ...editingStore, bannerImageUrl: url })
+      }
+    } else if (type === 'food') {
+      setUploadingFood(true)
+      const url = await handleUploadImage(file, 'foods')
+      setUploadingFood(false)
+      if (url) {
+        setFoodImage(url)
+      }
+    }
   }
 
   // Find latest store information to reflect added/updated dishes immediately
@@ -120,6 +180,7 @@ export default function MyStoresSection({
                   setEditingStore(null)
                   setIsAddingNew(false)
                   setManagingDishesForStore(null)
+                  setEditingFood(null)
                 }}
                 className="brutalist-btn-white text-sm w-full md:w-auto flex items-center gap-2"
               >
@@ -337,15 +398,53 @@ export default function MyStoresSection({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs uppercase font-extrabold tracking-wider block">Đường Dẫn Hình Ảnh Banner</label>
-              <input
-                type="text"
-                value={editingStore.bannerImageUrl || ''}
-                onChange={(e) => setEditingStore({ ...editingStore, bannerImageUrl: e.target.value })}
-                className="brutalist-input"
-                placeholder="https://example.com/banner.jpg"
-              />
+            <div className="space-y-3">
+              <label className="text-xs uppercase font-extrabold tracking-wider block">Hình Ảnh Banner Quán Ăn</label>
+              
+              {/* Image Preview & Upload Row */}
+              <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-4 border-3 border-black rounded shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                {editingStore.bannerImageUrl && (
+                  <div className="w-24 h-24 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    <img src={editingStore.bannerImageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="flex-1 w-full space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    <label className="cursor-pointer brutalist-btn-white py-1 px-3 text-xs font-black uppercase text-center flex-1 sm:flex-initial">
+                      {uploadingBanner ? 'Đang Tải Lên...' : 'Chọn Ảnh Từ Thiết Bị'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={uploadingBanner}
+                        onChange={(e) => handleFileChange(e, 'editBanner')}
+                        className="hidden"
+                      />
+                    </label>
+                    {editingStore.bannerImageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setEditingStore({ ...editingStore, bannerImageUrl: '' })}
+                        className="brutalist-btn-red py-1 px-3 text-xs font-black uppercase"
+                      >
+                        Xóa Ảnh
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[10px] font-bold text-neutral-500">Hỗ trợ JPG, PNG, GIF. Tải lên Cloudinary tự động.</p>
+                </div>
+              </div>
+
+              {/* Text fallback input */}
+              <div className="space-y-1">
+                <span className="text-[10px] text-neutral-500 font-extrabold uppercase">Hoặc nhập URL hình ảnh trực tiếp:</span>
+                <input
+                  type="text"
+                  value={editingStore.bannerImageUrl || ''}
+                  onChange={(e) => setEditingStore({ ...editingStore, bannerImageUrl: e.target.value })}
+                  className="brutalist-input text-xs"
+                  placeholder="https://example.com/banner.jpg"
+                />
+              </div>
             </div>
 
             <button
@@ -534,15 +633,53 @@ export default function MyStoresSection({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs uppercase font-extrabold tracking-wider block">Banner Image URL</label>
-              <input
-                type="text"
-                placeholder="https://images.unsplash.com/photo-..."
-                value={storeBannerUrl}
-                onChange={(e) => setStoreBannerUrl(e.target.value)}
-                className="brutalist-input"
-              />
+            <div className="space-y-3">
+              <label className="text-xs uppercase font-extrabold tracking-wider block">Hình Ảnh Banner Quán Ăn</label>
+              
+              {/* Image Preview & Upload Row */}
+              <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-4 border-3 border-black rounded shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                {storeBannerUrl && (
+                  <div className="w-24 h-24 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    <img src={storeBannerUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="flex-1 w-full space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    <label className="cursor-pointer brutalist-btn-white py-1 px-3 text-xs font-black uppercase text-center flex-1 sm:flex-initial">
+                      {uploadingBanner ? 'Đang Tải Lên...' : 'Chọn Ảnh Từ Thiết Bị'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={uploadingBanner}
+                        onChange={(e) => handleFileChange(e, 'banner')}
+                        className="hidden"
+                      />
+                    </label>
+                    {storeBannerUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setStoreBannerUrl('')}
+                        className="brutalist-btn-red py-1 px-3 text-xs font-black uppercase"
+                      >
+                        Xóa Ảnh
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[10px] font-bold text-neutral-500">Hỗ trợ JPG, PNG, GIF. Tải lên Cloudinary tự động.</p>
+                </div>
+              </div>
+
+              {/* Text fallback input */}
+              <div className="space-y-1">
+                <span className="text-[10px] text-neutral-500 font-extrabold uppercase">Hoặc nhập URL hình ảnh trực tiếp:</span>
+                <input
+                  type="text"
+                  placeholder="https://images.unsplash.com/photo-..."
+                  value={storeBannerUrl}
+                  onChange={(e) => setStoreBannerUrl(e.target.value)}
+                  className="brutalist-input text-xs"
+                />
+              </div>
             </div>
 
             <button
@@ -558,16 +695,35 @@ export default function MyStoresSection({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Form */}
           <div className="lg:col-span-5 brutalist-card p-6 bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
-            <div className="border-b-3 border-black pb-3">
-              <h3 className="text-xl font-black uppercase flex items-center gap-2">
-                <PlusCircle className="w-5 h-5 text-[#ff3e3e]" /> Thêm Món Ăn Mới
-              </h3>
-              <p className="text-xs font-bold text-neutral-500 mt-1">
-                Quán ăn: <span className="text-[#ff3e3e] font-black">{currentSelectedStoreInfo?.name}</span>
-              </p>
+            <div className="border-b-3 border-black pb-3 flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-black uppercase flex items-center gap-2">
+                  {editingFood ? (
+                    <>
+                      <Edit2 className="w-5 h-5 text-[#ff3e3e]" /> Sửa Món Ăn
+                    </>
+                  ) : (
+                    <>
+                      <PlusCircle className="w-5 h-5 text-[#ff3e3e]" /> Thêm Món Ăn Mới
+                    </>
+                  )}
+                </h3>
+                <p className="text-xs font-bold text-neutral-500 mt-1">
+                  Quán ăn: <span className="text-[#ff3e3e] font-black">{currentSelectedStoreInfo?.name}</span>
+                </p>
+              </div>
+              {editingFood && (
+                <button
+                  type="button"
+                  onClick={() => setEditingFood(null)}
+                  className="brutalist-badge bg-white hover:bg-neutral-100 cursor-pointer"
+                >
+                  Hủy Sửa
+                </button>
+              )}
             </div>
 
-            <form onSubmit={onLocalCreateFoodItem} className="space-y-6">
+            <form onSubmit={onLocalSubmitFoodItem} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-xs uppercase font-extrabold tracking-wider block">Tên Món Ăn</label>
                 <input
@@ -597,15 +753,53 @@ export default function MyStoresSection({
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs uppercase font-extrabold tracking-wider block">Đường Dẫn Hình Ảnh Món Ăn</label>
-                <input
-                  type="text"
-                  placeholder="https://images.unsplash.com/photo-..."
-                  value={foodImage}
-                  onChange={(e) => setFoodImage(e.target.value)}
-                  className="brutalist-input"
-                />
+              <div className="space-y-3">
+                <label className="text-xs uppercase font-extrabold tracking-wider block">Hình Ảnh Món Ăn</label>
+                
+                {/* Image Preview & Upload Row */}
+                <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-4 border-3 border-black rounded shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                  {foodImage && (
+                    <div className="w-24 h-24 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                      <img src={foodImage} alt="Food Preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="w-full flex-1 space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      <label className="cursor-pointer brutalist-btn-white py-1 px-3 text-xs font-black uppercase text-center flex-1 sm:flex-initial">
+                        {uploadingFood ? 'Đang Tải Lên...' : 'Chọn Ảnh Từ Thiết Bị'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingFood}
+                          onChange={(e) => handleFileChange(e, 'food')}
+                          className="hidden"
+                        />
+                      </label>
+                      {foodImage && (
+                        <button
+                          type="button"
+                          onClick={() => setFoodImage('')}
+                          className="brutalist-btn-red py-1 px-3 text-xs font-black uppercase"
+                        >
+                          Xóa Ảnh
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[10px] font-bold text-neutral-500">Hỗ trợ JPG, PNG, GIF. Tải lên Cloudinary tự động.</p>
+                  </div>
+                </div>
+
+                {/* Text fallback input */}
+                <div className="space-y-1">
+                  <span className="text-[10px] text-neutral-500 font-extrabold uppercase">Hoặc nhập URL hình ảnh trực tiếp:</span>
+                  <input
+                    type="text"
+                    placeholder="https://images.unsplash.com/photo-..."
+                    value={foodImage}
+                    onChange={(e) => setFoodImage(e.target.value)}
+                    className="brutalist-input text-xs"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -624,7 +818,7 @@ export default function MyStoresSection({
                 type="submit"
                 className="w-full brutalist-btn-red py-3 text-sm font-black"
               >
-                Xác Nhận Thêm Món Ăn
+                {editingFood ? 'Xác Nhận Cập Nhật' : 'Xác Nhận Thêm Món Ăn'}
               </button>
             </form>
           </div>
@@ -658,12 +852,33 @@ export default function MyStoresSection({
                     </div>
                     <div className="p-4 flex-1 flex flex-col justify-between gap-2">
                       <div>
-                        <p className="font-extrabold text-sm text-black">{food.name}</p>
+                        <div className="flex justify-between items-start gap-1">
+                          <p className="font-extrabold text-sm text-black">{food.name}</p>
+                          <span className="font-black text-xs text-[#ff3e3e] shrink-0">
+                            {food.price?.toLocaleString()}đ
+                          </span>
+                        </div>
                         <p className="text-[10px] text-neutral-600 line-clamp-2 mt-1">{food.description}</p>
                       </div>
-                      <p className="font-black text-xs text-[#ff3e3e] mt-2">
-                        {food.price?.toLocaleString()}đ
-                      </p>
+
+                      {/* Action buttons */}
+                      <div className="flex gap-2 mt-2 pt-2 border-t border-black/10 items-center">
+                        <button
+                          type="button"
+                          onClick={() => setEditingFood(food)}
+                          className="flex-1 brutalist-btn-white py-1 text-[10px] font-extrabold flex items-center justify-center gap-1"
+                        >
+                          <Edit2 className="w-3 h-3" /> Sửa
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteFoodItem(food.id)}
+                          className="w-10 h-10 rounded-full border-3 border-black bg-white text-red-500 hover:bg-red-50 shadow-[4px_4px_0px_0px_#111111] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#111111] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#111111] transition-all flex items-center justify-center shrink-0"
+                          title="Xóa món"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -752,7 +967,7 @@ export default function MyStoresSection({
                     </button>
                     <button
                       onClick={() => handleDeleteStore(st.id)}
-                      className="p-2 border-3 border-black bg-white hover:bg-red-50 text-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
+                      className="w-9 h-9 rounded-full border-3 border-black bg-white hover:bg-red-50 text-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center shrink-0"
                       title="Xóa Quán"
                     >
                       <Trash2 className="w-4 h-4" />

@@ -18,13 +18,29 @@ public class CloudinaryService {
     @Value("${cloudinary.folder}")
     private String folderName;
 
-    /**
-     * Tải file lên Cloudinary vào folder chỉ định
-     */
     public Map uploadImage(MultipartFile file) throws IOException
     {
+        return uploadImage(file, null);
+    }
+
+    /**
+     * Tải file lên Cloudinary vào folder chỉ định và subfolder tùy chọn
+     */
+    public Map uploadImage(MultipartFile file, String subFolder) throws IOException
+    {
+        String targetFolder = folderName;
+        if (subFolder != null && !subFolder.trim().isEmpty()) {
+            String targetSub = subFolder.trim();
+            int index = folderName.lastIndexOf("/avatars");
+            if (index != -1) {
+                String rootFolder = folderName.substring(0, index);
+                targetFolder = rootFolder + "/" + targetSub;
+            } else {
+                targetFolder = folderName + "/" + targetSub;
+            }
+        }
         return cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
-            "folder", folderName,
+            "folder", targetFolder,
             "resource_type", "image"
         ));
     }
