@@ -46,6 +46,7 @@ export default function MyStoresSection({
   setFoodImage,
   foodDesc,
   setFoodDesc,
+  setFoodStoreId,
   handleCreateFoodItem,
   loadGlobalData
 }) {
