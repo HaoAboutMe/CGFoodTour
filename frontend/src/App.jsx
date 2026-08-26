@@ -143,6 +143,46 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
+  // Server-Sent Events (SSE) for Real-time Store Updates
+  useEffect(() => {
+    let eventSource;
+    let reconnectTimeout;
+
+    function connectSSE() {
+      console.log('Connecting to SSE events...');
+      eventSource = new EventSource(API_BASE + '/v1/stores/events');
+
+      eventSource.onmessage = (event) => {
+        console.log('SSE message received:', event.data);
+        if (event.data === 'STORES_UPDATED') {
+          loadGlobalData();
+          if (token) {
+            loadAdminPendingStores();
+          }
+        }
+      };
+
+      eventSource.onerror = (err) => {
+        console.error('SSE connection error:', err);
+        eventSource.close();
+        // Auto-reconnect after 5 seconds
+        reconnectTimeout = setTimeout(connectSSE, 5000);
+      };
+    }
+
+    connectSSE();
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
   const googleLoginSubmitRef = useRef(null)
   const facebookLoginSubmitRef = useRef(null)
 
