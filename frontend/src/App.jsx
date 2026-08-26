@@ -8,7 +8,8 @@ import {
   XCircle,
   Utensils,
   Coffee,
-  IceCream
+  IceCream,
+  X
 } from 'lucide-react'
 import './App.css'
 
@@ -21,8 +22,6 @@ import WidgetsSection from './components/WidgetsSection'
 import ProfileSection from './components/ProfileSection'
 import AdminSection from './components/AdminSection'
 import MyStoresSection from './components/MyStoresSection'
-import MyDishesSection from './components/MyDishesSection'
-import MySubmissionsSection from './components/MySubmissionsSection'
 
 const API_BASE = 'http://localhost:8080/api'
 
@@ -46,7 +45,7 @@ export default function App() {
 
   // UI state
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState({ type: '', text: '' })
+  const [toasts, setToasts] = useState([])
   const [consoleLogs, setConsoleLogs] = useState([])
   const [isConsoleOpen, setIsConsoleOpen] = useState(true)
 
@@ -72,6 +71,8 @@ export default function App() {
   const [resetEmail, setResetEmail] = useState('')
   const [resetOtp, setResetOtp] = useState('')
   const [resetPassword, setResetPassword] = useState('')
+  const [resetConfirmPassword, setResetConfirmPassword] = useState('')
+  const [forgotStep, setForgotStep] = useState(1) // 1: Email, 2: OTP, 3: New Password
   const [socialGoogleToken, setSocialGoogleToken] = useState('')
   const [socialFacebookToken, setSocialFacebookToken] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -246,10 +247,15 @@ export default function App() {
 
   // Flash UI messages
   function showToast(text, type = 'success') {
-    setMessage({ type, text })
+    const id = Date.now() + Math.random()
+    setToasts((prev) => [...prev, { id, text, type }])
     setTimeout(() => {
-      setMessage({ type: '', text: '' })
+      setToasts((prev) => prev.filter((t) => t.id !== id))
     }, 4000)
+  }
+
+  function removeToast(id) {
+    setToasts((prev) => prev.filter((t) => t.id !== id))
   }
 
   // Core Request Wrapper
@@ -291,6 +297,14 @@ export default function App() {
         return { success: true, data: data }
       } else {
         logEvent(method, endpoint, body, data, false)
+        // If unauthorized and not a login/refresh endpoint, clear invalid session
+        if (response.status === 401 && 
+            endpoint !== '/auth/token' && 
+            endpoint !== '/auth/refresh' && 
+            endpoint !== '/auth/google-login' && 
+            endpoint !== '/auth/facebook-login') {
+          handleLogout()
+        }
         return { success: false, error: data }
       }
     } catch (err) {
@@ -299,17 +313,52 @@ export default function App() {
     }
   }
 
-  // Time format helper
+  // Time format helper (Converts e.g. "4" -> "04:00", "4:30" -> "04:30", "17:30:00" -> "17:30")
   function formatTimeHHmm(timeStr) {
     if (!timeStr) return ''
-    const clean = timeStr.trim()
-    if (/^\d{2}:\d{2}$/.test(clean)) return clean
-    if (/^\d{2}:\d{2}:\d{2}$/.test(clean)) return clean.substring(0, 5)
-    
+    const clean = timeStr.toString().trim()
+    if (!clean) return ''
+
+    // Case 1: Just digits, e.g. "4", "04", "17"
+    if (/^\d+$/.test(clean)) {
+      let hour = parseInt(clean, 10)
+      if (hour < 0) hour = 0
+      if (hour > 23) hour = 23
+      return `${hour.toString().padStart(2, '0')}:00`
+    }
+
+    // Case 2: One colon, e.g. "4:30", "04:30", "17:05"
+    const hmRegex = /^(\d{1,2}):(\d{1,2})$/
+    if (hmRegex.test(clean)) {
+      const matches = clean.match(hmRegex)
+      let hour = parseInt(matches[1], 10)
+      let minute = parseInt(matches[2], 10)
+      if (hour < 0) hour = 0; if (hour > 23) hour = 23
+      if (minute < 0) minute = 0; if (minute > 59) minute = 59
+      return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
+    }
+
+    // Case 3: Two colons, e.g. "4:30:00"
+    const hmsRegex = /^(\d{1,2}):(\d{1,2}):(\d{1,2})$/
+    if (hmsRegex.test(clean)) {
+      const matches = clean.match(hmsRegex)
+      let hour = parseInt(matches[1], 10)
+      let minute = parseInt(matches[2], 10)
+      if (hour < 0) hour = 0; if (hour > 23) hour = 23
+      if (minute < 0) minute = 0; if (minute > 59) minute = 59
+      return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
+    }
+
+    // Fallback: if there's any colon but doesn't match above, try to pad parts
     const parts = clean.split(':')
     if (parts.length >= 2) {
-      return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`
+      let hour = parseInt(parts[0], 10) || 0
+      let minute = parseInt(parts[1], 10) || 0
+      if (hour < 0) hour = 0; if (hour > 23) hour = 23
+      if (minute < 0) minute = 0; if (minute > 59) minute = 59
+      return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
     }
+
     return clean
   }
 
@@ -432,24 +481,46 @@ export default function App() {
 
   // Forgot Password request OTP
   async function handleForgotPassword(e) {
-    e.preventDefault()
+    if (e && e.preventDefault) e.preventDefault()
     setLoading(true)
     const res = await makeRequest('POST', '/auth/forgot-password', { email: forgotEmail })
     setLoading(false)
 
     if (res.success) {
-      showToast('Password reset OTP sent to your email!', 'success')
+      showToast('Đã gửi mã OTP đặt lại mật khẩu vào email của bạn!', 'success')
       setResetEmail(forgotEmail)
-      setAuthMode('reset')
+      setForgotStep(2)
       setForgotEmail('')
     } else {
-      showToast(res.error?.message || 'Failed to send OTP.', 'error')
+      showToast(res.error?.message || 'Gửi mã OTP thất bại.', 'error')
+    }
+  }
+
+  // Verify OTP
+  async function handleVerifyOtp(e) {
+    if (e && e.preventDefault) e.preventDefault()
+    setLoading(true)
+    const res = await makeRequest('POST', '/auth/verify-otp', {
+      email: resetEmail,
+      otp: resetOtp
+    })
+    setLoading(false)
+
+    if (res.success) {
+      showToast('Xác thực OTP thành công!', 'success')
+      setForgotStep(3)
+    } else {
+      showToast(res.error?.message || 'Mã OTP không đúng hoặc đã hết hạn.', 'error')
     }
   }
 
   // Reset Password with OTP
   async function handleResetPassword(e) {
-    e.preventDefault()
+    if (e && e.preventDefault) e.preventDefault()
+    if (resetPassword !== resetConfirmPassword) {
+      showToast('Mật khẩu nhập lại không khớp!', 'error')
+      return
+    }
     setLoading(true)
     const res = await makeRequest('POST', '/auth/reset-password', {
       email: resetEmail,
@@ -459,13 +530,15 @@ export default function App() {
     setLoading(false)
 
     if (res.success) {
-      showToast('Password reset successful! Please log in.', 'success')
+      showToast('Đổi mật khẩu thành công! Hãy đăng nhập.', 'success')
       setAuthMode('login')
       setResetEmail('')
       setResetOtp('')
       setResetPassword('')
+      setResetConfirmPassword('')
+      setForgotStep(1)
     } else {
-      showToast(res.error?.message || 'Reset failed. Verify OTP.', 'error')
+      showToast(res.error?.message || 'Đổi mật khẩu thất bại.', 'error')
     }
   }
 
@@ -681,9 +754,9 @@ export default function App() {
     setLoading(true)
     const res = await makeRequest('POST', '/v1/categories', {
       name: catName,
-      icon: catIcon
+      iconUrl: catIcon
     })
-    setLoading(true)
+    setLoading(false)
 
     if (res.success) {
       showToast(`Category "${catName}" added!`, 'success')
@@ -691,6 +764,40 @@ export default function App() {
       loadGlobalData()
     } else {
       showToast(res.error?.message || 'Failed to create category.', 'error')
+    }
+  }
+
+  // Update Category (Admin)
+  async function handleUpdateCategory(id, name, iconUrl) {
+    setLoading(true)
+    const res = await makeRequest('PUT', `/v1/categories/${id}`, {
+      name,
+      iconUrl
+    })
+    setLoading(false)
+
+    if (res.success) {
+      showToast('Cập nhật danh mục thành công!', 'success')
+      loadGlobalData()
+      return true
+    } else {
+      showToast(res.error?.message || 'Không thể cập nhật danh mục.', 'error')
+      return false
+    }
+  }
+
+  // Delete Category (Admin)
+  async function handleDeleteCategory(id) {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa danh mục này? Các quán ăn liên kết với danh mục này sẽ bị ảnh hưởng.")) return
+    setLoading(true)
+    const res = await makeRequest('DELETE', `/v1/categories/${id}`)
+    setLoading(false)
+
+    if (res.success) {
+      showToast('Xóa danh mục thành công!', 'success')
+      loadGlobalData()
+    } else {
+      showToast(res.error?.message || 'Không thể xóa danh mục.', 'error')
     }
   }
 
@@ -934,10 +1041,8 @@ export default function App() {
   }
 
   // Admin View - Reject store submission with reason
-  async function handleAdminReject(storeId) {
-    const reason = window.prompt('Specify the moderation feedback/rejection reason for this owner:')
-    if (reason === null) return
-    if (!reason.trim()) {
+  async function handleAdminReject(storeId, reason) {
+    if (!reason || !reason.trim()) {
       showToast('Rejection reason cannot be blank.', 'error')
       return
     }
@@ -1037,7 +1142,7 @@ export default function App() {
     if (tabId === 'admin') {
       loadAdminUsers()
       loadAdminPendingStores()
-    } else if (tabId === 'explore') {
+    } else if (tabId === 'explore' || tabId === 'my-stores') {
       loadGlobalData()
     }
   }
@@ -1084,25 +1189,6 @@ export default function App() {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 md:px-8 pt-32 animate-fade-in-up">
-        {/* API Response Flash Notification */}
-        {message.text && (
-          <div
-            className={`fixed top-24 left-1/2 -translate-x-1/2 z-50 px-6 py-3 border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-2.5 transition-all duration-500 ${
-              message.type === 'error'
-                ? 'bg-[#fff5f5] text-[#c92a2a]'
-                : message.type === 'info'
-                ? 'bg-[#f7f6f2] text-black'
-                : 'bg-[#e6fcf5] text-[#0ca678]'
-            }`}
-          >
-            {message.type === 'error' ? (
-              <XCircle className="w-4 h-4 text-red-500" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-            )}
-            <span className="text-xs font-bold tracking-wide">{message.text}</span>
-          </div>
-        )}
 
         {/* LOADING INDICATOR */}
         {loading && (
@@ -1169,7 +1255,7 @@ export default function App() {
                             : 'bg-white text-black hover:bg-neutral-50 active:translate-y-[1px]'
                         }`}
                       >
-                        {getCategoryIcon(cat.icon)}
+                        {getCategoryIcon(cat.icon || cat.iconUrl)}
                         {cat.name}
                       </button>
                     ))}
@@ -1297,8 +1383,6 @@ export default function App() {
             setStoreBannerUrl={setStoreBannerUrl}
             handleCreateStore={handleCreateStore}
             loading={loading}
-            foodStoreId={foodStoreId}
-            setFoodStoreId={setFoodStoreId}
             foodName={foodName}
             setFoodName={setFoodName}
             foodPrice={foodPrice}
@@ -1308,6 +1392,7 @@ export default function App() {
             foodDesc={foodDesc}
             setFoodDesc={setFoodDesc}
             handleCreateFoodItem={handleCreateFoodItem}
+            loadGlobalData={loadGlobalData}
           />
         )}
 
@@ -1354,6 +1439,12 @@ export default function App() {
             adminUserRoles={adminUserRoles}
             setAdminUserRoles={setAdminUserRoles}
             handleAdminUserEditSubmit={handleAdminUserEditSubmit}
+            categories={categories}
+            handleUpdateCategory={handleUpdateCategory}
+            handleDeleteCategory={handleDeleteCategory}
+            loadAdminUsers={loadAdminUsers}
+            loadAdminPendingStores={loadAdminPendingStores}
+            loadGlobalData={loadGlobalData}
           />
         )}
       </main>
@@ -1400,6 +1491,11 @@ export default function App() {
         resetPassword={resetPassword}
         setResetPassword={setResetPassword}
         handleResetPassword={handleResetPassword}
+        forgotStep={forgotStep}
+        setForgotStep={setForgotStep}
+        resetConfirmPassword={resetConfirmPassword}
+        setResetConfirmPassword={setResetConfirmPassword}
+        handleVerifyOtp={handleVerifyOtp}
         verifyTokenVal={verifyTokenVal}
         setVerifyTokenVal={setVerifyTokenVal}
         handleVerifyEmail={handleVerifyEmail}
@@ -1427,6 +1523,33 @@ export default function App() {
         token={token}
         handleRefreshToken={handleRefreshToken}
       />
+
+      {/* Toast Notification Stack (Top-Right, below header) */}
+      <div className="fixed top-24 right-6 z-[9999] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            onClick={() => removeToast(toast.id)}
+            className={`pointer-events-auto cursor-pointer p-4 border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-between gap-3 animate-slide-in-right transition-all duration-300 ${
+              toast.type === 'error'
+                ? 'bg-[#fff5f5] text-[#c92a2a] hover:bg-[#ffe3e3]'
+                : toast.type === 'info'
+                ? 'bg-[#f7f6f2] text-black hover:bg-neutral-100'
+                : 'bg-[#e6fcf5] text-[#0ca678] hover:bg-[#cbf7ec]'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              {toast.type === 'error' ? (
+                <XCircle className="w-5 h-5 flex-shrink-0 text-red-500" />
+              ) : (
+                <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-500" />
+              )}
+              <span className="text-xs font-black tracking-wide leading-snug">{toast.text}</span>
+            </div>
+            <X className="w-3.5 h-3.5 flex-shrink-0 opacity-40 hover:opacity-100" />
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

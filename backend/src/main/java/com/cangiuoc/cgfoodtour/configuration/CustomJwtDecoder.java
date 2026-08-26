@@ -23,6 +23,7 @@ public class CustomJwtDecoder implements JwtDecoder
     private String signerKey;
 
     @Autowired
+    @org.springframework.context.annotation.Lazy
     private AuthenticationService authenticationService;
 
     private NimbusJwtDecoder nimbusJwtDecoder = null;

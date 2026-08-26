@@ -37,12 +37,16 @@ export default function AuthModal({
   setForgotEmail,
   handleForgotPassword,
   resetEmail,
-  setResetEmail,
   resetOtp,
   setResetOtp,
   resetPassword,
   setResetPassword,
   handleResetPassword,
+  forgotStep,
+  setForgotStep,
+  resetConfirmPassword,
+  setResetConfirmPassword,
+  handleVerifyOtp,
   verifyTokenVal,
   setVerifyTokenVal,
   handleVerifyEmail,
@@ -51,6 +55,55 @@ export default function AuthModal({
   handleResendVerification
 }) {
   if (!showAuthModal) return null
+
+  // Handle OTP digit changes
+  const handleOtpDigitChange = (index, value) => {
+    const cleanValue = value.replace(/\D/g, '')
+    if (cleanValue === '' && value !== '') return
+
+    const otpArray = resetOtp.split('')
+    while (otpArray.length < 6) otpArray.push('')
+    otpArray[index] = cleanValue.slice(-1)
+    const newOtp = otpArray.join('')
+    setResetOtp(newOtp)
+
+    if (cleanValue && index < 5) {
+      const nextInput = document.getElementById(`otp-input-${index + 1}`)
+      if (nextInput) nextInput.focus()
+    }
+  }
+
+  // Handle backspace key press
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === 'Backspace') {
+      const otpArray = resetOtp.split('')
+      while (otpArray.length < 6) otpArray.push('')
+      
+      if (otpArray[index] === '' && index > 0) {
+        otpArray[index - 1] = ''
+        setResetOtp(otpArray.join(''))
+        const prevInput = document.getElementById(`otp-input-${index - 1}`)
+        if (prevInput) {
+          prevInput.focus()
+        }
+      } else {
+        otpArray[index] = ''
+        setResetOtp(otpArray.join(''))
+      }
+    }
+  }
+
+  // Handle paste events (e.g. paste 6-digit code)
+  const handleOtpPaste = (e) => {
+    e.preventDefault()
+    const pastedData = e.clipboardData.getData('text')
+    const digitsOnly = pastedData.replace(/\D/g, '').slice(0, 6)
+    setResetOtp(digitsOnly)
+    
+    const focusIndex = Math.min(digitsOnly.length, 5)
+    const targetInput = document.getElementById(`otp-input-${focusIndex}`)
+    if (targetInput) targetInput.focus()
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
@@ -71,8 +124,7 @@ export default function AuthModal({
               {authMode === 'login' && 'Đăng Nhập'}
               {authMode === 'register' && 'Tạo Tài Khoản'}
               {authMode === 'verify' && 'Xác Thực Email'}
-              {authMode === 'forgot' && 'Quên Mật Khẩu'}
-              {authMode === 'reset' && 'Đặt Lại Mật Khẩu'}
+              {authMode === 'forgot' && (forgotStep === 1 ? 'Quên Mật Khẩu' : forgotStep === 2 ? 'Xác thực OTP' : 'Đặt lại mật khẩu')}
             </h3>
           </div>
 
@@ -300,85 +352,177 @@ export default function AuthModal({
             </form>
           )}
 
-          {/* Forgot Password Form */}
+          {/* Forgot Password Flow */}
           {authMode === 'forgot' && (
-            <form onSubmit={handleForgotPassword} className="space-y-4">
-              <p className="text-xs font-semibold text-neutral-600 leading-relaxed">
-                Nhập email đã đăng ký của bạn. Hệ thống sẽ gửi một mã OTP gồm 6 chữ số để xác thực yêu cầu đặt lại mật khẩu.
-              </p>
-              <div className="space-y-2">
-                <label className="text-xs uppercase font-extrabold tracking-wider block">Địa Chỉ Email</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="yourname@gmail.com"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  className="brutalist-input"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full brutalist-btn-red py-3 text-sm font-black"
-              >
-                Gửi OTP Đặt Lại Mật Khẩu
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setAuthMode('login')}
-                className="w-full text-center text-xs font-black uppercase text-neutral-600 hover:text-black"
-              >
-                Quay Lại Đăng Nhập
-              </button>
-            </form>
-          )}
-
-          {/* Reset Password Form */}
-          {authMode === 'reset' && (
-            <form onSubmit={handleResetPassword} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-xs uppercase font-extrabold tracking-wider block">Địa Chỉ Email</label>
-                <input
-                  type="email"
-                  required
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  className="brutalist-input"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs uppercase font-extrabold tracking-wider block">Mã OTP (6 số)</label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={6}
-                    placeholder="123456"
-                    value={resetOtp}
-                    onChange={(e) => setResetOtp(e.target.value)}
-                    className="brutalist-input"
-                  />
+            <div className="space-y-4">
+              {/* Step Progress Bar */}
+              <div className="flex items-center justify-between pb-6 mb-4 border-b-2 border-black">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-6 h-6 rounded-none flex items-center justify-center text-xs font-black border-2 border-black ${forgotStep >= 1 ? 'bg-[#ff3e3e] text-white shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}>1</div>
+                  <span className="text-[10px] uppercase font-black tracking-wider hidden sm:inline">Email</span>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs uppercase font-extrabold tracking-wider block">Mật Khẩu Mới</label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={resetPassword}
-                    onChange={(e) => setResetPassword(e.target.value)}
-                    className="brutalist-input"
-                  />
+                <div className="h-0.5 bg-black flex-grow mx-2" />
+                <div className="flex items-center space-x-2">
+                  <div className={`w-6 h-6 rounded-none flex items-center justify-center text-xs font-black border-2 border-black ${forgotStep >= 2 ? 'bg-[#ff3e3e] text-white shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}>2</div>
+                  <span className="text-[10px] uppercase font-black tracking-wider hidden sm:inline">OTP</span>
+                </div>
+                <div className="h-0.5 bg-black flex-grow mx-2" />
+                <div className="flex items-center space-x-2">
+                  <div className={`w-6 h-6 rounded-none flex items-center justify-center text-xs font-black border-2 border-black ${forgotStep >= 3 ? 'bg-[#ff3e3e] text-white shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}>3</div>
+                  <span className="text-[10px] uppercase font-black tracking-wider hidden sm:inline">Mật khẩu</span>
                 </div>
               </div>
-              <button
-                type="submit"
-                className="w-full brutalist-btn-red py-3 text-sm font-black"
-              >
-                Đổi Mật Khẩu
-              </button>
-            </form>
+
+              {/* Step 1: Input Email */}
+              {forgotStep === 1 && (
+                <form onSubmit={handleForgotPassword} className="space-y-4 animate-fade-in-up">
+                  <p className="text-xs font-semibold text-neutral-600 leading-relaxed">
+                    Nhập email đã đăng ký của bạn. Hệ thống sẽ gửi một mã OTP gồm 6 chữ số để xác thực yêu cầu đặt lại mật khẩu.
+                  </p>
+                  <div className="space-y-2">
+                    <label className="text-xs uppercase font-extrabold tracking-wider block">Địa Chỉ Email</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="yourname@gmail.com"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      className="brutalist-input"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full brutalist-btn-red py-3 text-sm font-black"
+                  >
+                    Gửi OTP Đặt Lại Mật Khẩu ↗
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode('login')}
+                    className="w-full text-center text-xs font-black uppercase text-neutral-600 hover:text-black mt-2"
+                  >
+                    Quay Lại Đăng Nhập
+                  </button>
+                </form>
+              )}
+
+              {/* Step 2: Input OTP */}
+              {forgotStep === 2 && (
+                <form onSubmit={handleVerifyOtp} className="space-y-4 animate-fade-in-up">
+                  <div className="bg-[#f7f6f2] p-3 border-2 border-black text-xs font-bold text-neutral-700">
+                    Mã OTP đã được gửi đến: <span className="text-black font-black">{resetEmail}</span>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs uppercase font-extrabold tracking-wider block text-center">Mã OTP (6 chữ số)</label>
+                    <div className="flex justify-center gap-2" onPaste={handleOtpPaste}>
+                      {[0, 1, 2, 3, 4, 5].map((index) => {
+                        const val = resetOtp[index] || ''
+                        return (
+                          <input
+                            key={index}
+                            id={`otp-input-${index}`}
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={1}
+                            required
+                            value={val}
+                            onChange={(e) => handleOtpDigitChange(index, e.target.value)}
+                            onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                            className="w-12 h-14 text-center text-xl font-black border-2 border-black rounded-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:bg-neutral-100 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                          />
+                        )
+                      })}
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full brutalist-btn-red py-3 text-sm font-black"
+                  >
+                    Xác Thực OTP ↗
+                  </button>
+
+                  <div className="flex justify-between items-center text-xs font-bold mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setForgotStep(1)}
+                      className="text-neutral-600 hover:text-black uppercase"
+                    >
+                      ← Nhập lại Email
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleForgotPassword()}
+                      className="text-[#ff3e3e] hover:underline uppercase"
+                    >
+                      Gửi Lại Mã OTP
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Step 3: Input New Password */}
+              {forgotStep === 3 && (
+                <form onSubmit={handleResetPassword} className="space-y-4 animate-fade-in-up">
+                  <div className="bg-[#f7f6f2] p-3 border-2 border-black text-xs font-bold text-neutral-700 space-y-1">
+                    <div>Tài khoản: <span className="text-black font-black">{resetEmail}</span></div>
+                    <div>Xác thực OTP: <span className="text-[#00ca4e] font-black">Hợp lệ ✓</span></div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs uppercase font-extrabold tracking-wider block">Mật Khẩu Mới</label>
+                    <input
+                      type="password"
+                      required
+                      minLength={8}
+                      placeholder="••••••••"
+                      value={resetPassword}
+                      onChange={(e) => setResetPassword(e.target.value)}
+                      className="brutalist-input"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs uppercase font-extrabold tracking-wider block">Xác Nhận Mật Khẩu Mới</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={resetConfirmPassword}
+                      onChange={(e) => setResetConfirmPassword(e.target.value)}
+                      className={`brutalist-input ${
+                        resetConfirmPassword
+                          ? resetPassword === resetConfirmPassword
+                            ? 'border-[#00ca4e] focus:bg-[#e6fcf0]'
+                            : 'border-[#ff3e3e] focus:bg-[#ffebeb]'
+                          : ''
+                      }`}
+                    />
+                    {resetConfirmPassword && (
+                      <p className={`text-[10px] font-black uppercase tracking-wider ${
+                        resetPassword === resetConfirmPassword ? 'text-[#00ca4e]' : 'text-[#ff3e3e]'
+                      }`}>
+                        {resetPassword === resetConfirmPassword ? 'Mật khẩu trùng khớp ✓' : 'Mật khẩu không trùng khớp ✗'}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!resetPassword || resetPassword !== resetConfirmPassword}
+                    className="w-full brutalist-btn-red py-3 text-sm font-black disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Đổi Mật Khẩu & Đăng Nhập ↗
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setForgotStep(2)}
+                    className="w-full text-center text-xs font-black uppercase text-neutral-600 hover:text-black mt-2"
+                  >
+                    ← Quay Lại Nhập OTP
+                  </button>
+                </form>
+              )}
+            </div>
           )}
 
           {/* Verify Email token Form */}

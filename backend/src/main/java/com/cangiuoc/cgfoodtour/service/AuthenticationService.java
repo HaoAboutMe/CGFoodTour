@@ -8,6 +8,7 @@ import com.cangiuoc.cgfoodtour.dto.request.IntrospectRequest;
 import com.cangiuoc.cgfoodtour.dto.request.LogOutRequest;
 import com.cangiuoc.cgfoodtour.dto.request.RefreshRequest;
 import com.cangiuoc.cgfoodtour.dto.request.ResetPasswordRequest;
+import com.cangiuoc.cgfoodtour.dto.request.VerifyOtpRequest;
 import com.cangiuoc.cgfoodtour.dto.response.AuthenticationResponse;
 import com.cangiuoc.cgfoodtour.dto.response.IntrospectResponse;
 import com.cangiuoc.cgfoodtour.repository.RoleRepository;
@@ -285,6 +286,17 @@ public class AuthenticationService
             log.error("You can manually reset password using this OTP via POST /api/auth/reset-password");
             log.error("==========================================================================");
         }
+    }
+
+    @Transactional(readOnly = true)
+    public void verifyOtp(VerifyOtpRequest request) {
+        passwordResetOtpRepository
+                .findByEmailAndOtpAndIsUsedFalseAndExpiryDateAfter(
+                        request.getEmail(),
+                        request.getOtp(),
+                        LocalDateTime.now()
+                )
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_OTP));
     }
 
     @Transactional

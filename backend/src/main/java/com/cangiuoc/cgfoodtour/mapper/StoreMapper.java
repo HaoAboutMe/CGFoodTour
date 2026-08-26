@@ -19,6 +19,9 @@ public interface StoreMapper {
     @Mapping(target = "categoryName", source = "category.name")
     @Mapping(target = "ownerId", source = "owner.id")
     @Mapping(target = "ownerEmail", source = "owner.email")
+    @Mapping(target = "ownerUsername", source = "owner.username")
+    @Mapping(target = "ownerFirstname", source = "owner.firstname")
+    @Mapping(target = "ownerLastname", source = "owner.lastname")
     @Mapping(target = "foodItems", ignore = true)
     @Mapping(target = "isReportedClosed", ignore = true)
     StoreResponse toStoreResponse(Store store);

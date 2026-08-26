@@ -388,6 +388,15 @@ public class AuthenticationController {
                 .build();
     }
 
+    @PostMapping("/verify-otp")
+    ApiResponse<String> verifyOtp(@RequestBody @Valid VerifyOtpRequest request) {
+        authenticationService.verifyOtp(request);
+        return ApiResponse.<String>builder()
+                .result("OTP is valid")
+                .message("OTP_VALID")
+                .build();
+    }
+
     @PostMapping("/reset-password")
     ApiResponse<String> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
         authenticationService.resetPassword(request);
