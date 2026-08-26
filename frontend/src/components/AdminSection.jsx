@@ -22,6 +22,7 @@ export default function AdminSection({
   foodDesc,
   setFoodDesc,
   handleCreateFoodItem,
+  handleUploadImage,
   adminPendingStores,
   handleAdminApprove,
   handleAdminReject,
@@ -55,6 +56,18 @@ export default function AdminSection({
   const [editingCategory, setEditingCategory] = useState(null)
   const [editCatName, setEditCatName] = useState('')
   const [editCatIcon, setEditCatIcon] = useState('fa-bread-slice')
+  const [uploadingFood, setUploadingFood] = useState(false)
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploadingFood(true)
+    const url = await handleUploadImage(file)
+    setUploadingFood(false)
+    if (url) {
+      setFoodImage(url)
+    }
+  }
 
   function getCategoryIcon(iconName) {
     const name = iconName ? iconName.toLowerCase() : ''
@@ -187,7 +200,7 @@ export default function AdminSection({
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-xs uppercase font-extrabold block text-neutral-700">Giá (VND)</label>
                     <div className="relative">
@@ -204,15 +217,54 @@ export default function AdminSection({
                       </div>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-xs uppercase font-extrabold block text-neutral-700">Banner Image URL</label>
-                    <input
-                      type="text"
-                      placeholder="https://..."
-                      value={foodImage}
-                      onChange={(e) => setFoodImage(e.target.value)}
-                      className="brutalist-input"
-                    />
+
+                  <div className="space-y-3">
+                    <label className="text-xs uppercase font-extrabold block text-neutral-700">Hình Ảnh Món Ăn</label>
+                    
+                    {/* Image Preview & Upload Row */}
+                    <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-3 border-3 border-black rounded shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                      {foodImage && (
+                        <div className="w-16 h-16 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                          <img src={foodImage} alt="Food Preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <div className="w-full flex-1 space-y-2">
+                        <div className="flex flex-wrap gap-2">
+                          <label className="cursor-pointer brutalist-btn-white py-1 px-3 text-xs font-black uppercase text-center flex-1 sm:flex-initial">
+                            {uploadingFood ? 'Đang Tải Lên...' : 'Chọn Ảnh Từ Thiết Bị'}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={uploadingFood}
+                              onChange={handleFileChange}
+                              className="hidden"
+                            />
+                          </label>
+                          {foodImage && (
+                            <button
+                              type="button"
+                              onClick={() => setFoodImage('')}
+                              className="brutalist-btn-red py-1 px-3 text-xs font-black uppercase"
+                            >
+                              Xóa Ảnh
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-[10px] font-bold text-neutral-500">Tải lên Cloudinary tự động.</p>
+                      </div>
+                    </div>
+
+                    {/* Text fallback input */}
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-neutral-500 font-extrabold uppercase">Hoặc nhập URL hình ảnh trực tiếp:</span>
+                      <input
+                        type="text"
+                        placeholder="https://..."
+                        value={foodImage}
+                        onChange={(e) => setFoodImage(e.target.value)}
+                        className="brutalist-input text-xs"
+                      />
+                    </div>
                   </div>
                 </div>
 

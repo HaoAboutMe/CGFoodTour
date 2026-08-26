@@ -866,6 +866,29 @@ export default function App() {
     }
   }
 
+  // Upload Generic Image (Stores/Dishes)
+  async function handleUploadImage(file, folder = '') {
+    if (!file) return null
+    setLoading(true)
+    const formData = new FormData()
+    formData.append('file', file)
+
+    let url = '/v1/upload/image'
+    if (folder) {
+      url += `?folder=${encodeURIComponent(folder)}`
+    }
+
+    const res = await makeRequest('POST', url, formData, true)
+    setLoading(false)
+
+    if (res.success && res.data.result) {
+      return res.data.result.url
+    } else {
+      showToast(res.error?.message || 'Image upload failed.', 'error')
+      return null
+    }
+  }
+
   // Preview file upload avatar
   function onAvatarFileChange(e) {
     const file = e.target.files[0]
@@ -1071,6 +1094,42 @@ export default function App() {
       loadGlobalData()
     } else {
       showToast(res.error?.message || 'Failed to add food item.', 'error')
+    }
+  }
+
+  // Update Food Item
+  async function handleUpdateFoodItem(foodId, foodData) {
+    setLoading(true)
+    const res = await makeRequest('PUT', `/v1/food-items/${foodId}`, {
+      name: foodData.name,
+      price: parseFloat(foodData.price) || 0,
+      imageUrl: foodData.imageUrl,
+      description: foodData.description
+    })
+    setLoading(false)
+
+    if (res.success) {
+      showToast(`Món ăn "${foodData.name}" đã được cập nhật!`, 'success')
+      loadGlobalData()
+      return true
+    } else {
+      showToast(res.error?.message || 'Không thể cập nhật món ăn.', 'error')
+      return false
+    }
+  }
+
+  // Delete Food Item
+  async function handleDeleteFoodItem(foodId) {
+    if (!window.confirm('Bạn có chắc muốn xóa món ăn này không?')) return
+    setLoading(true)
+    const res = await makeRequest('DELETE', `/v1/food-items/${foodId}`)
+    setLoading(false)
+
+    if (res.success) {
+      showToast('Món ăn đã được xóa thành công!', 'success')
+      loadGlobalData()
+    } else {
+      showToast(res.error?.message || 'Không thể xóa món ăn.', 'error')
     }
   }
 
@@ -1431,6 +1490,9 @@ export default function App() {
             foodStoreId={foodStoreId}
             setFoodStoreId={setFoodStoreId}
             handleCreateFoodItem={handleCreateFoodItem}
+            handleUpdateFoodItem={handleUpdateFoodItem}
+            handleDeleteFoodItem={handleDeleteFoodItem}
+            handleUploadImage={handleUploadImage}
             loadGlobalData={loadGlobalData}
           />
         )}
@@ -1459,6 +1521,7 @@ export default function App() {
             foodDesc={foodDesc}
             setFoodDesc={setFoodDesc}
             handleCreateFoodItem={handleCreateFoodItem}
+            handleUploadImage={handleUploadImage}
             adminPendingStores={adminPendingStores}
             handleAdminApprove={handleAdminApprove}
             handleAdminReject={handleAdminReject}
