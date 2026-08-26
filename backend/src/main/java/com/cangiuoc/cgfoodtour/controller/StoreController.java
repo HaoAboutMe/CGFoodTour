@@ -7,6 +7,8 @@ import com.cangiuoc.cgfoodtour.dto.request.StoreRequest;
 import com.cangiuoc.cgfoodtour.dto.request.RejectStoreRequest;
 import com.cangiuoc.cgfoodtour.dto.response.StoreResponse;
 import com.cangiuoc.cgfoodtour.service.StoreService;
+import com.cangiuoc.cgfoodtour.service.SseNotificationService;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class StoreController {
     StoreService storeService;
+    SseNotificationService sseNotificationService;
 
     private String getCurrentUserEmail() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -32,12 +35,19 @@ public class StoreController {
         return null;
     }
 
+    @GetMapping("/events")
+    public SseEmitter subscribeToStoreEvents() {
+        return sseNotificationService.subscribe();
+    }
+
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<StoreResponse> createStore(@RequestBody @Valid StoreRequest request) {
         String email = getCurrentUserEmail();
+        StoreResponse response = storeService.createStore(request, email);
+        sseNotificationService.broadcast("STORES_UPDATED");
         return ApiResponse.<StoreResponse>builder()
-                .result(storeService.createStore(request, email))
+                .result(response)
                 .message("Store submitted successfully and is pending approval")
                 .build();
     }
@@ -80,8 +90,10 @@ public class StoreController {
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<StoreResponse> updateStore(@PathVariable String id, @RequestBody @Valid StoreRequest request) {
         String email = getCurrentUserEmail();
+        StoreResponse response = storeService.updateStore(id, request, email);
+        sseNotificationService.broadcast("STORES_UPDATED");
         return ApiResponse.<StoreResponse>builder()
-                .result(storeService.updateStore(id, request, email))
+                .result(response)
                 .message("Store updated successfully and is pending approval")
                 .build();
     }
@@ -91,6 +103,7 @@ public class StoreController {
     public ApiResponse<Void> deleteStore(@PathVariable String id) {
         String email = getCurrentUserEmail();
         storeService.deleteStore(id, email);
+        sseNotificationService.broadcast("STORES_UPDATED");
         return ApiResponse.<Void>builder()
                 .message("Store deleted successfully")
                 .build();
@@ -119,8 +132,10 @@ public class StoreController {
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<StoreResponse> approveStore(@PathVariable String id) {
+        StoreResponse response = storeService.approveStore(id);
+        sseNotificationService.broadcast("STORES_UPDATED");
         return ApiResponse.<StoreResponse>builder()
-                .result(storeService.approveStore(id))
+                .result(response)
                 .message("Store approved successfully")
                 .build();
     }
@@ -128,8 +143,10 @@ public class StoreController {
     @PostMapping("/{id}/reject")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<StoreResponse> rejectStore(@PathVariable String id, @RequestBody @Valid RejectStoreRequest request) {
+        StoreResponse response = storeService.rejectStore(id, request.getReason());
+        sseNotificationService.broadcast("STORES_UPDATED");
         return ApiResponse.<StoreResponse>builder()
-                .result(storeService.rejectStore(id, request.getReason()))
+                .result(response)
                 .message("Store rejected successfully")
                 .build();
     }
