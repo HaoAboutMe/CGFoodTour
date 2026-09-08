@@ -1,5 +1,6 @@
 import React from 'react'
 import { X, Trophy, MapPin, Phone, DollarSign, ThumbsUp, Meh, ThumbsDown } from 'lucide-react'
+import { checkStoreOpenStatus } from '../utils/timeUtils'
 
 export default function StoreDetailDrawer({
   activeStore,
@@ -13,13 +14,15 @@ export default function StoreDetailDrawer({
 }) {
   if (!activeStore) return null
 
+  const statusInfo = checkStoreOpenStatus(activeStore)
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex justify-end">
+    <div className="fixed inset-0 z-50 bg-black/60 flex justify-end items-end sm:items-stretch">
       {/* Close click backdrop */}
       <div className="absolute inset-0" onClick={() => setActiveStore(null)} />
 
-      {/* Drawer content (Right slide) */}
-      <div className="w-full max-w-lg bg-white border-l-4 border-black h-full overflow-y-auto relative z-10 shadow-2xl flex flex-col justify-between animate-slide-in-right">
+      {/* Drawer content (Bottom-sheet on mobile, Right slide-in on desktop) */}
+      <div className="w-full sm:max-w-lg bg-white border-t-4 sm:border-t-0 sm:border-l-4 border-black h-[90vh] sm:h-full rounded-t-3xl sm:rounded-none overflow-y-auto relative z-10 shadow-2xl flex flex-col justify-between animate-slide-in-right">
         <div>
           {/* Header Image banner */}
           <div className="h-56 w-full relative bg-neutral-200 border-b-4 border-black shrink-0">
@@ -59,12 +62,12 @@ export default function StoreDetailDrawer({
             <div className="flex items-center justify-between p-4 bg-[#f7f6f2] border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
               <div className="flex items-center gap-2">
                 <div
-                  className={`w-3 h-3 rounded-full border-2 border-black ${
-                    activeStore.isReportedClosed ? 'bg-red-500' : 'bg-emerald-500'
+                  className={`w-3.5 h-3.5 rounded-full border-2 border-black ${
+                    statusInfo.isOpen ? 'bg-emerald-500' : 'bg-red-500'
                   }`}
                 />
                 <span className="text-xs font-black text-black">
-                  {activeStore.isReportedClosed ? 'Báo Đóng Cửa Hôm Nay' : 'Đang Mở Cửa & Phục Vụ'}
+                  {statusInfo.statusText} {statusInfo.isOpen ? '& Đang Phục Vụ' : ''}
                 </span>
               </div>
               <span className="text-[11px] font-black text-neutral-700">

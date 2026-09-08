@@ -291,14 +291,24 @@ export default function App() {
                 }
               }
             })
-            const btnEl = document.getElementById('googleSignInBtn')
-            if (btnEl) {
-              window.google.accounts.id.renderButton(btnEl, {
+            const btnLogin = document.getElementById('googleSignInBtn')
+            if (btnLogin) {
+              window.google.accounts.id.renderButton(btnLogin, {
                 theme: 'outline',
                 size: 'large',
                 text: 'continue_with',
                 shape: 'pill',
-                width: 340
+                width: 360
+              })
+            }
+            const btnReg = document.getElementById('googleSignInBtnRegister')
+            if (btnReg) {
+              window.google.accounts.id.renderButton(btnReg, {
+                theme: 'outline',
+                size: 'large',
+                text: 'continue_with',
+                shape: 'pill',
+                width: 360
               })
             }
           }

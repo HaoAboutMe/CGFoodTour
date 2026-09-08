@@ -167,7 +167,7 @@ export default function AdminSection({
           <div className="lg:col-span-5 space-y-8">
             {/* Add Food Item (Admin bypass) */}
             <div className="brutalist-card bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
-              <h3 className="text-lg font-black uppercase border-b-3 border-black pb-2 text-black">
+              <h3 className="text-lg font-black uppercase border-b-4 border-black pb-2 text-black">
                 Thêm Món Ăn Cho Quán (Admin)
               </h3>
               <form onSubmit={handleCreateFoodItem} className="space-y-4">
@@ -293,13 +293,13 @@ export default function AdminSection({
           <div className="lg:col-span-7 space-y-8">
             {/* Registered Accounts list */}
             <div className="brutalist-card bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
-              <h3 className="text-lg font-black uppercase border-b-3 border-black pb-2 text-black flex items-center gap-2">
+              <h3 className="text-lg font-black uppercase border-b-4 border-black pb-2 text-black flex items-center gap-2">
                 <Users className="w-5 h-5 text-[#ff3e3e]" /> Danh Sách Tài Khoản
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="text-black border-b-3 border-black">
+                    <tr className="text-black border-b-2 border-black">
                       <th className="pb-3 font-black uppercase">Ảnh</th>
                       <th className="pb-3 font-black uppercase">Tài Khoản</th>
                       <th className="pb-3 font-black uppercase">Vai Trò (Roles)</th>
@@ -361,7 +361,7 @@ export default function AdminSection({
       {activeAdminTab === 'requests' && (
         /* Requests/Yêu Cầu Tab (Full Width / Max width centered) */
         <div className="brutalist-card bg-white p-6 md:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] max-w-4xl mx-auto space-y-6">
-          <h3 className="text-lg font-black uppercase border-b-3 border-black pb-2 text-black">
+          <h3 className="text-lg font-black uppercase border-b-4 border-black pb-2 text-black">
             Yêu Cầu Đang Chờ Phê Duyệt
           </h3>
           {adminPendingStores.length === 0 ? (
@@ -434,7 +434,7 @@ export default function AdminSection({
           {/* Left Column (5/12): Add New Category */}
           <div className="lg:col-span-5 space-y-8">
             <div className="brutalist-card bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
-              <h3 className="text-lg font-black uppercase border-b-3 border-black pb-2 text-black flex items-center gap-2">
+              <h3 className="text-lg font-black uppercase border-b-4 border-black pb-2 text-black flex items-center gap-2">
                 <PlusCircle className="w-5 h-5 text-[#ff3e3e]" /> Thêm Danh Mục Mới
               </h3>
               <form onSubmit={handleCreateCategory} className="space-y-4">
@@ -476,13 +476,13 @@ export default function AdminSection({
           {/* Right Column (7/12): List Categories */}
           <div className="lg:col-span-7 space-y-8">
             <div className="brutalist-card bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
-              <h3 className="text-lg font-black uppercase border-b-3 border-black pb-2 text-black flex items-center gap-2">
+              <h3 className="text-lg font-black uppercase border-b-4 border-black pb-2 text-black flex items-center gap-2">
                 <Folder className="w-5 h-5 text-[#ff3e3e]" /> Danh Sách Danh Mục
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="text-black border-b-3 border-black">
+                    <tr className="text-black border-b-2 border-black">
                       <th className="pb-3 font-black uppercase">ID</th>
                       <th className="pb-3 font-black uppercase">Icon</th>
                       <th className="pb-3 font-black uppercase">Tên Danh Mục</th>
@@ -541,7 +541,7 @@ export default function AdminSection({
             </button>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-black uppercase border-b-3 border-black pb-2 text-black">
+              <h3 className="text-lg font-black uppercase border-b-4 border-black pb-2 text-black">
                 Từ Chối Xét Duyệt Quán
               </h3>
               <p className="text-xs font-bold text-neutral-600">
@@ -603,7 +603,7 @@ export default function AdminSection({
           <div className="w-full max-w-lg bg-white border-l-3 border-black h-full overflow-hidden relative z-10 shadow-2xl flex flex-col justify-between animate-fade-in-up">
             <div className="flex-1 overflow-y-auto">
               {/* Header Image banner */}
-              <div className="h-56 w-full relative bg-neutral-200 border-b-3 border-black shrink-0">
+              <div className="h-56 w-full relative bg-neutral-200 border-b-4 border-black shrink-0">
                 <img
                   src={
                     viewingStore.bannerImageUrl ||
@@ -754,7 +754,7 @@ export default function AdminSection({
             </button>
 
             <div className="space-y-6">
-              <h3 className="text-lg font-black uppercase border-b-3 border-black pb-2 text-black">
+              <h3 className="text-lg font-black uppercase border-b-4 border-black pb-2 text-black">
                 Chỉnh Sửa Thành Viên (Admin Access)
               </h3>
 
@@ -856,7 +856,7 @@ export default function AdminSection({
             </button>
 
             <div className="space-y-6">
-              <h3 className="text-lg font-black uppercase border-b-3 border-black pb-2 text-black">
+              <h3 className="text-lg font-black uppercase border-b-4 border-black pb-2 text-black">
                 Chỉnh Sửa Danh Mục
               </h3>
 

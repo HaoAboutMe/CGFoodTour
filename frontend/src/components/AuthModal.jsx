@@ -106,8 +106,8 @@ export default function AuthModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-      <div className="w-full max-w-md brutalist-card bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden animate-fade-in-up">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 sm:p-4">
+      <div className="w-full max-w-md brutalist-card bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative max-h-[92vh] overflow-y-auto animate-fade-in-up">
         {/* Close Button */}
         <button
           onClick={() => setShowAuthModal(false)}
@@ -116,7 +116,7 @@ export default function AuthModal({
           <X className="w-4 h-4" />
         </button>
 
-        <div className="p-8 space-y-6">
+        <div className="p-5 sm:p-8 space-y-5 sm:space-y-6">
           {/* Header */}
           <div className="text-center space-y-1 border-b-4 border-black pb-3">
             <span className="brutalist-badge bg-[#ff3e3e] text-white">Security Gateway</span>
@@ -190,34 +190,32 @@ export default function AuthModal({
 
               {/* Social Buttons Container */}
               <div className="space-y-3">
-                {/* Hidden container for Google GSI SDK iframe */}
-                <div id="googleSignInBtn" className="hidden"></div>
+                {/* Neo-Brutalist Google Button Container */}
+                <div className="relative w-full h-12">
+                  {/* Visual Custom Neo-Brutalist Button */}
+                  <div className="w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] transition-all select-none">
+                    <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.14C3.26 21.3 7.31 24 12 24z"/>
+                      <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.59H1.29C.47 8.23 0 10.06 0 12s.47 3.77 1.29 5.41l3.99-3.14z"/>
+                      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.59l3.99 3.14c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                    </svg>
+                    <span>Tiếp Tục Với Google</span>
+                  </div>
 
-                {/* Neo-Brutalist Google Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.google?.accounts?.id) {
-                      window.google.accounts.id.prompt((notification) => {
-                        if (notification.isNotDisplayed() || notification.isSkippedMoment() || notification.isDismissedMoment()) {
-                          const iframeBtn = document.querySelector('#googleSignInBtn iframe') || document.querySelector('#googleSignInBtn div[role="button"]')
-                          if (iframeBtn) iframeBtn.click()
-                        }
-                      })
-                    } else {
-                      alert('Google Sign-In SDK đang khởi tạo, vui lòng thử lại sau giây lát!')
-                    }
-                  }}
-                  className="w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer select-none"
-                >
-                  <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.14C3.26 21.3 7.31 24 12 24z"/>
-                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.59H1.29C.47 8.23 0 10.06 0 12s.47 3.77 1.29 5.41l3.99-3.14z"/>
-                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.59l3.99 3.14c.95-2.83 3.6-4.98 6.72-4.98z"/>
-                  </svg>
-                  <span>Tiếp Tục Với Google</span>
-                </button>
+                  {/* Real Google GSI SDK iframe container overlaid transparently */}
+                  <div
+                    id="googleSignInBtn"
+                    className="absolute inset-0 opacity-0 overflow-hidden cursor-pointer flex justify-center items-center scale-150 z-10"
+                    onClick={() => {
+                      if (window.google?.accounts?.id) {
+                        window.google.accounts.id.prompt()
+                      } else {
+                        alert('Google Sign-In SDK đang khởi tạo, vui lòng thử lại sau giây lát!')
+                      }
+                    }}
+                  ></div>
+                </div>
 
                 {/* Neo-Brutalist Facebook Button */}
                 <button
@@ -377,31 +375,32 @@ export default function AuthModal({
 
               {/* Social Buttons for Registration */}
               <div className="space-y-3">
-                {/* Neo-Brutalist Google Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.google?.accounts?.id) {
-                      window.google.accounts.id.prompt((notification) => {
-                        if (notification.isNotDisplayed() || notification.isSkippedMoment() || notification.isDismissedMoment()) {
-                          const iframeBtn = document.querySelector('#googleSignInBtn iframe') || document.querySelector('#googleSignInBtn div[role="button"]')
-                          if (iframeBtn) iframeBtn.click()
-                        }
-                      })
-                    } else {
-                      alert('Google Sign-In SDK đang khởi tạo, vui lòng thử lại sau giây lát!')
-                    }
-                  }}
-                  className="w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer select-none"
-                >
-                  <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.14C3.26 21.3 7.31 24 12 24z"/>
-                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.59H1.29C.47 8.23 0 10.06 0 12s.47 3.77 1.29 5.41l3.99-3.14z"/>
-                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.59l3.99 3.14c.95-2.83 3.6-4.98 6.72-4.98z"/>
-                  </svg>
-                  <span>Tiếp Tục Với Google</span>
-                </button>
+                {/* Neo-Brutalist Google Button Container */}
+                <div className="relative w-full h-12">
+                  {/* Visual Custom Neo-Brutalist Button */}
+                  <div className="w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] transition-all select-none">
+                    <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.14C3.26 21.3 7.31 24 12 24z"/>
+                      <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.59H1.29C.47 8.23 0 10.06 0 12s.47 3.77 1.29 5.41l3.99-3.14z"/>
+                      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.59l3.99 3.14c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                    </svg>
+                    <span>Tiếp Tục Với Google</span>
+                  </div>
+
+                  {/* Real Google GSI SDK iframe container overlaid transparently */}
+                  <div
+                    id="googleSignInBtnRegister"
+                    className="absolute inset-0 opacity-0 overflow-hidden cursor-pointer flex justify-center items-center scale-150 z-10"
+                    onClick={() => {
+                      if (window.google?.accounts?.id) {
+                        window.google.accounts.id.prompt()
+                      } else {
+                        alert('Google Sign-In SDK đang khởi tạo, vui lòng thử lại sau giây lát!')
+                      }
+                    }}
+                  ></div>
+                </div>
 
                 {/* Neo-Brutalist Facebook Button */}
                 <button
