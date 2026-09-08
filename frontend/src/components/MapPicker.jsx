@@ -187,13 +187,13 @@ export default function MapPicker({ initialLat, initialLng, onSelect, onClose })
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="brutalist-card bg-white w-full max-w-2xl p-6 space-y-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-        <div className="flex items-center justify-between border-b-3 border-black pb-3">
+        <div className="flex items-center justify-between border-b-2 border-black pb-3">
           <h3 className="text-xl font-black uppercase text-black">
             Chọn Vĩ Độ & Kinh Độ Của Quán
           </h3>
           <button
             onClick={onClose}
-            className="p-1.5 border-2 border-black hover:bg-neutral-100 transition-colors cursor-pointer"
+            className="p-1.5 border-2 border-black rounded-full hover:bg-neutral-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -224,7 +224,7 @@ export default function MapPicker({ initialLat, initialLng, onSelect, onClose })
 
           {/* Search Results Dropdown List */}
           {searchResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 border-3 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-h-48 overflow-y-auto divide-y-2 divide-black z-30">
+            <div className="absolute top-full left-0 right-0 mt-1 border-2 border-black rounded-xl bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-h-48 overflow-y-auto divide-y-2 divide-black z-30">
               {searchResults.map((result, idx) => {
                 const name = result.properties.name || ''
                 const street = result.properties.street || ''
@@ -257,7 +257,7 @@ export default function MapPicker({ initialLat, initialLng, onSelect, onClose })
             <button
               type="button"
               onClick={() => setMapStyle('google-road')}
-              className={`px-3 py-1.5 border-2 border-black text-xs font-black transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${
+              className={`px-3 py-1.5 border-2 border-black rounded-full text-xs font-black transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${
                 mapStyle === 'google-road' ? 'bg-[#ff3e3e] text-white shadow-none translate-x-[1px] translate-y-[1px]' : 'bg-white text-black hover:bg-neutral-100'
               }`}
             >
@@ -266,7 +266,7 @@ export default function MapPicker({ initialLat, initialLng, onSelect, onClose })
             <button
               type="button"
               onClick={() => setMapStyle('google-satellite')}
-              className={`px-3 py-1.5 border-2 border-black text-xs font-black transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${
+              className={`px-3 py-1.5 border-2 border-black rounded-full text-xs font-black transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${
                 mapStyle === 'google-satellite' ? 'bg-[#ff3e3e] text-white shadow-none translate-x-[1px] translate-y-[1px]' : 'bg-white text-black hover:bg-neutral-100'
               }`}
             >
@@ -275,7 +275,7 @@ export default function MapPicker({ initialLat, initialLng, onSelect, onClose })
             <button
               type="button"
               onClick={() => setMapStyle('esri-street')}
-              className={`px-3 py-1.5 border-2 border-black text-xs font-black transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${
+              className={`px-3 py-1.5 border-2 border-black rounded-full text-xs font-black transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${
                 mapStyle === 'esri-street' ? 'bg-[#ff3e3e] text-white shadow-none translate-x-[1px] translate-y-[1px]' : 'bg-white text-black hover:bg-neutral-100'
               }`}
             >
@@ -284,7 +284,7 @@ export default function MapPicker({ initialLat, initialLng, onSelect, onClose })
             <button
               type="button"
               onClick={() => setMapStyle('cartodb-voyager')}
-              className={`px-3 py-1.5 border-2 border-black text-xs font-black transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${
+              className={`px-3 py-1.5 border-2 border-black rounded-full text-xs font-black transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${
                 mapStyle === 'cartodb-voyager' ? 'bg-[#ff3e3e] text-white shadow-none translate-x-[1px] translate-y-[1px]' : 'bg-white text-black hover:bg-neutral-100'
               }`}
             >
@@ -300,7 +300,7 @@ export default function MapPicker({ initialLat, initialLng, onSelect, onClose })
         {/* Map Div */}
         <div 
           ref={mapContainerRef} 
-          className="h-90 w-full border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-neutral-100 relative z-10" 
+          className="h-90 w-full border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-neutral-100 relative z-10" 
         />
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">

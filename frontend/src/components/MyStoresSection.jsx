@@ -151,7 +151,7 @@ export default function MyStoresSection({
   return (
     <div className="space-y-8 animate-fade-in-up">
       {/* Title Banner */}
-      <div className="bg-white text-black border-3 border-black p-6 md:p-8 brutalist-card shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
+      <div className="bg-white text-black border-4 border-black p-6 md:p-8 brutalist-card shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
         <div className="absolute right-4 bottom-0 opacity-10 pointer-events-none select-none">
           <Store className="w-48 h-48" />
         </div>
@@ -193,13 +193,13 @@ export default function MyStoresSection({
 
       {/* Sub-Tab Navigation (Only visible when not deep in forms/views) */}
       {!editingStore && !isAddingNew && !managingDishesForStore && (
-        <div className="flex items-center gap-4 border-b-3 border-black pb-2">
+        <div className="flex items-center gap-4 border-b-4 border-black pb-2">
           <button
             onClick={() => {
               setActiveSubTab('stores')
               if (loadGlobalData) loadGlobalData()
             }}
-            className={`px-4 py-2 text-xs font-black uppercase transition-all border-3 border-black ${
+            className={`px-4 py-2 text-xs font-black uppercase transition-all border-2 border-black rounded-full ${
               activeSubTab === 'stores'
                 ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
                 : 'bg-white text-black hover:bg-neutral-100'
@@ -212,7 +212,7 @@ export default function MyStoresSection({
               setActiveSubTab('submissions')
               if (loadGlobalData) loadGlobalData()
             }}
-            className={`px-4 py-2 text-xs font-black uppercase transition-all border-3 border-black ${
+            className={`px-4 py-2 text-xs font-black uppercase transition-all border-2 border-black rounded-full ${
               activeSubTab === 'submissions'
                 ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
                 : 'bg-white text-black hover:bg-neutral-100'
@@ -402,7 +402,7 @@ export default function MyStoresSection({
               <label className="text-xs uppercase font-extrabold tracking-wider block">Hình Ảnh Banner Quán Ăn</label>
               
               {/* Image Preview & Upload Row */}
-              <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-4 border-3 border-black rounded shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+              <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-4 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                 {editingStore.bannerImageUrl && (
                   <div className="w-24 h-24 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                     <img src={editingStore.bannerImageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
@@ -637,7 +637,7 @@ export default function MyStoresSection({
               <label className="text-xs uppercase font-extrabold tracking-wider block">Hình Ảnh Banner Quán Ăn</label>
               
               {/* Image Preview & Upload Row */}
-              <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-4 border-3 border-black rounded shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+              <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-4 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                 {storeBannerUrl && (
                   <div className="w-24 h-24 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                     <img src={storeBannerUrl} alt="Banner Preview" className="w-full h-full object-cover" />
@@ -757,7 +757,7 @@ export default function MyStoresSection({
                 <label className="text-xs uppercase font-extrabold tracking-wider block">Hình Ảnh Món Ăn</label>
                 
                 {/* Image Preview & Upload Row */}
-                <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-4 border-3 border-black rounded shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-4 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                   {foodImage && (
                     <div className="w-24 h-24 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                       <img src={foodImage} alt="Food Preview" className="w-full h-full object-cover" />
@@ -825,12 +825,12 @@ export default function MyStoresSection({
 
           {/* Right Column: Menu List Preview */}
           <div className="lg:col-span-7 brutalist-card p-6 bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
-            <h3 className="text-xl font-black uppercase border-b-3 border-black pb-3">
+            <h3 className="text-xl font-black uppercase border-b-2 border-black pb-3">
               Thực Đơn Hiện Tại
             </h3>
 
             {!currentSelectedStoreInfo?.foodItems || currentSelectedStoreInfo.foodItems.length === 0 ? (
-              <div className="p-12 text-center text-neutral-500 font-semibold bg-[#f7f6f2] border-3 border-dashed border-neutral-300 rounded">
+              <div className="p-12 text-center text-neutral-500 font-semibold bg-[#f7f6f2] border-2 border-dashed border-neutral-300 rounded-xl">
                 Quán ăn này chưa được cập nhật món ăn nào trong thực đơn.
               </div>
             ) : (
@@ -838,9 +838,9 @@ export default function MyStoresSection({
                 {currentSelectedStoreInfo.foodItems.map((food) => (
                   <div
                     key={food.id}
-                    className="border-3 border-black bg-[#f7f6f2] flex flex-col justify-between shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                    className="border-2 border-black rounded-xl bg-[#f7f6f2] flex flex-col justify-between shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
                   >
-                    <div className="h-32 border-b-3 border-black relative bg-neutral-200 shrink-0">
+                    <div className="h-32 border-b-2 border-black relative bg-neutral-200 shrink-0">
                       <img
                         src={
                           food.imageUrl ||
@@ -873,7 +873,7 @@ export default function MyStoresSection({
                         <button
                           type="button"
                           onClick={() => handleDeleteFoodItem(food.id)}
-                          className="w-10 h-10 rounded-full border-3 border-black bg-white text-red-500 hover:bg-red-50 shadow-[4px_4px_0px_0px_#111111] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#111111] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#111111] transition-all flex items-center justify-center shrink-0"
+                          className="w-10 h-10 rounded-full border-2 border-black bg-white text-red-500 hover:bg-red-50 shadow-[4px_4px_0px_0px_#111111] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#111111] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#111111] transition-all flex items-center justify-center shrink-0"
                           title="Xóa món"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -967,7 +967,7 @@ export default function MyStoresSection({
                     </button>
                     <button
                       onClick={() => handleDeleteStore(st.id)}
-                      className="w-9 h-9 rounded-full border-3 border-black bg-white hover:bg-red-50 text-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center shrink-0"
+                      className="w-9 h-9 rounded-full border-2 border-black bg-white hover:bg-red-50 text-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center shrink-0"
                       title="Xóa Quán"
                     >
                       <Trash2 className="w-4 h-4" />

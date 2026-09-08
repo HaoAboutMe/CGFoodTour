@@ -12,15 +12,15 @@ export default function Header({
   setAuthMode
 }) {
   return (
-    <header className="fixed top-0 inset-x-0 z-40 px-4 py-3 bg-white border-b-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+    <header className="fixed top-0 inset-x-0 z-40 px-4 py-3 bg-white border-b-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         {/* Brand Logo */}
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => switchTab('explore')}>
-          <div className="w-10 h-10 bg-[#ff3e3e] text-white border-2 border-black flex items-center justify-center font-black text-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] select-none">
+          <div className="w-10 h-10 bg-[#ff3e3e] text-white border-2 border-black rounded-lg flex items-center justify-center font-black text-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] select-none">
             C
           </div>
           <span className="font-black text-black tracking-tight text-xl">
-            CầnGiuộc<span className="text-[#ff3e3e] font-black text-sm ml-1 px-2 py-0.5 border-2 border-black bg-white shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)] tracking-wider uppercase">FoodTour</span>
+            CầnGiuộc<span className="text-[#ff3e3e] font-black text-sm ml-1 px-2 py-0.5 border-2 border-black rounded-full bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] tracking-wider uppercase">FoodTour</span>
           </span>
         </div>
 

@@ -98,7 +98,7 @@ export default function AdminSection({
   return (
     <div className="space-y-12 animate-fade-in-up">
       {/* Title Banner */}
-      <div className="bg-[#ff3e3e] text-white border-3 border-black p-6 md:p-8 brutalist-card shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
+      <div className="bg-[#ff3e3e] text-white border-4 border-black p-6 md:p-8 brutalist-card shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
         <div className="absolute right-4 bottom-0 opacity-10 pointer-events-none select-none">
           <Shield className="w-48 h-48" />
         </div>
@@ -114,13 +114,13 @@ export default function AdminSection({
       </div>
 
       {/* Admin Tab Navigation */}
-      <div className="flex items-center gap-4 border-b-3 border-black pb-2">
+      <div className="flex items-center gap-4 border-b-4 border-black pb-2">
         <button
           onClick={() => {
             setActiveAdminTab('users')
             if (loadAdminUsers) loadAdminUsers()
           }}
-          className={`px-6 py-2.5 text-xs font-black uppercase transition-all border-3 border-black ${
+          className={`px-6 py-2.5 text-xs font-black uppercase transition-all border-2 border-black rounded-full ${
             activeAdminTab === 'users'
               ? 'bg-black text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
               : 'bg-white text-black hover:bg-neutral-100'
@@ -133,7 +133,7 @@ export default function AdminSection({
             setActiveAdminTab('requests')
             if (loadAdminPendingStores) loadAdminPendingStores()
           }}
-          className={`px-6 py-2.5 text-xs font-black uppercase transition-all border-3 border-black flex items-center gap-2 ${
+          className={`px-6 py-2.5 text-xs font-black uppercase transition-all border-2 border-black rounded-full flex items-center gap-2 ${
             activeAdminTab === 'requests'
               ? 'bg-black text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
               : 'bg-white text-black hover:bg-neutral-100'
@@ -151,7 +151,7 @@ export default function AdminSection({
             setActiveAdminTab('categories')
             if (loadGlobalData) loadGlobalData()
           }}
-          className={`px-6 py-2.5 text-xs font-black uppercase transition-all border-3 border-black ${
+          className={`px-6 py-2.5 text-xs font-black uppercase transition-all border-2 border-black rounded-full ${
             activeAdminTab === 'categories'
               ? 'bg-black text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
               : 'bg-white text-black hover:bg-neutral-100'
@@ -222,7 +222,7 @@ export default function AdminSection({
                     <label className="text-xs uppercase font-extrabold block text-neutral-700">Hình Ảnh Món Ăn</label>
                     
                     {/* Image Preview & Upload Row */}
-                    <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-3 border-3 border-black rounded shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                    <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-3 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                       {foodImage && (
                         <div className="w-16 h-16 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                           <img src={foodImage} alt="Food Preview" className="w-full h-full object-cover" />
@@ -373,7 +373,7 @@ export default function AdminSection({
               {adminPendingStores.map((st) => (
                 <div
                   key={st.id}
-                  className="p-4 bg-[#f7f6f2] border-3 border-black rounded shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-in-up"
+                  className="p-4 bg-[#f7f6f2] border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-in-up"
                 >
                   <div className="flex gap-4 items-center flex-1 min-w-0">
                     {/* Thumbnail Image */}
@@ -619,7 +619,7 @@ export default function AdminSection({
                   <X className="w-4 h-4" />
                 </button>
 
-                <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between bg-white border-3 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between bg-white border-2 border-black rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                   <div className="space-y-1 min-w-0">
                     <span className="brutalist-badge bg-[#ff3e3e] text-white">
                       {viewingStore.categoryName || 'Chờ Duyệt'}
@@ -632,7 +632,7 @@ export default function AdminSection({
               {/* Main Scrollable Info */}
               <div className="p-6 space-y-6">
                 {/* Info Block 1: Sender Info */}
-                <div className="space-y-3 bg-[#f7f6f2] p-4 border-3 border-black rounded shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                <div className="space-y-3 bg-[#f7f6f2] p-4 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                   <h4 className="text-xs uppercase font-extrabold text-neutral-500 tracking-wider">Thông Tin Người Đăng</h4>
                   <div className="text-xs space-y-1.5 font-semibold text-neutral-700">
                     <p>
@@ -686,14 +686,14 @@ export default function AdminSection({
                 </div>
 
                 {/* Info Block 3: Dishes Menu */}
-                <div className="space-y-4 pt-6 border-t-3 border-black">
+                <div className="space-y-4 pt-6 border-t-2 border-black">
                   <h4 className="text-xs uppercase font-extrabold text-neutral-500 tracking-wider">Thực Đơn Đã Đăng ({viewingStore.foodItems?.length || 0})</h4>
                   {!viewingStore.foodItems || viewingStore.foodItems.length === 0 ? (
                     <p className="text-xs text-neutral-400 italic">Chưa có món ăn nào được đăng kèm.</p>
                   ) : (
                     <div className="space-y-3">
                       {viewingStore.foodItems.map((food) => (
-                        <div key={food.id} className="flex gap-4 p-3 bg-white border-3 border-black rounded shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                        <div key={food.id} className="flex gap-4 p-3 bg-white border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                           <img
                             src={food.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60'}
                             alt={food.name}
@@ -715,7 +715,7 @@ export default function AdminSection({
             </div>
 
             {/* Moderation Actions Footer Toolbar */}
-            <div className="p-4 bg-white border-t-3 border-black sticky bottom-0 flex gap-2 shrink-0 z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+            <div className="p-4 bg-white border-t-2 border-black sticky bottom-0 flex gap-2 shrink-0 z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
               <button
                 type="button"
                 onClick={() => {
@@ -732,7 +732,7 @@ export default function AdminSection({
                   await handleAdminApprove(viewingStore.id)
                   setViewingStore(null)
                 }}
-                className="flex-1 py-2 bg-[#e6fcf5] text-[#0ca678] border-3 border-black font-black text-xs hover:bg-emerald-100 cursor-pointer shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all text-center"
+                className="flex-1 py-2 bg-[#e6fcf5] text-[#0ca678] border-2 border-black rounded-full font-black text-xs hover:bg-emerald-100 cursor-pointer shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all text-center"
               >
                 Phê Duyệt
               </button>

@@ -74,7 +74,7 @@ export default function ExploreSection({
           <div className="flex items-center gap-3 flex-wrap">
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`px-4 py-2.5 border-3 border-black text-xs font-black transition-all ${
+              className={`px-4 py-2 border-2 border-black rounded-full text-xs font-black transition-all ${
                 selectedCategory === null
                   ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
                   : 'bg-white text-black hover:bg-neutral-50 active:translate-y-[1px]'
@@ -88,7 +88,7 @@ export default function ExploreSection({
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2.5 border-3 border-black text-xs font-black flex items-center gap-1.5 whitespace-nowrap transition-all ${
+                  className={`px-4 py-2 border-2 border-black rounded-full text-xs font-black flex items-center gap-1.5 whitespace-nowrap transition-all ${
                     selectedCategory?.id === cat.id
                       ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
                       : 'bg-white text-black hover:bg-neutral-50 active:translate-y-[1px]'
@@ -109,12 +109,12 @@ export default function ExploreSection({
         <div className="lg:col-span-8 space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-[#00f2fe]">LIVE STALLS</span>
-              <h2 className="text-xl md:text-2xl font-bold text-white">Active Food Spots ({filteredStores.length})</h2>
+              <span className="text-[10px] uppercase font-black tracking-[0.2em] text-[#ff3e3e]">LIVE STALLS</span>
+              <h2 className="text-xl md:text-2xl font-black text-black">Active Food Spots ({filteredStores.length})</h2>
             </div>
             <button
               onClick={loadGlobalData}
-              className="p-2 rounded-2xl border border-white/5 bg-neutral-900/60 hover:bg-neutral-900 text-neutral-400 hover:text-white transition-all"
+              className="p-2.5 rounded-full border-2 border-black bg-white hover:bg-[#ff3e3e] hover:text-white text-black transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
               title="Refresh Data"
             >
               <RefreshCw className="w-4 h-4" />
@@ -122,12 +122,10 @@ export default function ExploreSection({
           </div>
 
           {filteredStores.length === 0 ? (
-            <div className="double-bezel-outer">
-              <div className="double-bezel-inner p-12 text-center text-neutral-500 space-y-3">
-                <Compass className="w-10 h-10 mx-auto text-neutral-600 animate-pulse" />
-                <p className="text-sm font-semibold">No food spots match your filters.</p>
-                <p className="text-xs text-neutral-600">Be the first to submit a new gourmet spot in Cần Giuộc!</p>
-              </div>
+            <div className="brutalist-card bg-white p-12 text-center text-neutral-600 space-y-3 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <Compass className="w-10 h-10 mx-auto text-[#ff3e3e] animate-pulse" />
+              <p className="text-sm font-black text-black uppercase">Không tìm thấy quán ăn phù hợp</p>
+              <p className="text-xs text-neutral-600 font-semibold">Hãy là người đầu tiên giới thiệu địa điểm ẩm thực tuyệt vời tại Cần Giuộc!</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

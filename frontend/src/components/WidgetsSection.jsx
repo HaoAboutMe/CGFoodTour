@@ -15,7 +15,7 @@ export default function WidgetsSection({
     <div className="lg:col-span-4 space-y-8">
       {/* 🎲 Random Picker Widget */}
       <div className="brutalist-card bg-white p-6 space-y-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-        <div className="space-y-1 border-b-3 border-black pb-2">
+        <div className="space-y-1 border-b-2 border-black pb-2">
           <span className="brutalist-badge bg-[#ff3e3e] text-white">Gourmet Spinner</span>
           <h3 className="text-lg font-black uppercase text-black flex items-center gap-2 mt-1">
             <Shuffle className="w-5 h-5 text-[#ff3e3e]" /> Chọn Ngẫu Nhiên
@@ -42,7 +42,7 @@ export default function WidgetsSection({
 
         {/* Random pick result animation box */}
         {randomResult && (
-          <div className="p-4 bg-[#f7f6f2] border-3 border-black rounded shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] animate-fade-in-up space-y-3">
+          <div className="p-4 bg-[#f7f6f2] border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] animate-fade-in-up space-y-3">
             <div className="flex justify-between items-start gap-2">
               <h4 className="text-sm font-black uppercase text-black line-clamp-1">{randomResult.name}</h4>
               <span className="brutalist-badge bg-white text-black border-black shrink-0">
@@ -72,7 +72,7 @@ export default function WidgetsSection({
               </button>
               <button
                 onClick={() => setRandomResult(null)}
-                className="p-1.5 border-2 border-black bg-white hover:bg-neutral-100 font-bold text-xs"
+                className="p-1.5 border-2 border-black rounded-full bg-white hover:bg-neutral-100 font-bold text-xs"
               >
                 Đóng
               </button>
@@ -83,7 +83,7 @@ export default function WidgetsSection({
 
       {/* 🏆 Leaderboard Widget */}
       <div className="brutalist-card bg-white p-6 space-y-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-        <div className="flex items-center justify-between border-b-3 border-black pb-2">
+        <div className="flex items-center justify-between border-b-2 border-black pb-2">
           <div className="space-y-1">
             <span className="brutalist-badge bg-[#ff3e3e] text-white">Top Ratings</span>
             <h3 className="text-lg font-black uppercase text-black flex items-center gap-2 mt-1">

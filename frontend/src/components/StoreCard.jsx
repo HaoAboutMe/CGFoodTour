@@ -9,7 +9,7 @@ export default function StoreCard({ store, setActiveStore }) {
     >
       <div>
         {/* Banner Image */}
-        <div className="h-44 w-full relative bg-neutral-200 border-b-3 border-black shrink-0">
+        <div className="h-44 w-full relative bg-neutral-200 border-b-2 border-black shrink-0">
           <img
             src={
               store.bannerImageUrl ||
@@ -20,7 +20,7 @@ export default function StoreCard({ store, setActiveStore }) {
           />
 
           {/* Ratings Badge Overlay */}
-          <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-white border-2 border-black px-2 py-0.5 text-xs font-black text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+          <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-white border-2 border-black rounded-full px-2.5 py-0.5 text-xs font-black text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
             <Trophy className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
             <span>{store.satisfactionRate}%</span>
             <span className="text-[9px] text-neutral-500 font-semibold">({store.totalVotes})</span>
@@ -57,7 +57,7 @@ export default function StoreCard({ store, setActiveStore }) {
       </div>
 
       {/* Footer Info */}
-      <div className="p-4 bg-[#f7f6f2] border-t-3 border-black space-y-2 text-xs font-bold text-neutral-700">
+      <div className="p-4 bg-[#f7f6f2] border-t-2 border-black space-y-2 text-xs font-bold text-neutral-700">
         <div className="flex items-center gap-2">
           <MapPin className="w-3.5 h-3.5 text-[#ff3e3e] shrink-0" />
           <span className="truncate text-black">{store.addressLine || 'Cần Giuộc, Long An'}</span>

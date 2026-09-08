@@ -40,7 +40,7 @@ export default function MyDishesSection({
   return (
     <div className="space-y-8 animate-fade-in-up">
       {/* Title Banner */}
-      <div className="bg-[#ff3e3e] text-white border-3 border-black p-6 md:p-8 brutalist-card shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
+      <div className="bg-[#ff3e3e] text-white border-4 border-black p-6 md:p-8 brutalist-card shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
         <div className="absolute right-4 bottom-0 opacity-10 pointer-events-none select-none">
           <Utensils className="w-48 h-48" />
         </div>
@@ -67,7 +67,7 @@ export default function MyDishesSection({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Form */}
           <div className="lg:col-span-5 brutalist-card p-6 bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
-            <h3 className="text-xl font-black uppercase border-b-3 border-black pb-3 flex items-center gap-2">
+            <h3 className="text-xl font-black uppercase border-b-2 border-black pb-3 flex items-center gap-2">
               <PlusCircle className="w-5 h-5 text-[#ff3e3e]" /> Thêm Món Ăn Mới
             </h3>
 
@@ -152,16 +152,16 @@ export default function MyDishesSection({
 
           {/* Right Column: Menu List Preview */}
           <div className="lg:col-span-7 brutalist-card p-6 bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
-            <h3 className="text-xl font-black uppercase border-b-3 border-black pb-3">
+            <h3 className="text-xl font-black uppercase border-b-2 border-black pb-3">
               Thực Đơn Hiện Tại {selectedStore ? `(${selectedStore.name})` : ''}
             </h3>
 
             {!foodStoreId ? (
-              <div className="p-12 text-center text-neutral-500 font-semibold bg-[#f7f6f2] border-3 border-dashed border-neutral-300 rounded">
+              <div className="p-12 text-center text-neutral-500 font-semibold bg-[#f7f6f2] border-2 border-dashed border-neutral-300 rounded-xl">
                 Vui lòng chọn quán ăn ở cột bên trái để hiển thị danh sách thực đơn hiện tại.
               </div>
             ) : !selectedStore?.foodItems || selectedStore.foodItems.length === 0 ? (
-              <div className="p-12 text-center text-neutral-500 font-semibold bg-[#f7f6f2] border-3 border-dashed border-neutral-300 rounded">
+              <div className="p-12 text-center text-neutral-500 font-semibold bg-[#f7f6f2] border-2 border-dashed border-neutral-300 rounded-xl">
                 Quán ăn này chưa được cập nhật món ăn nào trong thực đơn.
               </div>
             ) : (
@@ -169,9 +169,9 @@ export default function MyDishesSection({
                 {selectedStore.foodItems.map((food) => (
                   <div
                     key={food.id}
-                    className="border-3 border-black bg-[#f7f6f2] flex flex-col justify-between shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                    className="border-2 border-black rounded-xl bg-[#f7f6f2] flex flex-col justify-between shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
                   >
-                    <div className="h-32 border-b-3 border-black relative bg-neutral-200 shrink-0">
+                    <div className="h-32 border-b-2 border-black relative bg-neutral-200 shrink-0">
                       <img
                         src={
                           food.imageUrl ||

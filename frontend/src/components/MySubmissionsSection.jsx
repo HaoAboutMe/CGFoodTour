@@ -20,7 +20,7 @@ export default function MySubmissionsSection({ myStores, loading }) {
   return (
     <div className="space-y-8 animate-fade-in-up">
       {/* Title Banner */}
-      <div className="bg-white text-black border-3 border-black p-6 md:p-8 brutalist-card shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
+      <div className="bg-white text-black border-4 border-black p-6 md:p-8 brutalist-card shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
         <div className="absolute right-4 bottom-0 opacity-10 pointer-events-none select-none">
           <ClipboardList className="w-48 h-48" />
         </div>

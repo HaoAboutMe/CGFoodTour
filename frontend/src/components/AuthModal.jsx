@@ -118,7 +118,7 @@ export default function AuthModal({
 
         <div className="p-8 space-y-6">
           {/* Header */}
-          <div className="text-center space-y-1 border-b-3 border-black pb-3">
+          <div className="text-center space-y-1 border-b-4 border-black pb-3">
             <span className="brutalist-badge bg-[#ff3e3e] text-white">Security Gateway</span>
             <h3 className="text-2xl font-black uppercase text-black mt-2">
               {authMode === 'login' && 'Đăng Nhập'}
@@ -128,6 +128,7 @@ export default function AuthModal({
             </h3>
           </div>
 
+          {/* Helper Component for Social Auth Buttons */}
           {/* Login Form */}
           {authMode === 'login' && (
             <div className="space-y-6">
@@ -187,27 +188,53 @@ export default function AuthModal({
                 <div className="h-0.5 bg-black flex-1" />
               </div>
 
-              {/* Social Buttons */}
-              <div className="space-y-4">
-                <div className="flex flex-col items-center">
-                  <div id="googleSignInBtn" className="w-full flex justify-center min-h-[40px] border-2 border-black"></div>
-                </div>
+              {/* Social Buttons Container */}
+              <div className="space-y-3">
+                {/* Hidden container for Google GSI SDK iframe */}
+                <div id="googleSignInBtn" className="hidden"></div>
 
+                {/* Neo-Brutalist Google Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.google?.accounts?.id) {
+                      window.google.accounts.id.prompt((notification) => {
+                        if (notification.isNotDisplayed() || notification.isSkippedMoment() || notification.isDismissedMoment()) {
+                          const iframeBtn = document.querySelector('#googleSignInBtn iframe') || document.querySelector('#googleSignInBtn div[role="button"]')
+                          if (iframeBtn) iframeBtn.click()
+                        }
+                      })
+                    } else {
+                      alert('Google Sign-In SDK đang khởi tạo, vui lòng thử lại sau giây lát!')
+                    }
+                  }}
+                  className="w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer select-none"
+                >
+                  <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.14C3.26 21.3 7.31 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.59H1.29C.47 8.23 0 10.06 0 12s.47 3.77 1.29 5.41l3.99-3.14z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.59l3.99 3.14c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                  </svg>
+                  <span>Tiếp Tục Với Google</span>
+                </button>
+
+                {/* Neo-Brutalist Facebook Button */}
                 <button
                   type="button"
                   onClick={handleFacebookSDKLogin}
-                  className="w-full brutalist-btn-white py-2.5 text-xs font-black flex items-center justify-center gap-2 bg-[#1877f2] hover:bg-[#166fe5] text-white"
+                  className="w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer select-none"
                 >
-                  <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 fill-[#1877f2] shrink-0" viewBox="0 0 24 24">
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                   </svg>
-                  Đăng Nhập Với Facebook
+                  <span>Tiếp Tục Với Facebook</span>
                 </button>
 
                 {/* Manual Paste Tokens Details */}
                 <details className="text-[10px] text-neutral-600 font-extrabold cursor-pointer">
                   <summary className="hover:text-black">Hoặc nhập OAuth Tokens thủ công (Dev mode)</summary>
-                  <div className="mt-3 space-y-3 bg-[#f7f6f2] p-4 border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="mt-3 space-y-3 bg-[#f7f6f2] p-4 border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#111111]">
                     <div className="space-y-1">
                       <label className="text-[9px] uppercase font-black text-black">Google ID Token JWT</label>
                       <textarea
@@ -215,7 +242,7 @@ export default function AuthModal({
                         onChange={(e) => setSocialGoogleToken(e.target.value)}
                         placeholder="eyJhbGciOiJSUzI1Ni..."
                         rows={2}
-                        className="w-full bg-white border-2 border-black rounded p-2 text-[10px] focus:outline-none"
+                        className="w-full bg-white border-2 border-black rounded-lg p-2 text-[10px] focus:outline-none font-mono"
                       />
                       <button
                         onClick={handleGoogleLoginSubmit}
@@ -232,7 +259,7 @@ export default function AuthModal({
                         onChange={(e) => setSocialFacebookToken(e.target.value)}
                         placeholder="EAACW..."
                         rows={2}
-                        className="w-full bg-white border-2 border-black rounded p-2 text-[10px] focus:outline-none"
+                        className="w-full bg-white border-2 border-black rounded-lg p-2 text-[10px] focus:outline-none font-mono"
                       />
                       <button
                         onClick={handleFacebookLoginSubmit}
@@ -259,85 +286,135 @@ export default function AuthModal({
 
           {/* Registration Form */}
           {authMode === 'register' && (
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs uppercase font-extrabold tracking-wider block">Username</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="foodlover"
-                    value={regUsername}
-                    onChange={(e) => setRegUsername(e.target.value)}
-                    className="brutalist-input"
-                  />
+            <div className="space-y-6">
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs uppercase font-extrabold tracking-wider block">Username</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="foodlover"
+                      value={regUsername}
+                      onChange={(e) => setRegUsername(e.target.value)}
+                      className="brutalist-input"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs uppercase font-extrabold tracking-wider block">Email</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="yourname@gmail.com"
+                      value={regEmail}
+                      onChange={(e) => setRegEmail(e.target.value)}
+                      className="brutalist-input"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs uppercase font-extrabold tracking-wider block">Email</label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="yourname@gmail.com"
-                    value={regEmail}
-                    onChange={(e) => setRegEmail(e.target.value)}
-                    className="brutalist-input"
-                  />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs uppercase font-extrabold tracking-wider block">Họ</label>
+                    <input
+                      type="text"
+                      placeholder="Alex"
+                      value={regFirstname}
+                      onChange={(e) => setRegFirstname(e.target.value)}
+                      className="brutalist-input"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs uppercase font-extrabold tracking-wider block">Tên</label>
+                    <input
+                      type="text"
+                      placeholder="Smith"
+                      value={regLastname}
+                      onChange={(e) => setRegLastname(e.target.value)}
+                      className="brutalist-input"
+                    />
+                  </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs uppercase font-extrabold tracking-wider block">Mật Khẩu</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      className="brutalist-input"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs uppercase font-extrabold tracking-wider block">Ngày Sinh</label>
+                    <input
+                      type="date"
+                      required
+                      value={regDob}
+                      onChange={(e) => setRegDob(e.target.value)}
+                      className="brutalist-input"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full brutalist-btn-red py-3 text-sm font-black"
+                >
+                  Hoàn Tất Đăng Ký ↗
+                </button>
+              </form>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3">
+                <div className="h-0.5 bg-black flex-1" />
+                <span className="text-[10px] uppercase font-black text-black tracking-wider shrink-0">Hoặc Đăng Ký Bằng</span>
+                <div className="h-0.5 bg-black flex-1" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs uppercase font-extrabold tracking-wider block">Họ</label>
-                  <input
-                    type="text"
-                    placeholder="Alex"
-                    value={regFirstname}
-                    onChange={(e) => setRegFirstname(e.target.value)}
-                    className="brutalist-input"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs uppercase font-extrabold tracking-wider block">Tên</label>
-                  <input
-                    type="text"
-                    placeholder="Smith"
-                    value={regLastname}
-                    onChange={(e) => setRegLastname(e.target.value)}
-                    className="brutalist-input"
-                  />
-                </div>
-              </div>
+              {/* Social Buttons for Registration */}
+              <div className="space-y-3">
+                {/* Neo-Brutalist Google Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.google?.accounts?.id) {
+                      window.google.accounts.id.prompt((notification) => {
+                        if (notification.isNotDisplayed() || notification.isSkippedMoment() || notification.isDismissedMoment()) {
+                          const iframeBtn = document.querySelector('#googleSignInBtn iframe') || document.querySelector('#googleSignInBtn div[role="button"]')
+                          if (iframeBtn) iframeBtn.click()
+                        }
+                      })
+                    } else {
+                      alert('Google Sign-In SDK đang khởi tạo, vui lòng thử lại sau giây lát!')
+                    }
+                  }}
+                  className="w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer select-none"
+                >
+                  <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.14C3.26 21.3 7.31 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.59H1.29C.47 8.23 0 10.06 0 12s.47 3.77 1.29 5.41l3.99-3.14z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.59l3.99 3.14c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                  </svg>
+                  <span>Tiếp Tục Với Google</span>
+                </button>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs uppercase font-extrabold tracking-wider block">Mật Khẩu</label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={regPassword}
-                    onChange={(e) => setRegPassword(e.target.value)}
-                    className="brutalist-input"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs uppercase font-extrabold tracking-wider block">Ngày Sinh</label>
-                  <input
-                    type="date"
-                    required
-                    value={regDob}
-                    onChange={(e) => setRegDob(e.target.value)}
-                    className="brutalist-input"
-                  />
-                </div>
+                {/* Neo-Brutalist Facebook Button */}
+                <button
+                  type="button"
+                  onClick={handleFacebookSDKLogin}
+                  className="w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer select-none"
+                >
+                  <svg className="w-5 h-5 fill-[#1877f2] shrink-0" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                  <span>Tiếp Tục Với Facebook</span>
+                </button>
               </div>
-
-              <button
-                type="submit"
-                className="w-full brutalist-btn-red py-3 text-sm font-black"
-              >
-                Hoàn Tất Đăng Ký ↗
-              </button>
 
               <p className="text-center text-xs font-bold text-neutral-600">
                 Đã có tài khoản?{' '}
@@ -349,7 +426,7 @@ export default function AuthModal({
                   Đăng Nhập Tại Đây
                 </button>
               </p>
-            </form>
+            </div>
           )}
 
           {/* Forgot Password Flow */}

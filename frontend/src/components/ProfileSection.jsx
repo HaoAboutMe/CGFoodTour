@@ -49,7 +49,7 @@ export default function ProfileSection({
   return (
     <div className="space-y-12 animate-fade-in-up">
       {/* Title Banner */}
-      <div className="bg-[#ff3e3e] text-white border-3 border-black p-6 md:p-8 brutalist-card shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
+      <div className="bg-[#ff3e3e] text-white border-4 border-black p-6 md:p-8 brutalist-card shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
         <div className="absolute right-4 bottom-0 opacity-10 pointer-events-none select-none">
           <User className="w-48 h-48" />
         </div>
@@ -67,19 +67,19 @@ export default function ProfileSection({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Profile Card left */}
         <div className="lg:col-span-7 brutalist-card p-6 space-y-8 bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-          <div className="border-b-3 border-black pb-3">
+          <div className="border-b-2 border-black pb-3">
             <h3 className="text-xl font-black uppercase tracking-wide flex items-center gap-2">
               <User className="w-5 h-5 text-[#ff3e3e]" /> Profile Details
             </h3>
           </div>
 
           {/* Avatar Upload Container */}
-          <form onSubmit={handleUploadAvatar} className="flex flex-col md:flex-row items-center gap-6 bg-[#f7f6f2] p-6 border-3 border-black rounded shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+          <form onSubmit={handleUploadAvatar} className="flex flex-col md:flex-row items-center gap-6 bg-[#f7f6f2] p-6 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
             <div className="relative group shrink-0">
               <img
                 src={avatarPreview || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg'}
                 alt="avatar preview"
-                className="w-24 h-24 rounded-none border-3 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] object-cover"
+                className="w-24 h-24 rounded-lg border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] object-cover"
               />
               <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer border border-black">
                 <Camera className="w-6 h-6 text-white" />

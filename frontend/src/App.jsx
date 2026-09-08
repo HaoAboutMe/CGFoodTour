@@ -276,7 +276,7 @@ export default function App() {
 
   // Re-render Google Sign-in button when the Auth Modal opens
   useEffect(() => {
-    if (showAuthModal && authMode === 'login') {
+    if (showAuthModal && (authMode === 'login' || authMode === 'register')) {
       const timer = setTimeout(() => {
         try {
           if (window.google) {
@@ -294,11 +294,11 @@ export default function App() {
             const btnEl = document.getElementById('googleSignInBtn')
             if (btnEl) {
               window.google.accounts.id.renderButton(btnEl, {
-                theme: 'dark',
+                theme: 'outline',
                 size: 'large',
-                text: 'signin_with',
-                shape: 'rectangular',
-                width: 380
+                text: 'continue_with',
+                shape: 'pill',
+                width: 340
               })
             }
           }
@@ -1383,8 +1383,8 @@ export default function App() {
 
         {/* LOADING INDICATOR */}
         {loading && (
-          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
-            <div className="bg-white border-3 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center gap-3">
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+            <div className="bg-white border-4 border-black rounded-xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center gap-3">
               <Loader2 className="w-10 h-10 text-[#ff3e3e] animate-spin" />
               <p className="text-xs font-black tracking-wider uppercase text-black">Đang Xử Lý Yêu Cầu...</p>
             </div>
@@ -1632,7 +1632,7 @@ export default function App() {
           <div
             key={toast.id}
             onClick={() => removeToast(toast.id)}
-            className={`pointer-events-auto cursor-pointer p-4 border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-between gap-3 animate-slide-in-right transition-all duration-300 ${
+            className={`pointer-events-auto cursor-pointer p-4 border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-between gap-3 animate-slide-in-right transition-all duration-300 ${
               toast.type === 'error'
                 ? 'bg-[#fff5f5] text-[#c92a2a] hover:bg-[#ffe3e3]'
                 : toast.type === 'info'
