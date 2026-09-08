@@ -13,14 +13,14 @@ export default function DevConsole({
     <>
       {/* FLOATING DEVELOPER NETWORK LOGS CONSOLE */}
       <div
-        className={`fixed bottom-0 right-4 z-40 bg-white border-t-3 border-x-3 border-black transition-all duration-300 flex flex-col shadow-[4px_0px_0px_0px_rgba(0,0,0,1)] ${
+        className={`fixed bottom-0 right-4 z-40 bg-white border-t-2 border-x-2 border-black transition-all duration-300 flex flex-col shadow-[4px_0px_0px_0px_rgba(0,0,0,1)] ${
           isConsoleOpen ? 'h-[360px] w-[500px]' : 'h-11 w-64'
         }`}
       >
         {/* Console Header bar */}
         <div
           onClick={() => setIsConsoleOpen(!isConsoleOpen)}
-          className="px-4 py-3 bg-[#f7f6f2] border-b-3 border-black flex items-center justify-between cursor-pointer select-none"
+          className="px-4 py-3 bg-[#f7f6f2] border-b-2 border-black flex items-center justify-between cursor-pointer select-none"
         >
           <div className="flex items-center gap-2">
             <div className={`w-2.5 h-2.5 rounded-full border border-black ${isConsoleOpen ? 'bg-[#ff3e3e]' : 'bg-neutral-400'}`} />
@@ -96,7 +96,7 @@ export default function DevConsole({
       </div>
 
       {/* Developer API status pill in bottom left corner */}
-      <div className="fixed bottom-4 left-4 z-40 bg-white border-3 border-black px-3 py-1.5 flex items-center gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] select-none">
+      <div className="fixed bottom-4 left-4 z-40 bg-white border-2 border-black rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] select-none">
         <div className={`w-2.5 h-2.5 rounded-full border border-black ${token ? 'bg-emerald-500' : 'bg-[#ff3e3e]'}`} />
         <span className="text-[9px] font-black uppercase tracking-wider text-black">
           {token ? 'Token Đang Hoạt Động' : 'Chưa Đăng Nhập'}

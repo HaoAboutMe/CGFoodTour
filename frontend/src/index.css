@@ -70,8 +70,8 @@ body {
 /* Brutalist Custom Helpers */
 .brutalist-card {
   background-color: #ffffff;
-  border: 3px solid #111111;
-  border-radius: 20px;
+  border: 2px solid #111111;
+  border-radius: 12px;
   box-shadow: 4px 4px 0px 0px #111111;
   transition: all 0.2s ease;
 }
@@ -87,7 +87,7 @@ body {
   justify-content: center;
   background-color: #ff3e3e;
   color: #ffffff;
-  border: 3px solid #111111;
+  border: 2px solid #111111;
   border-radius: 9999px;
   box-shadow: 4px 4px 0px 0px #111111;
   font-weight: 900;
@@ -116,7 +116,7 @@ body {
   justify-content: center;
   background-color: #ffffff;
   color: #111111;
-  border: 3px solid #111111;
+  border: 2px solid #111111;
   border-radius: 9999px;
   box-shadow: 4px 4px 0px 0px #111111;
   font-weight: 900;
@@ -142,7 +142,7 @@ body {
 .brutalist-input {
   width: 100%;
   background-color: #ffffff;
-  border: 3px solid #111111;
+  border: 2px solid #111111;
   border-radius: 9999px;
   padding: 10px 20px;
   font-size: 0.875rem;
@@ -188,3 +188,14 @@ body {
     background-position: -200% 0;
   }
 }
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
