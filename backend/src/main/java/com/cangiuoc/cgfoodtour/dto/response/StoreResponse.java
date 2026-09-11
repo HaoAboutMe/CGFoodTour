@@ -35,6 +35,11 @@ public class StoreResponse {
     String ownerLastname;
     String status;
     String rejectionReason;
+    Boolean hiddenByAdmin;
+    String hideReason;
+    Boolean recoveryRequested;
+    String recoveryRequestReason;
+    String recoveryDeclineReason;
 
     // Counters
     Integer countVerySatisfied;

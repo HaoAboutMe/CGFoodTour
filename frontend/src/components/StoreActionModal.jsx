@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { AlertTriangle, EyeOff, RotateCcw, Trash2, X } from 'lucide-react'
 
 /**
@@ -27,12 +28,14 @@ export default function StoreActionModal({
 
   if (!isOpen || !store) return null
 
-  const isReasonRequired = isStaffOrAdmin && (actionType === 'HIDE' || actionType === 'HARD_DELETE')
+  const isReasonRequired =
+    actionType === 'REQUEST_RECOVERY' ||
+    (isStaffOrAdmin && (actionType === 'HIDE' || actionType === 'HARD_DELETE' || actionType === 'REJECT_RECOVERY_REQUEST'))
 
   const handleFormSubmit = (e) => {
     e.preventDefault()
     if (isReasonRequired && !reason.trim()) {
-      setError('Vui lòng nhập lý do thực hiện thao tác này (Bắt buộc đối với Quản trị viên).')
+      setError('Vui lòng nhập lý do thực hiện thao tác này.')
       return
     }
     setError('')
@@ -46,7 +49,8 @@ export default function StoreActionModal({
           title: 'Ẩn Quán Ăn',
           icon: <EyeOff className="w-6 h-6 text-amber-600" />,
           badgeBg: 'bg-amber-100 text-amber-800 border-amber-500',
-          btnBg: 'brutalist-btn-yellow',
+          btnBg: 'brutalist-btn-yellow font-black uppercase flex items-center justify-center gap-1.5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]',
+          btnText: 'Ẩn Quán Ăn',
           description: `Quán "${store.name}" sẽ bị ẩn khỏi danh sách hiển thị cho khách hàng, nhưng vẫn được lưu trữ trong hệ thống.`
         }
       case 'RECOVER':
@@ -57,9 +61,25 @@ export default function StoreActionModal({
           btnBg: 'bg-emerald-500 text-white hover:bg-emerald-600 border-2 border-black font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]',
           description: `Quán "${store.name}" sẽ được khôi phục về trạng thái hoạt động bình thường (APPROVED).`
         }
+      case 'REQUEST_RECOVERY':
+        return {
+          title: 'Gửi Yêu Cầu Khôi Phục Quán',
+          icon: <RotateCcw className="w-6 h-6 text-indigo-600" />,
+          badgeBg: 'bg-indigo-100 text-indigo-800 border-indigo-500',
+          btnBg: 'bg-indigo-600 text-white hover:bg-indigo-700 border-2 border-black font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]',
+          description: `Vui lòng nhập lý do giải trình để gửi yêu cầu Quản trị viên xem xét khôi phục lại quán "${store.name}".`
+        }
+      case 'REJECT_RECOVERY_REQUEST':
+        return {
+          title: 'Từ Chối Yêu Cầu Khôi Phục',
+          icon: <X className="w-6 h-6 text-red-600" />,
+          badgeBg: 'bg-red-100 text-red-800 border-red-500',
+          btnBg: 'brutalist-btn-red',
+          description: `Từ chối yêu cầu khôi phục của Chủ quán đối với "${store.name}". Quán sẽ tiếp tục ở trạng thái ĐÃ ẨN.`
+        }
       case 'HARD_DELETE':
         return {
-          title: 'Xóa Vĩnh Viễn Quán Ăn',
+          title: 'Xóa VĨNH VIỄN Quán Ăn',
           icon: <Trash2 className="w-6 h-6 text-red-600" />,
           badgeBg: 'bg-red-100 text-red-800 border-red-500',
           btnBg: 'brutalist-btn-red',
@@ -78,8 +98,8 @@ export default function StoreActionModal({
 
   const config = getModalConfig()
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+  return createPortal(
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
       <div className="bg-white border-4 border-black p-6 md:p-8 max-w-md w-full shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between border-b-3 border-black pb-4">
@@ -103,37 +123,39 @@ export default function StoreActionModal({
             {config.description}
           </p>
 
-          {/* Reason Input Field */}
+          {/* Reason Input Field (Only for HIDE and HARD_DELETE) */}
           <form onSubmit={handleFormSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs uppercase font-extrabold tracking-wider block">
-                Lý Do Thao Tác{' '}
-                {isReasonRequired ? (
-                  <span className="text-red-600 font-bold">* (Bắt buộc)</span>
-                ) : (
-                  <span className="text-neutral-400 font-normal">(Không bắt buộc)</span>
+            {actionType !== 'RECOVER' && (
+              <div className="space-y-2">
+                <label className="text-xs uppercase font-extrabold tracking-wider block">
+                  Lý Do Thao Tác{' '}
+                  {isReasonRequired ? (
+                    <span className="text-red-600 font-bold">* (Bắt buộc)</span>
+                  ) : (
+                    <span className="text-neutral-400 font-normal">(Không bắt buộc)</span>
+                  )}
+                </label>
+                <textarea
+                  value={reason}
+                  onChange={(e) => {
+                    setReason(e.target.value)
+                    if (error) setError('')
+                  }}
+                  rows={3}
+                  placeholder={
+                    isReasonRequired
+                      ? 'Nhập lý do chi tiết (Ví dụ: Quán tạm ngừng kinh doanh, vi phạm quy định...)'
+                      : 'Nhập ghi chú hoặc lý do nếu có...'
+                  }
+                  className={`brutalist-input w-full ${error ? 'border-red-500 bg-red-50' : ''}`}
+                />
+                {error && (
+                  <p className="text-xs font-bold text-red-600 bg-red-100 border border-red-400 p-2 rounded">
+                    {error}
+                  </p>
                 )}
-              </label>
-              <textarea
-                value={reason}
-                onChange={(e) => {
-                  setReason(e.target.value)
-                  if (error) setError('')
-                }}
-                rows={3}
-                placeholder={
-                  isReasonRequired
-                    ? 'Nhập lý do chi tiết (Ví dụ: Quán tạm ngừng kinh doanh, vi phạm quy định...)'
-                    : 'Nhập ghi chú hoặc lý do nếu có...'
-                }
-                className={`brutalist-input w-full ${error ? 'border-red-500 bg-red-50' : ''}`}
-              />
-              {error && (
-                <p className="text-xs font-bold text-red-600 bg-red-100 border border-red-400 p-2 rounded">
-                  {error}
-                </p>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="flex items-center justify-end gap-3 pt-2">
@@ -147,15 +169,16 @@ export default function StoreActionModal({
               </button>
               <button
                 type="submit"
-                disabled={loading}
-                className={`py-2 px-5 text-xs ${config.btnBg}`}
+                disabled={loading || (isReasonRequired && !reason.trim())}
+                className={`py-2 px-5 text-xs ${config.btnBg} disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                {loading ? 'Đang Xử Lý...' : 'Xác Nhận'}
+                {loading ? 'Đang Xử Lý...' : (config.btnText || 'Xác Nhận')}
               </button>
             </div>
           </form>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

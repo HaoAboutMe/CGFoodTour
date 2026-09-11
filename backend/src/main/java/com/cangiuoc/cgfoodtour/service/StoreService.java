@@ -153,8 +153,8 @@ public class StoreService {
         storeMapper.updateStore(store, request);
         store.setCategory(category);
 
-        // If updated by owner, reset verification & status to pending for Admin review
-        if (!userIsAdmin) {
+        // If updated by owner, reset verification & status to pending for Admin review (unless store is currently HIDDEN)
+        if (!userIsAdmin && store.getStatus() != StoreStatus.HIDDEN) {
             store.setStatus(StoreStatus.PENDING);
             store.setIsVerified(false);
             store.setRejectionReason(null);
@@ -195,6 +195,8 @@ public class StoreService {
         }
 
         store.setStatus(StoreStatus.HIDDEN);
+        store.setHiddenByAdmin(userIsAdmin);
+        store.setHideReason(reason);
         store = storeRepository.save(store);
 
         // Audit log
@@ -237,8 +239,18 @@ public class StoreService {
             throw new AppException(ErrorCode.INVALID_STORE_STATUS_FOR_RECOVER);
         }
 
+        // Business rule: If store was hidden by Admin, only Admin can recover it
+        if (Boolean.TRUE.equals(store.getHiddenByAdmin()) && !userIsAdmin) {
+            throw new AppException(ErrorCode.STORE_HIDDEN_BY_ADMIN_CANNOT_RECOVER);
+        }
+
         String reason = request != null ? request.getReason() : null;
         store.setStatus(StoreStatus.APPROVED);
+        store.setHiddenByAdmin(false);
+        store.setHideReason(null);
+        store.setRecoveryRequested(false);
+        store.setRecoveryRequestReason(null);
+        store.setRecoveryDeclineReason(null);
         store = storeRepository.save(store);
 
         // Audit log
@@ -252,6 +264,101 @@ public class StoreService {
                 .reason(reason)
                 .build();
         storeAuditLogRepository.save(auditLog);
+
+        return toStoreResponse(store);
+    }
+
+    @Transactional
+    public StoreResponse requestStoreRecovery(String id, StoreActionRequest request, String email) {
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        boolean userIsAdmin = isAdmin(user);
+        boolean isOwner = store.getOwner() != null && user.getId().equals(store.getOwner().getId());
+
+        if (!userIsAdmin && !isOwner) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (store.getStatus() != StoreStatus.HIDDEN || !Boolean.TRUE.equals(store.getHiddenByAdmin())) {
+            throw new AppException(ErrorCode.INVALID_STORE_STATUS_FOR_RECOVER);
+        }
+
+        String reason = request != null ? request.getReason() : null;
+        if (reason == null || reason.isBlank()) {
+            throw new AppException(ErrorCode.RECOVERY_REQUEST_REASON_REQUIRED);
+        }
+
+        store.setRecoveryRequested(true);
+        store.setRecoveryRequestReason(reason);
+        store.setRecoveryDeclineReason(null);
+        store = storeRepository.save(store);
+
+        // Audit log
+        StoreAuditLog auditLog = StoreAuditLog.builder()
+                .storeId(store.getId())
+                .storeName(store.getName())
+                .actorId(user.getId())
+                .actorEmail(user.getEmail())
+                .actorRole(userIsAdmin ? "ADMIN" : "OWNER")
+                .actionType("REQUEST_RECOVERY")
+                .reason(reason)
+                .build();
+        storeAuditLogRepository.save(auditLog);
+
+        return toStoreResponse(store);
+    }
+
+    @Transactional
+    public StoreResponse rejectRecoveryRequest(String id, StoreActionRequest request, String email) {
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if (!isAdmin(user)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (!Boolean.TRUE.equals(store.getRecoveryRequested())) {
+            throw new AppException(ErrorCode.NO_PENDING_RECOVERY_REQUEST);
+        }
+
+        String reason = request != null ? request.getReason() : null;
+        if (reason == null || reason.isBlank()) {
+            throw new AppException(ErrorCode.STORE_REASON_REQUIRED);
+        }
+
+        store.setRecoveryRequested(false);
+        store.setRecoveryDeclineReason(reason);
+        // Note: Store status STAYS as HIDDEN and hiddenByAdmin STAYS as true!
+        store = storeRepository.save(store);
+
+        // Audit log
+        StoreAuditLog auditLog = StoreAuditLog.builder()
+                .storeId(store.getId())
+                .storeName(store.getName())
+                .actorId(user.getId())
+                .actorEmail(user.getEmail())
+                .actorRole("ADMIN")
+                .actionType("REJECT_RECOVERY_REQUEST")
+                .reason(reason)
+                .build();
+        storeAuditLogRepository.save(auditLog);
+
+        // Send notification email to owner
+        if (store.getOwner() != null && store.getOwner().getEmail() != null) {
+            emailService.sendStoreStatusNotificationEmail(
+                    store.getOwner().getEmail(),
+                    store.getName(),
+                    "REJECT_RECOVERY_REQUEST",
+                    "Từ chối yêu cầu khôi phục. Lý do: " + reason
+            );
+        }
 
         return toStoreResponse(store);
     }

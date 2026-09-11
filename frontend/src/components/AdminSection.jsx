@@ -29,6 +29,7 @@ export default function AdminSection({
   handleAdminReject,
   handleHideStore,
   handleRecoverStore,
+  handleRejectRecoveryRequest,
   handleHardDeleteStore,
   adminUsersList,
   handleOpenAdminEditUser,
@@ -69,15 +70,22 @@ export default function AdminSection({
   const handleAdminActionConfirm = async ({ reason }) => {
     if (!adminActionModalStore || !adminActionModalType) return
     const storeId = adminActionModalStore.id
-    let success = false
+    let resData = null
     if (adminActionModalType === 'HIDE') {
-      if (handleHideStore) success = await handleHideStore(storeId, reason)
+      if (handleHideStore) resData = await handleHideStore(storeId, reason)
     } else if (adminActionModalType === 'RECOVER') {
-      if (handleRecoverStore) success = await handleRecoverStore(storeId, reason)
+      if (handleRecoverStore) resData = await handleRecoverStore(storeId, reason)
+    } else if (adminActionModalType === 'REJECT_RECOVERY_REQUEST') {
+      if (handleRejectRecoveryRequest) resData = await handleRejectRecoveryRequest(storeId, reason)
     } else if (adminActionModalType === 'HARD_DELETE') {
-      if (handleHardDeleteStore) success = await handleHardDeleteStore(storeId, reason)
+      if (handleHardDeleteStore) resData = await handleHardDeleteStore(storeId, reason)
     }
-    if (success) {
+    if (resData) {
+      if (adminActionModalType === 'HARD_DELETE' && viewingStore?.id === storeId) {
+        setViewingStore(null)
+      } else if (viewingStore?.id === storeId && typeof resData === 'object') {
+        setViewingStore(resData)
+      }
       setAdminActionModalStore(null)
       setAdminActionModalType(null)
     }
@@ -142,6 +150,25 @@ export default function AdminSection({
       <div className="flex items-center gap-4 border-b-4 border-black pb-2">
         <button
           onClick={() => {
+            setActiveAdminTab('stores')
+            if (loadGlobalData) loadGlobalData()
+            if (loadAdminPendingStores) loadAdminPendingStores()
+          }}
+          className={`px-6 py-2.5 text-xs font-black uppercase transition-all border-2 border-black rounded-full flex items-center gap-2 ${
+            activeAdminTab === 'stores'
+              ? 'bg-black text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
+              : 'bg-white text-black hover:bg-neutral-100'
+          }`}
+        >
+          Quản Lý Quán
+          {(adminPendingStores.length + stores.filter(s => s.recoveryRequested).length) > 0 && (
+            <span className="bg-[#ff3e3e] text-white px-2 py-0.5 rounded-full text-[10px] font-black animate-pulse border border-black">
+              {adminPendingStores.length + stores.filter(s => s.recoveryRequested).length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => {
             setActiveAdminTab('users')
             if (loadAdminUsers) loadAdminUsers()
           }}
@@ -152,37 +179,6 @@ export default function AdminSection({
           }`}
         >
           Người Dùng
-        </button>
-        <button
-          onClick={() => {
-            setActiveAdminTab('requests')
-            if (loadAdminPendingStores) loadAdminPendingStores()
-          }}
-          className={`px-6 py-2.5 text-xs font-black uppercase transition-all border-2 border-black rounded-full flex items-center gap-2 ${
-            activeAdminTab === 'requests'
-              ? 'bg-black text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
-              : 'bg-white text-black hover:bg-neutral-100'
-          }`}
-        >
-          Yêu Cầu Phê Duyệt
-          {adminPendingStores.length > 0 && (
-            <span className="bg-[#ff3e3e] text-white px-2 py-0.5 rounded-full text-[10px] font-black animate-pulse border border-black">
-              {adminPendingStores.length}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => {
-            setActiveAdminTab('stores')
-            if (loadGlobalData) loadGlobalData()
-          }}
-          className={`px-6 py-2.5 text-xs font-black uppercase transition-all border-2 border-black rounded-full ${
-            activeAdminTab === 'stores'
-              ? 'bg-black text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
-              : 'bg-white text-black hover:bg-neutral-100'
-          }`}
-        >
-          Quản Lý Quán
         </button>
         <button
           onClick={() => {
@@ -396,76 +392,7 @@ export default function AdminSection({
         </div>
       )}
 
-      {activeAdminTab === 'requests' && (
-        /* Requests/Yêu Cầu Tab (Full Width / Max width centered) */
-        <div className="brutalist-card bg-white p-6 md:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] max-w-4xl mx-auto space-y-6">
-          <h3 className="text-lg font-black uppercase border-b-4 border-black pb-2 text-black">
-            Yêu Cầu Đang Chờ Phê Duyệt
-          </h3>
-          {adminPendingStores.length === 0 ? (
-            <p className="text-xs text-neutral-500 font-semibold bg-[#f7f6f2] p-4 border-2 border-dashed border-neutral-300 rounded text-center">
-              Không có yêu cầu duyệt quán ăn nào tại thời điểm này.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {adminPendingStores.map((st) => (
-                <div
-                  key={st.id}
-                  className="p-4 bg-[#f7f6f2] border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-in-up"
-                >
-                  <div className="flex gap-4 items-center flex-1 min-w-0">
-                    {/* Thumbnail Image */}
-                    <img
-                      src={st.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=150&auto=format&fit=crop&q=60'}
-                      alt={st.name}
-                      className="w-16 h-16 border-2 border-black object-cover shrink-0 rounded shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
-                    />
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <p className="font-extrabold text-sm text-black truncate">{st.name}</p>
-                      <p className="text-xs font-semibold text-neutral-600 truncate">
-                        Người gửi: <span className="font-extrabold text-black">{st.ownerUsername || 'N/A'}</span> 
-                        {st.ownerLastname || st.ownerFirstname ? ` (${[st.ownerLastname, st.ownerFirstname].filter(Boolean).join(' ')})` : ''}
-                      </p>
-                      {st.ownerEmail && (
-                        <p className="text-xs font-semibold text-neutral-500 truncate">
-                          Email: <span className="font-bold text-black">{st.ownerEmail}</span>
-                        </p>
-                      )}
-                      <p className="text-[10px] text-neutral-500 font-semibold truncate">Địa chỉ: {st.addressLine}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => setViewingStore(st)}
-                      className="brutalist-badge bg-white text-black border-black hover:bg-neutral-100 cursor-pointer shadow-none py-1.5 px-3 font-black text-[10px]"
-                    >
-                      Xem Chi Tiết
-                    </button>
-                    <button
-                      onClick={() => handleAdminApprove(st.id)}
-                      className="brutalist-badge bg-[#e6fcf5] text-[#0ca678] border-[#0ca678] hover:bg-emerald-100 cursor-pointer shadow-none py-1.5 px-3 font-black text-[10px]"
-                    >
-                      Duyệt (Approve)
-                    </button>
-                    <button
-                      onClick={() => {
-                        setViewingStore(st)
-                        setRejectionReason('')
-                        setTimeout(() => {
-                          setRejectingStore(st)
-                        }, 250)
-                      }}
-                      className="brutalist-badge bg-[#fff5f5] text-[#c92a2a] border-[#c92a2a] hover:bg-red-100 cursor-pointer shadow-none py-1.5 px-3 font-black text-[10px]"
-                    >
-                      Từ Chối (Reject)
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+
 
       {activeAdminTab === 'categories' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -576,17 +503,29 @@ export default function AdminSection({
             {/* Status Filter */}
             <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
               <span className="text-xs font-black uppercase text-neutral-500 shrink-0">Trạng Thái:</span>
-              {['ALL', 'APPROVED', 'HIDDEN', 'PENDING', 'REJECTED'].map((st) => (
+              {[
+                { id: 'ALL', label: 'Tất Cả' },
+                { id: 'PENDING', label: 'Chờ Duyệt', badge: adminPendingStores.length },
+                { id: 'RECOVERY_REQUESTED', label: 'Yêu Cầu Khôi Phục', badge: stores.filter((s) => s.recoveryRequested).length },
+                { id: 'APPROVED', label: 'Đã Duyệt' },
+                { id: 'HIDDEN', label: 'Đã Ẩn' },
+                { id: 'REJECTED', label: 'Từ Chối' }
+              ].map((filter) => (
                 <button
-                  key={st}
-                  onClick={() => setStoreStatusFilter(st)}
-                  className={`px-3 py-1 text-[11px] font-black uppercase border-2 border-black rounded-full transition-all shrink-0 ${
-                    storeStatusFilter === st
+                  key={filter.id}
+                  onClick={() => setStoreStatusFilter(filter.id)}
+                  className={`px-3 py-1 text-[11px] font-black uppercase border-2 border-black rounded-full transition-all shrink-0 flex items-center gap-1.5 ${
+                    storeStatusFilter === filter.id
                       ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
                       : 'bg-white text-black hover:bg-neutral-100'
                   }`}
                 >
-                  {st === 'ALL' ? 'Tất Cả' : st === 'APPROVED' ? 'Đã Duyệt' : st === 'HIDDEN' ? 'Đã Ẩn' : st === 'PENDING' ? 'Chờ Duyệt' : 'Từ Chối'}
+                  <span>{filter.label}</span>
+                  {filter.badge > 0 && (
+                    <span className="bg-[#ff3e3e] text-white px-1.5 py-0.2 rounded-full text-[9px] font-black animate-pulse border border-black leading-none">
+                      {filter.badge}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -594,15 +533,23 @@ export default function AdminSection({
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {stores
-              .filter((s) => storeStatusFilter === 'ALL' || s.status === storeStatusFilter)
+              .filter((s) => {
+                if (storeStatusFilter === 'ALL') return true
+                if (storeStatusFilter === 'RECOVERY_REQUESTED') return s.recoveryRequested
+                return s.status === storeStatusFilter
+              })
               .map((st) => (
-                <div key={st.id} className="brutalist-card bg-white overflow-hidden flex flex-col justify-between border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <div
+                  key={st.id}
+                  onClick={() => setViewingStore(st)}
+                  className="brutalist-card bg-white overflow-hidden flex flex-col justify-between h-full border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer group"
+                >
                   <div>
-                    <div className="h-36 w-full border-b-2 border-black relative bg-neutral-200">
+                    <div className="h-36 w-full border-b-2 border-black relative bg-neutral-200 overflow-hidden">
                       <img
                         src={st.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'}
                         alt={st.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-2 left-2">
                         <span className="brutalist-badge bg-white text-black text-[10px]">
@@ -611,7 +558,7 @@ export default function AdminSection({
                       </div>
                     </div>
                     <div className="p-4 space-y-2">
-                      <h4 className="font-extrabold text-base text-black line-clamp-1">{st.name}</h4>
+                      <h4 className="font-extrabold text-base text-black line-clamp-1 group-hover:text-[#ff3e3e] transition-colors">{st.name}</h4>
                       <p className="text-xs text-neutral-600 truncate">Địa chỉ: {st.addressLine}</p>
                       <p className="text-[11px] text-neutral-500 font-semibold">Chủ quán: {st.ownerUsername || st.ownerEmail || 'N/A'}</p>
 
@@ -621,9 +568,21 @@ export default function AdminSection({
                             APPROVED (Công khai)
                           </span>
                         ) : st.status === 'HIDDEN' ? (
-                          <span className="brutalist-badge bg-[#fff9db] text-[#b45309] border-[#b45309]">
-                            HIDDEN (Đã Ẩn)
-                          </span>
+                          <div className="space-y-1">
+                            <span className="brutalist-badge bg-[#fff9db] text-[#b45309] border-[#b45309]">
+                              HIDDEN (Đã Ẩn)
+                            </span>
+                            {st.recoveryRequested && (
+                              <div className="text-[10px] font-bold text-indigo-900 bg-indigo-50 p-1.5 border border-indigo-300 rounded italic mt-1">
+                                Yêu cầu khôi phục: “{st.recoveryRequestReason}”
+                              </div>
+                            )}
+                            {st.hideReason && !st.recoveryRequested && (
+                              <p className="text-[10px] font-bold text-amber-800 bg-amber-50 p-1.5 border border-amber-300 rounded mt-1 italic">
+                                Lý do ẩn: “{st.hideReason}”
+                              </p>
+                            )}
+                          </div>
                         ) : st.status === 'REJECTED' ? (
                           <span className="brutalist-badge bg-[#fff5f5] text-[#c92a2a] border-[#c92a2a]">
                             REJECTED (Bị từ chối)
@@ -637,13 +596,56 @@ export default function AdminSection({
                     </div>
                   </div>
 
-                  <div className="p-3 bg-[#f7f6f2] border-t-2 border-black flex flex-wrap gap-2 items-center">
-                    <button
-                      onClick={() => setViewingStore(st)}
-                      className="flex-1 brutalist-btn-white py-1 px-2 text-[10px] font-black uppercase text-center"
-                    >
-                      Chi Tiết
-                    </button>
+                  {/* Actions Bar (stops propagation so clicking buttons doesn't trigger card view) */}
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-3 bg-[#f7f6f2] border-t-2 border-black flex items-center justify-end gap-2 shrink-0"
+                  >
+                    {st.status === 'PENDING' && (
+                      <div className="flex items-center gap-2 flex-1 justify-end">
+                        <button
+                          onClick={() => handleAdminApprove(st.id)}
+                          className="flex-1 py-1.5 px-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase border-2 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all"
+                        >
+                          Duyệt
+                        </button>
+                        <button
+                          onClick={() => {
+                            setViewingStore(st)
+                            setRejectionReason('')
+                            setTimeout(() => {
+                              setRejectingStore(st)
+                            }, 250)
+                          }}
+                          className="flex-1 py-1.5 px-3 bg-[#ff3e3e] hover:bg-[#e03535] text-white font-black text-xs uppercase border-2 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all"
+                        >
+                          Từ Chối
+                        </button>
+                      </div>
+                    )}
+
+                    {st.status === 'HIDDEN' && st.recoveryRequested && (
+                      <div className="flex items-center gap-2 flex-1 justify-end">
+                        <button
+                          onClick={() => {
+                            setAdminActionModalStore(st)
+                            setAdminActionModalType('RECOVER')
+                          }}
+                          className="flex-1 py-1.5 px-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase border-2 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all"
+                        >
+                          Duyệt KP
+                        </button>
+                        <button
+                          onClick={() => {
+                            setAdminActionModalStore(st)
+                            setAdminActionModalType('REJECT_RECOVERY_REQUEST')
+                          }}
+                          className="flex-1 py-1.5 px-3 bg-[#ff3e3e] hover:bg-[#e03535] text-white font-black text-xs uppercase border-2 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all"
+                        >
+                          Từ Chối KP
+                        </button>
+                      </div>
+                    )}
 
                     {st.status === 'APPROVED' && (
                       <button
@@ -651,21 +653,21 @@ export default function AdminSection({
                           setAdminActionModalStore(st)
                           setAdminActionModalType('HIDE')
                         }}
-                        className="brutalist-btn-yellow py-1 px-2 text-[10px] font-black uppercase flex items-center gap-1"
+                        className="py-1.5 px-3 bg-[#fab005] hover:bg-[#e69c00] text-black font-black text-xs uppercase border-2 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center justify-center gap-1"
                       >
-                        <EyeOff className="w-3 h-3" /> Ẩn Quán
+                        <EyeOff className="w-3.5 h-3.5" /> Ẩn Quán
                       </button>
                     )}
 
-                    {st.status === 'HIDDEN' && (
+                    {st.status === 'HIDDEN' && !st.recoveryRequested && (
                       <button
                         onClick={() => {
                           setAdminActionModalStore(st)
                           setAdminActionModalType('RECOVER')
                         }}
-                        className="bg-emerald-500 text-white hover:bg-emerald-600 border-2 border-black py-1 px-2 text-[10px] font-black uppercase flex items-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                        className="py-1.5 px-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase border-2 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center justify-center gap-1"
                       >
-                        <RotateCcw className="w-3 h-3" /> Hiện Quán
+                        <RotateCcw className="w-3.5 h-3.5" /> Hiện Quán
                       </button>
                     )}
 
@@ -674,7 +676,7 @@ export default function AdminSection({
                         setAdminActionModalStore(st)
                         setAdminActionModalType('HARD_DELETE')
                       }}
-                      className="p-1.5 border-2 border-black bg-white hover:bg-red-50 text-red-600 rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                      className="w-8 h-8 bg-white hover:bg-red-50 text-red-600 border-2 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center justify-center shrink-0"
                       title="Xóa Vĩnh Viễn"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -873,26 +875,95 @@ export default function AdminSection({
 
             {/* Moderation Actions Footer Toolbar */}
             <div className="p-4 bg-white border-t-2 border-black sticky bottom-0 flex gap-2 shrink-0 z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-              <button
-                type="button"
-                onClick={() => {
-                  setRejectingStore(viewingStore)
-                  setRejectionReason('')
-                }}
-                className="flex-1 brutalist-btn-red text-xs py-2"
-              >
-                Từ Chối
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  await handleAdminApprove(viewingStore.id)
-                  setViewingStore(null)
-                }}
-                className="flex-1 py-2 bg-[#e6fcf5] text-[#0ca678] border-2 border-black rounded-full font-black text-xs hover:bg-emerald-100 cursor-pointer shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all text-center"
-              >
-                Phê Duyệt
-              </button>
+              {viewingStore.status === 'PENDING' ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRejectingStore(viewingStore)
+                      setRejectionReason('')
+                    }}
+                    className="flex-1 brutalist-btn-red text-xs py-2"
+                  >
+                    Từ Chối
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const resData = await handleAdminApprove(viewingStore.id)
+                      if (resData && typeof resData === 'object') {
+                        setViewingStore(resData)
+                      }
+                    }}
+                    className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white border-2 border-black rounded-full font-black text-xs cursor-pointer shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all text-center"
+                  >
+                    Phê Duyệt
+                  </button>
+                </>
+              ) : viewingStore.status === 'HIDDEN' && viewingStore.recoveryRequested ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAdminActionModalStore(viewingStore)
+                      setAdminActionModalType('REJECT_RECOVERY_REQUEST')
+                    }}
+                    className="flex-1 brutalist-btn-red text-xs py-2"
+                  >
+                    Từ Chối KP
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAdminActionModalStore(viewingStore)
+                      setAdminActionModalType('RECOVER')
+                    }}
+                    className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white border-2 border-black rounded-full font-black text-xs cursor-pointer shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all text-center"
+                  >
+                    Duyệt Khôi Phục
+                  </button>
+                </>
+              ) : viewingStore.status === 'APPROVED' ? (
+                <div className="w-full flex items-center justify-between gap-2">
+                  <span className="brutalist-badge bg-[#e6fcf5] text-[#0ca678] border-[#0ca678] text-xs py-1.5 px-3">
+                    Đã Duyệt (Công khai)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAdminActionModalStore(viewingStore)
+                      setAdminActionModalType('HIDE')
+                    }}
+                    className="py-1.5 px-4 bg-[#fab005] hover:bg-[#e69c00] text-black font-black text-xs uppercase border-2 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-1"
+                  >
+                    <EyeOff className="w-3.5 h-3.5" /> Ẩn Quán
+                  </button>
+                </div>
+              ) : viewingStore.status === 'HIDDEN' ? (
+                <div className="w-full flex items-center justify-between gap-2">
+                  <span className="brutalist-badge bg-[#fff9db] text-[#b45309] border-[#b45309] text-xs py-1.5 px-3">
+                    Đã Ẩn (Bị Ban)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAdminActionModalStore(viewingStore)
+                      setAdminActionModalType('RECOVER')
+                    }}
+                    className="py-1.5 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase border-2 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-1"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" /> Hiện Quán
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setViewingStore(null)}
+                  className="w-full brutalist-btn-white text-xs py-2"
+                >
+                  Đóng Chi Tiết
+                </button>
+              )}
             </div>
           </div>
         </div>,

@@ -1076,7 +1076,7 @@ export default function App() {
       showToast('Đã ẩn quán ăn thành công.', 'success')
       loadGlobalData()
       if (activeTab === 'admin') loadAdminPendingStores()
-      return true
+      return res.data || true
     } else {
       showToast(res.error?.message || 'Không thể ẩn quán ăn.', 'error')
       return false
@@ -1093,9 +1093,42 @@ export default function App() {
       showToast('Đã khôi phục quán ăn hoạt động công khai thành công.', 'success')
       loadGlobalData()
       if (activeTab === 'admin') loadAdminPendingStores()
-      return true
+      return res.data || true
     } else {
       showToast(res.error?.message || 'Không thể khôi phục quán ăn.', 'error')
+      return false
+    }
+  }
+
+  // Request Store Recovery (Owner)
+  async function handleRequestStoreRecovery(storeId, reason = '') {
+    setLoading(true)
+    const res = await makeRequest('POST', `/v1/stores/${storeId}/request-recovery`, { reason })
+    setLoading(false)
+
+    if (res.success) {
+      showToast('Đã gửi yêu cầu khôi phục quán ăn cho Admin xem xét.', 'success')
+      loadGlobalData()
+      return res.data || true
+    } else {
+      showToast(res.error?.message || 'Không thể gửi yêu cầu khôi phục.', 'error')
+      return false
+    }
+  }
+
+  // Reject Recovery Request (Admin)
+  async function handleRejectRecoveryRequest(storeId, reason = '') {
+    setLoading(true)
+    const res = await makeRequest('POST', `/v1/stores/${storeId}/reject-recovery-request`, { reason })
+    setLoading(false)
+
+    if (res.success) {
+      showToast('Đã từ chối yêu cầu khôi phục quán ăn.', 'success')
+      loadGlobalData()
+      if (activeTab === 'admin') loadAdminPendingStores()
+      return res.data || true
+    } else {
+      showToast(res.error?.message || 'Không thể từ chối yêu cầu khôi phục.', 'error')
       return false
     }
   }
@@ -1296,8 +1329,10 @@ export default function App() {
       showToast('Store approved and verified live!', 'success')
       loadAdminPendingStores()
       loadGlobalData()
+      return res.data || true
     } else {
       showToast(res.error?.message || 'Approve action failed.', 'error')
+      return false
     }
   }
 
@@ -1305,7 +1340,7 @@ export default function App() {
   async function handleAdminReject(storeId, reason) {
     if (!reason || !reason.trim()) {
       showToast('Rejection reason cannot be blank.', 'error')
-      return
+      return false
     }
 
     setLoading(true)
@@ -1316,8 +1351,10 @@ export default function App() {
       showToast('Submission rejected and feedback saved.', 'info')
       loadAdminPendingStores()
       loadGlobalData()
+      return res.data || true
     } else {
       showToast(res.error?.message || 'Reject action failed.', 'error')
+      return false
     }
   }
 
@@ -1503,6 +1540,7 @@ export default function App() {
             handleDeleteStore={handleDeleteStore}
             handleHideStore={handleHideStore}
             handleRecoverStore={handleRecoverStore}
+            handleRequestStoreRecovery={handleRequestStoreRecovery}
             handleHardDeleteStore={handleHardDeleteStore}
             handleSelectEditStore={handleSelectEditStore}
             storeName={storeName}
@@ -1579,6 +1617,7 @@ export default function App() {
             handleAdminReject={handleAdminReject}
             handleHideStore={handleHideStore}
             handleRecoverStore={handleRecoverStore}
+            handleRejectRecoveryRequest={handleRejectRecoveryRequest}
             handleHardDeleteStore={handleHardDeleteStore}
             adminUsersList={adminUsersList}
             handleOpenAdminEditUser={handleOpenAdminEditUser}

@@ -13,6 +13,7 @@ export default function MyStoresSection({
   handleDeleteStore,
   handleHideStore,
   handleRecoverStore,
+  handleRequestStoreRecovery,
   handleHardDeleteStore,
   handleSelectEditStore,
   storeName,
@@ -76,6 +77,8 @@ export default function MyStoresSection({
       if (handleHideStore) success = await handleHideStore(storeId, reason)
     } else if (actionModalType === 'RECOVER') {
       if (handleRecoverStore) success = await handleRecoverStore(storeId, reason)
+    } else if (actionModalType === 'REQUEST_RECOVERY') {
+      if (handleRequestStoreRecovery) success = await handleRequestStoreRecovery(storeId, reason)
     } else if (actionModalType === 'HARD_DELETE') {
       if (handleHardDeleteStore) {
         success = await handleHardDeleteStore(storeId, reason)
@@ -265,6 +268,13 @@ export default function MyStoresSection({
               <X className="w-5 h-5" />
             </button>
           </div>
+
+          {editingStore.status === 'HIDDEN' && (
+            <div className="bg-amber-50 border-2 border-amber-400 p-3 rounded-md text-amber-900 text-xs font-bold space-y-1">
+              <p className="font-black text-amber-950 uppercase">Lưu ý khi cập nhật quán bị ẩn:</p>
+              <p>Chỉnh sửa thông tin quán trong trạng thái này sẽ cập nhật dữ liệu mà không thay đổi trạng thái ẩn hiện hoặc gửi yêu cầu phê duyệt mới. Để khôi phục quán, vui lòng sử dụng chức năng "Yêu cầu khôi phục".</p>
+            </div>
+          )}
 
           <form onSubmit={handleUpdateStore} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -933,7 +943,7 @@ export default function MyStoresSection({
             myStores.map((st) => (
               <div
                 key={st.id}
-                className="brutalist-card bg-white overflow-hidden flex flex-col justify-between"
+                className="brutalist-card bg-white overflow-hidden flex flex-col justify-between h-full"
               >
                 <div>
                   <div className="h-40 w-full border-b-3 border-black relative bg-neutral-200">
@@ -963,9 +973,49 @@ export default function MyStoresSection({
                           Đã Duyệt (Live)
                         </span>
                       ) : st.status === 'HIDDEN' ? (
-                        <span className="brutalist-badge bg-[#fff9db] text-[#b45309] border-[#b45309]">
-                          Đã Ẩn (Soft Deleted)
-                        </span>
+                        st.hiddenByAdmin ? (
+                          <div className="space-y-1.5">
+                            {st.recoveryRequested ? (
+                              <div>
+                                <span className="brutalist-badge bg-indigo-100 text-indigo-800 border-indigo-500">
+                                  Đang Chờ Admin Xem Xét Khôi Phục
+                                </span>
+                                {st.recoveryRequestReason && (
+                                  <p className="text-[10px] font-bold text-indigo-700 bg-indigo-50 p-1.5 border border-indigo-300 rounded mt-1 italic">
+                                    Lý do đã gửi: “{st.recoveryRequestReason}”
+                                  </p>
+                                )}
+                              </div>
+                            ) : (
+                              <div>
+                                <span className="brutalist-badge bg-red-100 text-red-800 border-red-500">
+                                  Đã Bị Admin Ẩn (Ban)
+                                </span>
+                                {st.hideReason && (
+                                  <p className="text-[10px] font-bold text-red-700 bg-red-50 p-1.5 border border-red-300 rounded mt-1 italic">
+                                    Lý do bị ẩn: “{st.hideReason}”
+                                  </p>
+                                )}
+                                {st.recoveryDeclineReason && (
+                                  <p className="text-[10px] font-bold text-red-700 bg-red-50 p-1.5 border border-red-300 rounded mt-1 italic">
+                                    Admin từ chối trước đó: “{st.recoveryDeclineReason}”
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div>
+                            <span className="brutalist-badge bg-[#fff9db] text-[#b45309] border-[#b45309]">
+                              Đã Ẩn (Soft Deleted)
+                            </span>
+                            {st.hideReason && (
+                              <p className="text-[10px] font-bold text-amber-800 bg-amber-50 p-1.5 border border-amber-300 rounded mt-1 italic">
+                                Lý do: “{st.hideReason}”
+                              </p>
+                            )}
+                          </div>
+                        )
                       ) : st.status === 'REJECTED' ? (
                         <div className="space-y-2">
                           <div>
@@ -1010,7 +1060,7 @@ export default function MyStoresSection({
                       </button>
                     )}
 
-                    {st.status === 'HIDDEN' && (
+                    {st.status === 'HIDDEN' && !st.hiddenByAdmin && (
                       <button
                         onClick={() => {
                           setActionModalStore(st)
@@ -1020,6 +1070,19 @@ export default function MyStoresSection({
                         title="Khôi phục trạng thái hoạt động công khai"
                       >
                         <RotateCcw className="w-3.5 h-3.5" /> Hiện Quán
+                      </button>
+                    )}
+
+                    {st.status === 'HIDDEN' && st.hiddenByAdmin && !st.recoveryRequested && (
+                      <button
+                        onClick={() => {
+                          setActionModalStore(st)
+                          setActionModalType('REQUEST_RECOVERY')
+                        }}
+                        className="bg-indigo-600 text-white hover:bg-indigo-700 border-2 border-black py-1.5 px-3 text-xs font-black uppercase flex items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                        title="Gửi lý do xin khôi phục quán ăn"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" /> Gửi Yêu Cầu Khôi Phục
                       </button>
                     )}
 

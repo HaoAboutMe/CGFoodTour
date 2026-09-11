@@ -36,7 +36,10 @@ public enum ErrorCode {
     GPS_OUT_OF_RANGE(1034, "You must be within 100m of the store to report it closed", HttpStatus.BAD_REQUEST),
     STORE_REASON_REQUIRED(1035, "Action reason is required when performed by Admin", HttpStatus.BAD_REQUEST),
     INVALID_STORE_STATUS_FOR_HIDE(1036, "Only approved stores can be hidden", HttpStatus.BAD_REQUEST),
-    INVALID_STORE_STATUS_FOR_RECOVER(1037, "Only hidden stores can be recovered", HttpStatus.BAD_REQUEST);
+    INVALID_STORE_STATUS_FOR_RECOVER(1037, "Only hidden stores can be recovered", HttpStatus.BAD_REQUEST),
+    STORE_HIDDEN_BY_ADMIN_CANNOT_RECOVER(1038, "Quán ăn đã bị Quản trị viên ẩn, chỉ Quản trị viên mới có thể khôi phục", HttpStatus.FORBIDDEN),
+    RECOVERY_REQUEST_REASON_REQUIRED(1039, "Reason is required when requesting store recovery", HttpStatus.BAD_REQUEST),
+    NO_PENDING_RECOVERY_REQUEST(1040, "No pending recovery request for this store", HttpStatus.BAD_REQUEST);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

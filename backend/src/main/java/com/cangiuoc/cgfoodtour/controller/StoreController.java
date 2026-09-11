@@ -134,6 +134,30 @@ public class StoreController {
                 .build();
     }
 
+    @PostMapping("/{id}/request-recovery")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<StoreResponse> requestStoreRecovery(@PathVariable String id, @RequestBody @Valid StoreActionRequest request) {
+        String email = getCurrentUserEmail();
+        StoreResponse response = storeService.requestStoreRecovery(id, request, email);
+        sseNotificationService.broadcast("STORES_UPDATED");
+        return ApiResponse.<StoreResponse>builder()
+                .result(response)
+                .message("Recovery request submitted successfully")
+                .build();
+    }
+
+    @PostMapping("/{id}/reject-recovery-request")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<StoreResponse> rejectRecoveryRequest(@PathVariable String id, @RequestBody @Valid StoreActionRequest request) {
+        String email = getCurrentUserEmail();
+        StoreResponse response = storeService.rejectRecoveryRequest(id, request, email);
+        sseNotificationService.broadcast("STORES_UPDATED");
+        return ApiResponse.<StoreResponse>builder()
+                .result(response)
+                .message("Recovery request rejected successfully")
+                .build();
+    }
+
     @PostMapping("/{id}/rate")
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<StoreResponse> rateStore(@PathVariable String id, @RequestBody @Valid RatingRequest request) {
