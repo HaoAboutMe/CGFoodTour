@@ -1063,19 +1063,58 @@ export default function App() {
 
   // Delete Store
   async function handleDeleteStore(storeId) {
-    if (!window.confirm('Delete this store submission permanently? This action is irreversible.')) {
-      return
-    }
+    return handleHardDeleteStore(storeId, '')
+  }
+
+  // Hide Store (Soft Delete)
+  async function handleHideStore(storeId, reason = '') {
     setLoading(true)
-    const res = await makeRequest('DELETE', `/v1/stores/${storeId}`)
+    const res = await makeRequest('POST', `/v1/stores/${storeId}/hide`, { reason })
     setLoading(false)
 
     if (res.success) {
-      showToast('Store removed successfully.', 'success')
+      showToast('Đã ẩn quán ăn thành công.', 'success')
+      loadGlobalData()
+      if (activeTab === 'admin') loadAdminPendingStores()
+      return true
+    } else {
+      showToast(res.error?.message || 'Không thể ẩn quán ăn.', 'error')
+      return false
+    }
+  }
+
+  // Recover Store (Restore from Hidden to Approved)
+  async function handleRecoverStore(storeId, reason = '') {
+    setLoading(true)
+    const res = await makeRequest('POST', `/v1/stores/${storeId}/recover`, { reason })
+    setLoading(false)
+
+    if (res.success) {
+      showToast('Đã khôi phục quán ăn hoạt động công khai thành công.', 'success')
+      loadGlobalData()
+      if (activeTab === 'admin') loadAdminPendingStores()
+      return true
+    } else {
+      showToast(res.error?.message || 'Không thể khôi phục quán ăn.', 'error')
+      return false
+    }
+  }
+
+  // Hard Delete Store
+  async function handleHardDeleteStore(storeId, reason = '') {
+    setLoading(true)
+    const res = await makeRequest('DELETE', `/v1/stores/${storeId}`, { reason })
+    setLoading(false)
+
+    if (res.success) {
+      showToast('Đã xóa vĩnh viễn quán ăn khỏi hệ thống.', 'success')
       setEditingStore(null)
       loadGlobalData()
+      if (activeTab === 'admin') loadAdminPendingStores()
+      return true
     } else {
-      showToast(res.error?.message || 'Failed to delete store.', 'error')
+      showToast(res.error?.message || 'Không thể xóa vĩnh viễn quán ăn.', 'error')
+      return false
     }
   }
 
@@ -1462,6 +1501,9 @@ export default function App() {
             setEditingStore={setEditingStore}
             handleUpdateStore={handleUpdateStore}
             handleDeleteStore={handleDeleteStore}
+            handleHideStore={handleHideStore}
+            handleRecoverStore={handleRecoverStore}
+            handleHardDeleteStore={handleHardDeleteStore}
             handleSelectEditStore={handleSelectEditStore}
             storeName={storeName}
             setStoreName={setStoreName}
@@ -1535,6 +1577,9 @@ export default function App() {
             adminPendingStores={adminPendingStores}
             handleAdminApprove={handleAdminApprove}
             handleAdminReject={handleAdminReject}
+            handleHideStore={handleHideStore}
+            handleRecoverStore={handleRecoverStore}
+            handleHardDeleteStore={handleHardDeleteStore}
             adminUsersList={adminUsersList}
             handleOpenAdminEditUser={handleOpenAdminEditUser}
             handleAdminDeleteUser={handleAdminDeleteUser}

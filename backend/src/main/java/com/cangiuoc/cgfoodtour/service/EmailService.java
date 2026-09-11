@@ -385,4 +385,53 @@ public class EmailService {
                 """
                 .formatted(otp);
     }
+
+    @Async
+    public void sendStoreStatusNotificationEmail(String toEmail, String storeName, String actionType, String reason) {
+        if (toEmail == null || toEmail.isBlank()) return;
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+
+            String actionText = "HIDE".equalsIgnoreCase(actionType) ? "đã bị ẨN" : "đã bị XÓA VĨNH VIỄN";
+            helper.setSubject("Thông báo về quán ăn: " + storeName + " - CGFoodTour");
+
+            String htmlContent = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: sans-serif; background-color: #F7F6F0; color: #0F172A; padding: 20px; }
+                        .container { max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border: 2px solid #0F172A; border-radius: 20px; padding: 25px; box-shadow: 4px 4px 0px #0F172A; }
+                        .header { background-color: #FF5F38; color: #FFFFFF; padding: 10px 20px; border-radius: 12px; font-size: 16px; font-weight: bold; margin-bottom: 20px; }
+                        .reason-card { background-color: #FFFBEB; border: 1px solid #0F172A; border-radius: 12px; padding: 15px; margin: 20px 0; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">📢 THÔNG BÁO TỪ QUẢN TRỊ VIÊN CGFoodTour</div>
+                        <p>Xin chào Chủ quán,</p>
+                        <p>Quản trị viên hệ thống đã thực hiện thao tác đối với quán ăn <strong>%s</strong> của bạn. Trạng thái hiện tại: <strong>%s</strong>.</p>
+                        <div class="reason-card">
+                            <p>📌 <strong>Lý do từ Admin:</strong></p>
+                            <p><em>%s</em></p>
+                        </div>
+                        <p>Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ với bộ phận hỗ trợ CGFoodTour.</p>
+                        <p>Trân trọng,<br><strong>CGFoodTour Team</strong></p>
+                    </div>
+                </body>
+                </html>
+                """.formatted(storeName, actionText, (reason != null && !reason.isBlank()) ? reason : "Không có lý do chi tiết");
+
+            helper.setText(htmlContent, true);
+            mailSender.send(message);
+            log.info("Store notification email sent to: {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send store status notification email to: {} - Error: {}", toEmail, e.getMessage());
+        }
+    }
 }

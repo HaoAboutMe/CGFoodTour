@@ -33,7 +33,10 @@ public enum ErrorCode {
     STORE_NOT_FOUND(1031, "Store not found", HttpStatus.NOT_FOUND),
     FOOD_ITEM_NOT_FOUND(1032, "Food item not found", HttpStatus.NOT_FOUND),
     REPORT_ALREADY_SUBMITTED(1033, "You have already reported this store closed today", HttpStatus.BAD_REQUEST),
-    GPS_OUT_OF_RANGE(1034, "You must be within 100m of the store to report it closed", HttpStatus.BAD_REQUEST);
+    GPS_OUT_OF_RANGE(1034, "You must be within 100m of the store to report it closed", HttpStatus.BAD_REQUEST),
+    STORE_REASON_REQUIRED(1035, "Action reason is required when performed by Admin", HttpStatus.BAD_REQUEST),
+    INVALID_STORE_STATUS_FOR_HIDE(1036, "Only approved stores can be hidden", HttpStatus.BAD_REQUEST),
+    INVALID_STORE_STATUS_FOR_RECOVER(1037, "Only hidden stores can be recovered", HttpStatus.BAD_REQUEST);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

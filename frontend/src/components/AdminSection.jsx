@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Edit2, Trash2, Shield, X, Users, Utensils, Coffee, IceCream, Compass, Folder, PlusCircle } from 'lucide-react'
+import { Edit2, Trash2, Shield, X, Users, Utensils, Coffee, IceCream, Compass, Folder, PlusCircle, EyeOff, RotateCcw, Store } from 'lucide-react'
+import StoreActionModal from './StoreActionModal'
 
 export default function AdminSection({
   isUserAdmin,
@@ -12,7 +13,7 @@ export default function AdminSection({
   handleCreateCategory,
   foodStoreId,
   setFoodStoreId,
-  stores,
+  stores = [],
   foodName,
   setFoodName,
   foodPrice,
@@ -23,9 +24,12 @@ export default function AdminSection({
   setFoodDesc,
   handleCreateFoodItem,
   handleUploadImage,
-  adminPendingStores,
+  adminPendingStores = [],
   handleAdminApprove,
   handleAdminReject,
+  handleHideStore,
+  handleRecoverStore,
+  handleHardDeleteStore,
   adminUsersList,
   handleOpenAdminEditUser,
   handleAdminDeleteUser,
@@ -57,6 +61,27 @@ export default function AdminSection({
   const [editCatName, setEditCatName] = useState('')
   const [editCatIcon, setEditCatIcon] = useState('fa-bread-slice')
   const [uploadingFood, setUploadingFood] = useState(false)
+  const [storeStatusFilter, setStoreStatusFilter] = useState('ALL')
+
+  const [adminActionModalStore, setAdminActionModalStore] = useState(null)
+  const [adminActionModalType, setAdminActionModalType] = useState(null) // HIDE, RECOVER, HARD_DELETE
+
+  const handleAdminActionConfirm = async ({ reason }) => {
+    if (!adminActionModalStore || !adminActionModalType) return
+    const storeId = adminActionModalStore.id
+    let success = false
+    if (adminActionModalType === 'HIDE') {
+      if (handleHideStore) success = await handleHideStore(storeId, reason)
+    } else if (adminActionModalType === 'RECOVER') {
+      if (handleRecoverStore) success = await handleRecoverStore(storeId, reason)
+    } else if (adminActionModalType === 'HARD_DELETE') {
+      if (handleHardDeleteStore) success = await handleHardDeleteStore(storeId, reason)
+    }
+    if (success) {
+      setAdminActionModalStore(null)
+      setAdminActionModalType(null)
+    }
+  }
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0]
@@ -145,6 +170,19 @@ export default function AdminSection({
               {adminPendingStores.length}
             </span>
           )}
+        </button>
+        <button
+          onClick={() => {
+            setActiveAdminTab('stores')
+            if (loadGlobalData) loadGlobalData()
+          }}
+          className={`px-6 py-2.5 text-xs font-black uppercase transition-all border-2 border-black rounded-full ${
+            activeAdminTab === 'stores'
+              ? 'bg-black text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
+              : 'bg-white text-black hover:bg-neutral-100'
+          }`}
+        >
+          Quản Lý Quán
         </button>
         <button
           onClick={() => {
@@ -525,6 +563,125 @@ export default function AdminSection({
                 </table>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {activeAdminTab === 'stores' && (
+        <div className="brutalist-card bg-white p-6 md:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-4 border-black pb-4">
+            <h3 className="text-lg font-black uppercase text-black flex items-center gap-2">
+              <Store className="w-5 h-5 text-[#ff3e3e]" /> Quản Lý Tất Cả Quán Ăn
+            </h3>
+            {/* Status Filter */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
+              <span className="text-xs font-black uppercase text-neutral-500 shrink-0">Trạng Thái:</span>
+              {['ALL', 'APPROVED', 'HIDDEN', 'PENDING', 'REJECTED'].map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setStoreStatusFilter(st)}
+                  className={`px-3 py-1 text-[11px] font-black uppercase border-2 border-black rounded-full transition-all shrink-0 ${
+                    storeStatusFilter === st
+                      ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                      : 'bg-white text-black hover:bg-neutral-100'
+                  }`}
+                >
+                  {st === 'ALL' ? 'Tất Cả' : st === 'APPROVED' ? 'Đã Duyệt' : st === 'HIDDEN' ? 'Đã Ẩn' : st === 'PENDING' ? 'Chờ Duyệt' : 'Từ Chối'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {stores
+              .filter((s) => storeStatusFilter === 'ALL' || s.status === storeStatusFilter)
+              .map((st) => (
+                <div key={st.id} className="brutalist-card bg-white overflow-hidden flex flex-col justify-between border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <div>
+                    <div className="h-36 w-full border-b-2 border-black relative bg-neutral-200">
+                      <img
+                        src={st.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'}
+                        alt={st.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-2 left-2">
+                        <span className="brutalist-badge bg-white text-black text-[10px]">
+                          {st.categoryName || 'Quán ăn'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-4 space-y-2">
+                      <h4 className="font-extrabold text-base text-black line-clamp-1">{st.name}</h4>
+                      <p className="text-xs text-neutral-600 truncate">Địa chỉ: {st.addressLine}</p>
+                      <p className="text-[11px] text-neutral-500 font-semibold">Chủ quán: {st.ownerUsername || st.ownerEmail || 'N/A'}</p>
+
+                      <div>
+                        {st.status === 'APPROVED' ? (
+                          <span className="brutalist-badge bg-[#e6fcf5] text-[#0ca678] border-[#0ca678]">
+                            APPROVED (Công khai)
+                          </span>
+                        ) : st.status === 'HIDDEN' ? (
+                          <span className="brutalist-badge bg-[#fff9db] text-[#b45309] border-[#b45309]">
+                            HIDDEN (Đã Ẩn)
+                          </span>
+                        ) : st.status === 'REJECTED' ? (
+                          <span className="brutalist-badge bg-[#fff5f5] text-[#c92a2a] border-[#c92a2a]">
+                            REJECTED (Bị từ chối)
+                          </span>
+                        ) : (
+                          <span className="brutalist-badge bg-[#eef2ff] text-[#4338ca] border-[#4338ca]">
+                            PENDING (Chờ duyệt)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-[#f7f6f2] border-t-2 border-black flex flex-wrap gap-2 items-center">
+                    <button
+                      onClick={() => setViewingStore(st)}
+                      className="flex-1 brutalist-btn-white py-1 px-2 text-[10px] font-black uppercase text-center"
+                    >
+                      Chi Tiết
+                    </button>
+
+                    {st.status === 'APPROVED' && (
+                      <button
+                        onClick={() => {
+                          setAdminActionModalStore(st)
+                          setAdminActionModalType('HIDE')
+                        }}
+                        className="brutalist-btn-yellow py-1 px-2 text-[10px] font-black uppercase flex items-center gap-1"
+                      >
+                        <EyeOff className="w-3 h-3" /> Ẩn Quán
+                      </button>
+                    )}
+
+                    {st.status === 'HIDDEN' && (
+                      <button
+                        onClick={() => {
+                          setAdminActionModalStore(st)
+                          setAdminActionModalType('RECOVER')
+                        }}
+                        className="bg-emerald-500 text-white hover:bg-emerald-600 border-2 border-black py-1 px-2 text-[10px] font-black uppercase flex items-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                      >
+                        <RotateCcw className="w-3 h-3" /> Hiện Quán
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        setAdminActionModalStore(st)
+                        setAdminActionModalType('HARD_DELETE')
+                      }}
+                      className="p-1.5 border-2 border-black bg-white hover:bg-red-50 text-red-600 rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                      title="Xóa Vĩnh Viễn"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
           </div>
         </div>
       )}
@@ -918,6 +1075,19 @@ export default function AdminSection({
         </div>,
         document.body
       )}
+
+      {/* Store Action Modal for Admin (Reason Required) */}
+      <StoreActionModal
+        isOpen={!!adminActionModalStore}
+        onClose={() => {
+          setAdminActionModalStore(null)
+          setAdminActionModalType(null)
+        }}
+        onConfirm={handleAdminActionConfirm}
+        store={adminActionModalStore}
+        actionType={adminActionModalType}
+        isStaffOrAdmin={true}
+      />
     </div>
   )
 }

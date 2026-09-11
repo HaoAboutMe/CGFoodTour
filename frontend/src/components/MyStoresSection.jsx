@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Store, Plus, Edit2, Trash2, X, ChevronLeft, MapPin, PlusCircle, Utensils } from 'lucide-react'
+import { Store, Plus, Edit2, Trash2, X, ChevronLeft, MapPin, PlusCircle, Utensils, EyeOff, RotateCcw } from 'lucide-react'
 import MySubmissionsSection from './MySubmissionsSection'
 import MapPicker from './MapPicker'
+import StoreActionModal from './StoreActionModal'
 
 export default function MyStoresSection({
   myStores,
@@ -10,6 +11,9 @@ export default function MyStoresSection({
   setEditingStore,
   handleUpdateStore,
   handleDeleteStore,
+  handleHideStore,
+  handleRecoverStore,
+  handleHardDeleteStore,
   handleSelectEditStore,
   storeName,
   setStoreName,
@@ -61,6 +65,29 @@ export default function MyStoresSection({
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadingFood, setUploadingFood] = useState(false)
   const [editingFood, setEditingFood] = useState(null)
+  const [actionModalStore, setActionModalStore] = useState(null)
+  const [actionModalType, setActionModalType] = useState(null) // 'HIDE', 'RECOVER', 'HARD_DELETE'
+
+  const handleActionConfirm = async ({ reason }) => {
+    if (!actionModalStore || !actionModalType) return
+    const storeId = actionModalStore.id
+    let success = false
+    if (actionModalType === 'HIDE') {
+      if (handleHideStore) success = await handleHideStore(storeId, reason)
+    } else if (actionModalType === 'RECOVER') {
+      if (handleRecoverStore) success = await handleRecoverStore(storeId, reason)
+    } else if (actionModalType === 'HARD_DELETE') {
+      if (handleHardDeleteStore) {
+        success = await handleHardDeleteStore(storeId, reason)
+      } else if (handleDeleteStore) {
+        success = await handleDeleteStore(storeId, reason)
+      }
+    }
+    if (success) {
+      setActionModalStore(null)
+      setActionModalType(null)
+    }
+  }
 
   useEffect(() => {
     if (editingFood) {
@@ -935,6 +962,10 @@ export default function MyStoresSection({
                         <span className="brutalist-badge bg-[#e6fcf5] text-[#0ca678] border-[#0ca678]">
                           Đã Duyệt (Live)
                         </span>
+                      ) : st.status === 'HIDDEN' ? (
+                        <span className="brutalist-badge bg-[#fff9db] text-[#b45309] border-[#b45309]">
+                          Đã Ẩn (Soft Deleted)
+                        </span>
                       ) : st.status === 'REJECTED' ? (
                         <div className="space-y-2">
                           <div>
@@ -949,7 +980,7 @@ export default function MyStoresSection({
                           )}
                         </div>
                       ) : (
-                        <span className="brutalist-badge bg-[#fff9db] text-[#f59f00] border-[#f59f00]">
+                        <span className="brutalist-badge bg-[#eef2ff] text-[#4338ca] border-[#4338ca]">
                           Chờ Phê Duyệt
                         </span>
                       )}
@@ -958,17 +989,47 @@ export default function MyStoresSection({
                 </div>
 
                 <div className="p-4 bg-[#f7f6f2] border-t-3 border-black flex flex-col gap-2">
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       onClick={() => handleSelectEditStore(st)}
-                      className="flex-1 brutalist-btn-white py-1.5 px-3 text-xs flex items-center justify-center gap-1.5 font-extrabold"
+                      className="flex-1 brutalist-btn-white py-1.5 px-3 text-xs flex items-center justify-center gap-1 font-extrabold"
                     >
-                      <Edit2 className="w-3.5 h-3.5" /> Sửa Quán
+                      <Edit2 className="w-3.5 h-3.5" /> Sửa
                     </button>
+
+                    {st.status === 'APPROVED' && (
+                      <button
+                        onClick={() => {
+                          setActionModalStore(st)
+                          setActionModalType('HIDE')
+                        }}
+                        className="brutalist-btn-yellow py-1.5 px-3 text-xs flex items-center justify-center gap-1 font-extrabold"
+                        title="Ẩn quán khỏi khách hàng"
+                      >
+                        <EyeOff className="w-3.5 h-3.5" /> Ẩn Quán
+                      </button>
+                    )}
+
+                    {st.status === 'HIDDEN' && (
+                      <button
+                        onClick={() => {
+                          setActionModalStore(st)
+                          setActionModalType('RECOVER')
+                        }}
+                        className="bg-emerald-500 text-white hover:bg-emerald-600 border-2 border-black py-1.5 px-3 text-xs font-black uppercase flex items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                        title="Khôi phục trạng thái hoạt động công khai"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" /> Hiện Quán
+                      </button>
+                    )}
+
                     <button
-                      onClick={() => handleDeleteStore(st.id)}
-                      className="w-9 h-9 rounded-full border-2 border-black bg-white hover:bg-red-50 text-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center shrink-0"
-                      title="Xóa Quán"
+                      onClick={() => {
+                        setActionModalStore(st)
+                        setActionModalType('HARD_DELETE')
+                      }}
+                      className="w-9 h-9 rounded-full border-2 border-black bg-white hover:bg-red-50 text-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-center shrink-0"
+                      title="Xóa vĩnh viễn"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -990,6 +1051,19 @@ export default function MyStoresSection({
           )}
         </div>
       )}
+
+      {/* Action Modal for Soft Delete / Recover / Hard Delete */}
+      <StoreActionModal
+        isOpen={!!actionModalStore}
+        onClose={() => {
+          setActionModalStore(null)
+          setActionModalType(null)
+        }}
+        onConfirm={handleActionConfirm}
+        store={actionModalStore}
+        actionType={actionModalType}
+        isStaffOrAdmin={false}
+      />
 
       {isMapPickerOpen && (
         <MapPicker

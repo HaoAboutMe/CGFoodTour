@@ -2,6 +2,7 @@ package com.cangiuoc.cgfoodtour.service;
 
 import com.cangiuoc.cgfoodtour.dto.request.ReportClosedRequest;
 import com.cangiuoc.cgfoodtour.dto.request.RatingRequest;
+import com.cangiuoc.cgfoodtour.dto.request.StoreActionRequest;
 import com.cangiuoc.cgfoodtour.dto.request.StoreRequest;
 import com.cangiuoc.cgfoodtour.dto.response.FoodItemResponse;
 import com.cangiuoc.cgfoodtour.dto.response.StoreResponse;
@@ -41,7 +42,9 @@ public class StoreService {
     StoreRatingRepository storeRatingRepository;
     StoreDailyReportRepository storeDailyReportRepository;
     FoodItemRepository foodItemRepository;
-    
+    StoreAuditLogRepository storeAuditLogRepository;
+    EmailService emailService;
+
     StoreMapper storeMapper;
     FoodItemMapper foodItemMapper;
 
@@ -163,6 +166,11 @@ public class StoreService {
 
     @Transactional
     public void deleteStore(String id, String email) {
+        hardDeleteStore(id, null, email);
+    }
+
+    @Transactional
+    public StoreResponse hideStore(String id, StoreActionRequest request, String email) {
         Store store = storeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
 
@@ -176,7 +184,117 @@ public class StoreService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
-        storeRepository.deleteById(id);
+        // Business rule: Only APPROVED stores can be hidden
+        if (store.getStatus() != StoreStatus.APPROVED) {
+            throw new AppException(ErrorCode.INVALID_STORE_STATUS_FOR_HIDE);
+        }
+
+        String reason = request != null ? request.getReason() : null;
+        if (userIsAdmin && (reason == null || reason.isBlank())) {
+            throw new AppException(ErrorCode.STORE_REASON_REQUIRED);
+        }
+
+        store.setStatus(StoreStatus.HIDDEN);
+        store = storeRepository.save(store);
+
+        // Audit log
+        StoreAuditLog auditLog = StoreAuditLog.builder()
+                .storeId(store.getId())
+                .storeName(store.getName())
+                .actorId(user.getId())
+                .actorEmail(user.getEmail())
+                .actorRole(userIsAdmin ? "ADMIN" : "OWNER")
+                .actionType("HIDE")
+                .reason(reason)
+                .build();
+        storeAuditLogRepository.save(auditLog);
+
+        // Send email to owner if performed by admin
+        if (userIsAdmin && store.getOwner() != null && store.getOwner().getEmail() != null) {
+            emailService.sendStoreStatusNotificationEmail(store.getOwner().getEmail(), store.getName(), "HIDE", reason);
+        }
+
+        return toStoreResponse(store);
+    }
+
+    @Transactional
+    public StoreResponse recoverStore(String id, StoreActionRequest request, String email) {
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        boolean userIsAdmin = isAdmin(user);
+        boolean isOwner = store.getOwner() != null && user.getId().equals(store.getOwner().getId());
+
+        if (!userIsAdmin && !isOwner) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // Business rule: Only HIDDEN stores can be recovered
+        if (store.getStatus() != StoreStatus.HIDDEN) {
+            throw new AppException(ErrorCode.INVALID_STORE_STATUS_FOR_RECOVER);
+        }
+
+        String reason = request != null ? request.getReason() : null;
+        store.setStatus(StoreStatus.APPROVED);
+        store = storeRepository.save(store);
+
+        // Audit log
+        StoreAuditLog auditLog = StoreAuditLog.builder()
+                .storeId(store.getId())
+                .storeName(store.getName())
+                .actorId(user.getId())
+                .actorEmail(user.getEmail())
+                .actorRole(userIsAdmin ? "ADMIN" : "OWNER")
+                .actionType("RECOVER")
+                .reason(reason)
+                .build();
+        storeAuditLogRepository.save(auditLog);
+
+        return toStoreResponse(store);
+    }
+
+    @Transactional
+    public void hardDeleteStore(String id, StoreActionRequest request, String email) {
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        boolean userIsAdmin = isAdmin(user);
+        boolean isOwner = store.getOwner() != null && user.getId().equals(store.getOwner().getId());
+
+        if (!userIsAdmin && !isOwner) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        String reason = request != null ? request.getReason() : null;
+        if (userIsAdmin && (reason == null || reason.isBlank())) {
+            throw new AppException(ErrorCode.STORE_REASON_REQUIRED);
+        }
+
+        // Audit log
+        StoreAuditLog auditLog = StoreAuditLog.builder()
+                .storeId(store.getId())
+                .storeName(store.getName())
+                .actorId(user.getId())
+                .actorEmail(user.getEmail())
+                .actorRole(userIsAdmin ? "ADMIN" : "OWNER")
+                .actionType("HARD_DELETE")
+                .reason(reason)
+                .build();
+        storeAuditLogRepository.save(auditLog);
+
+        // Send email to owner if performed by admin
+        if (userIsAdmin && store.getOwner() != null && store.getOwner().getEmail() != null) {
+            emailService.sendStoreStatusNotificationEmail(store.getOwner().getEmail(), store.getName(), "HARD_DELETE", reason);
+        }
+
+        foodItemRepository.deleteByStoreId(store.getId());
+        storeRepository.delete(store);
     }
 
     @Transactional

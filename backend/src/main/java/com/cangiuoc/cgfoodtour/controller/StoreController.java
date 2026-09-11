@@ -3,6 +3,7 @@ package com.cangiuoc.cgfoodtour.controller;
 import com.cangiuoc.cgfoodtour.dto.request.ApiResponse;
 import com.cangiuoc.cgfoodtour.dto.request.RatingRequest;
 import com.cangiuoc.cgfoodtour.dto.request.ReportClosedRequest;
+import com.cangiuoc.cgfoodtour.dto.request.StoreActionRequest;
 import com.cangiuoc.cgfoodtour.dto.request.StoreRequest;
 import com.cangiuoc.cgfoodtour.dto.request.RejectStoreRequest;
 import com.cangiuoc.cgfoodtour.dto.response.StoreResponse;
@@ -100,12 +101,36 @@ public class StoreController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ApiResponse<Void> deleteStore(@PathVariable String id) {
+    public ApiResponse<Void> deleteStore(@PathVariable String id, @RequestBody(required = false) StoreActionRequest request) {
         String email = getCurrentUserEmail();
-        storeService.deleteStore(id, email);
+        storeService.hardDeleteStore(id, request, email);
         sseNotificationService.broadcast("STORES_UPDATED");
         return ApiResponse.<Void>builder()
                 .message("Store deleted successfully")
+                .build();
+    }
+
+    @PostMapping("/{id}/hide")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<StoreResponse> hideStore(@PathVariable String id, @RequestBody(required = false) StoreActionRequest request) {
+        String email = getCurrentUserEmail();
+        StoreResponse response = storeService.hideStore(id, request, email);
+        sseNotificationService.broadcast("STORES_UPDATED");
+        return ApiResponse.<StoreResponse>builder()
+                .result(response)
+                .message("Store hidden successfully")
+                .build();
+    }
+
+    @PostMapping("/{id}/recover")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<StoreResponse> recoverStore(@PathVariable String id, @RequestBody(required = false) StoreActionRequest request) {
+        String email = getCurrentUserEmail();
+        StoreResponse response = storeService.recoverStore(id, request, email);
+        sseNotificationService.broadcast("STORES_UPDATED");
+        return ApiResponse.<StoreResponse>builder()
+                .result(response)
+                .message("Store recovered successfully")
                 .build();
     }
 
