@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/v1/stores")
@@ -39,6 +40,14 @@ public class StoreController {
     @GetMapping("/events")
     public SseEmitter subscribeToStoreEvents() {
         return sseNotificationService.subscribe();
+    }
+
+    @GetMapping("/parse-gmaps")
+    public ApiResponse<Map<String, String>> parseGmapsUrl(@RequestParam("url") String url) {
+        return ApiResponse.<Map<String, String>>builder()
+                .result(storeService.parseGoogleMapsUrl(url))
+                .message("Parsed Google Maps URL")
+                .build();
     }
 
     @PostMapping

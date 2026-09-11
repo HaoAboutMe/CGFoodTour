@@ -23,12 +23,17 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -565,5 +570,72 @@ public class StoreService {
                 * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
+    }
+
+    public Map<String, String> parseGoogleMapsUrl(String inputUrl) {
+        if (inputUrl == null || inputUrl.isBlank()) {
+            return Collections.emptyMap();
+        }
+        String currentUrl = inputUrl.trim();
+
+        // 1. If short URL (maps.app.goo.gl or goo.gl/maps), expand HTTP redirect
+        if (currentUrl.contains("maps.app.goo.gl") || currentUrl.contains("goo.gl/maps")) {
+            try {
+                HttpURLConnection conn = (HttpURLConnection) new URL(currentUrl).openConnection();
+                conn.setInstanceFollowRedirects(true);
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+                conn.setConnectTimeout(6000);
+                conn.setReadTimeout(6000);
+                conn.connect();
+                currentUrl = conn.getURL().toString();
+            } catch (Exception e) {
+                log.warn("Could not expand short URL {}: {}", inputUrl, e.getMessage());
+            }
+        }
+
+        // 2. Extract coordinates from expanded or original URL
+        return extractCoordinatesFromText(currentUrl);
+    }
+
+    private Map<String, String> extractCoordinatesFromText(String text) {
+        if (text == null || text.isBlank()) return Collections.emptyMap();
+
+        // !3d...!4d...
+        var dMatcher = Pattern.compile("!3d(-?\\d+\\.\\d+)!4d(-?\\d+\\.\\d+)").matcher(text);
+        if (dMatcher.find()) {
+            return Map.of("latitude", dMatcher.group(1), "longitude", dMatcher.group(2));
+        }
+
+        // @lat,lng
+        var atMatcher = Pattern.compile("@(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)").matcher(text);
+        if (atMatcher.find()) {
+            return Map.of("latitude", atMatcher.group(1), "longitude", atMatcher.group(2));
+        }
+
+        // q=lat,lng or query=lat,lng
+        var qMatcher = Pattern.compile("[?&](?:q|ll|query|destination|near|center|point)=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)").matcher(text);
+        if (qMatcher.find()) {
+            return Map.of("latitude", qMatcher.group(1), "longitude", qMatcher.group(2));
+        }
+
+        // /place/lat,lng or /search/lat,lng
+        var pMatcher = Pattern.compile("\\/(?:place|dir|search|maps)\\/(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)").matcher(text);
+        if (pMatcher.find()) {
+            return Map.of("latitude", pMatcher.group(1), "longitude", pMatcher.group(2));
+        }
+
+        // Direct lat, lng pattern
+        var directMatcher = Pattern.compile("(-?\\d{1,2}\\.\\d+)\\s*[,;\\s]\\s*(-?\\d{1,3}\\.\\d+)").matcher(text);
+        if (directMatcher.find()) {
+            try {
+                double lat = Double.parseDouble(directMatcher.group(1));
+                double lng = Double.parseDouble(directMatcher.group(2));
+                if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+                    return Map.of("latitude", directMatcher.group(1), "longitude", directMatcher.group(2));
+                }
+            } catch (Exception ignored) {}
+        }
+
+        return Collections.emptyMap();
     }
 }

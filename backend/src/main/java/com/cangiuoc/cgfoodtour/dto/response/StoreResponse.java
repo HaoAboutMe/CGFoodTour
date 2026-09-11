@@ -22,6 +22,7 @@ public class StoreResponse {
     String landmarkNote;
     Double latitude;
     Double longitude;
+    String mapUrl;
     LocalTime openTime;
     LocalTime closeTime;
     Double priceMin;

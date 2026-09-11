@@ -81,6 +81,7 @@ export default function App() {
   const [storeDesc, setStoreDesc] = useState('')
   const [storeLat, setStoreLat] = useState('')
   const [storeLng, setStoreLng] = useState('')
+  const [storeMapUrl, setStoreMapUrl] = useState('')
   const [storeAddress, setStoreAddress] = useState('')
   const [storePhone, setStorePhone] = useState('')
   const [storeOpen, setStoreOpen] = useState('')
@@ -997,6 +998,7 @@ export default function App() {
       landmarkNote: storeDesc,
       latitude: storeLat ? parseFloat(storeLat) : null,
       longitude: storeLng ? parseFloat(storeLng) : null,
+      mapUrl: storeMapUrl || null,
       addressLine: storeAddress,
       phoneNumber: storePhone,
       openTime: formatTimeHHmm(storeOpen),
@@ -1014,6 +1016,7 @@ export default function App() {
       setStoreDesc('')
       setStoreLat('')
       setStoreLng('')
+      setStoreMapUrl('')
       setStoreAddress('')
       setStorePhone('')
       setStoreOpen('')
@@ -1042,6 +1045,7 @@ export default function App() {
       landmarkNote: editingStore.landmarkNote,
       latitude: editingStore.latitude ? parseFloat(editingStore.latitude) : null,
       longitude: editingStore.longitude ? parseFloat(editingStore.longitude) : null,
+      mapUrl: editingStore.mapUrl || null,
       addressLine: editingStore.addressLine,
       phoneNumber: editingStore.phoneNumber,
       openTime: formatTimeHHmm(editingStore.openTime),
@@ -1059,6 +1063,20 @@ export default function App() {
     } else {
       showToast(res.error?.message || 'Failed to update store.', 'error')
     }
+  }
+
+  // Parse Google Maps URL via backend to handle shortened links (maps.app.goo.gl)
+  const handleParseGmapsUrl = async (url) => {
+    if (!url) return null
+    try {
+      const res = await makeRequest('GET', `/v1/stores/parse-gmaps?url=${encodeURIComponent(url)}`)
+      if (res && res.result && res.result.latitude && res.result.longitude) {
+        return res.result
+      }
+    } catch (err) {
+      console.error('Failed to parse Google Maps URL from backend:', err)
+    }
+    return null
   }
 
   // Delete Store
@@ -1536,6 +1554,7 @@ export default function App() {
             categories={categories}
             editingStore={editingStore}
             setEditingStore={setEditingStore}
+            handleParseGmapsUrl={handleParseGmapsUrl}
             handleUpdateStore={handleUpdateStore}
             handleDeleteStore={handleDeleteStore}
             handleHideStore={handleHideStore}
@@ -1553,6 +1572,8 @@ export default function App() {
             setStoreLat={setStoreLat}
             storeLng={storeLng}
             setStoreLng={setStoreLng}
+            storeMapUrl={storeMapUrl}
+            setStoreMapUrl={setStoreMapUrl}
             storeAddress={storeAddress}
             setStoreAddress={setStoreAddress}
             storePhone={storePhone}

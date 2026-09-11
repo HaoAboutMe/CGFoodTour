@@ -816,12 +816,34 @@ export default function AdminSection({
                   <div className="text-xs space-y-3 font-semibold text-neutral-700">
                     <div>
                       <p className="font-extrabold text-black uppercase tracking-wider text-[10px] mb-0.5">Địa Chỉ Chi Tiết</p>
-                      <p>{viewingStore.addressLine}</p>
+                      {viewingStore.mapUrl || (viewingStore.latitude && viewingStore.longitude) ? (
+                        <a
+                          href={viewingStore.mapUrl || `https://www.google.com/maps/search/?api=1&query=${viewingStore.latitude},${viewingStore.longitude}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-bold text-neutral-800 hover:text-indigo-700 underline block"
+                          title="Bấm để mở trên Google Maps"
+                        >
+                          {viewingStore.addressLine} ↗
+                        </a>
+                      ) : (
+                        <p>{viewingStore.addressLine}</p>
+                      )}
                       {viewingStore.landmarkNote && (
                         <p className="text-[#ff3e3e] italic font-black">“ {viewingStore.landmarkNote} ”</p>
                       )}
-                      {viewingStore.latitude && viewingStore.longitude && (
-                        <p className="text-[10px] text-neutral-500">Tọa độ GPS: {viewingStore.latitude}, {viewingStore.longitude}</p>
+                      {(viewingStore.mapUrl || (viewingStore.latitude && viewingStore.longitude)) && (
+                        <div className="mt-2 pt-2 border-t border-neutral-100">
+                          <p className="font-extrabold text-black uppercase tracking-wider text-[10px] mb-1">Link Google Maps</p>
+                          <a
+                            href={viewingStore.mapUrl || `https://www.google.com/maps/search/?api=1&query=${viewingStore.latitude},${viewingStore.longitude}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-300 px-2.5 py-1.5 rounded break-all transition-colors"
+                          >
+                            🗺️ {viewingStore.mapUrl || `Google Maps (${viewingStore.latitude}, ${viewingStore.longitude})`} ↗
+                          </a>
+                        </div>
                       )}
                     </div>
 

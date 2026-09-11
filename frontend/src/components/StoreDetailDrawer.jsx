@@ -81,18 +81,30 @@ export default function StoreDetailDrawer({
                 <MapPin className="w-4 h-4 text-[#ff3e3e] shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="font-extrabold text-sm uppercase">Địa Chỉ Chi Tiết</p>
-                  <p className="font-bold text-neutral-600">{activeStore.addressLine || 'Địa chỉ chưa cập nhật'}</p>
+                  {activeStore.mapUrl || (activeStore.latitude && activeStore.longitude) ? (
+                    <a
+                      href={activeStore.mapUrl || `https://www.google.com/maps/search/?api=1&query=${activeStore.latitude},${activeStore.longitude}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-bold text-neutral-800 hover:text-[#ff3e3e] underline block transition-colors leading-snug"
+                      title="Bấm để mở địa chỉ chi tiết trên Google Maps"
+                    >
+                      {activeStore.addressLine || 'Địa chỉ chưa cập nhật'} ↗
+                    </a>
+                  ) : (
+                    <p className="font-bold text-neutral-600">{activeStore.addressLine || 'Địa chỉ chưa cập nhật'}</p>
+                  )}
                   {activeStore.landmarkNote && (
                     <p className="text-[#ff3e3e] italic font-black">“ {activeStore.landmarkNote} ”</p>
                   )}
-                  {activeStore.latitude && activeStore.longitude && (
+                  {(activeStore.mapUrl || (activeStore.latitude && activeStore.longitude)) && (
                     <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${activeStore.latitude},${activeStore.longitude}`}
+                      href={activeStore.mapUrl || `https://www.google.com/maps/search/?api=1&query=${activeStore.latitude},${activeStore.longitude}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-extrabold text-black hover:text-[#ff3e3e] underline"
+                      className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-300 px-2.5 py-1 rounded mt-1 shadow-xs transition-colors cursor-pointer"
                     >
-                      Bản Đồ Google Maps ↗
+                      🗺️ Xem địa chỉ chi tiết trên Google Maps ↗
                     </a>
                   )}
                 </div>

@@ -43,6 +43,9 @@ public class Store {
     @Column(name = "longitude")
     Double longitude;
 
+    @Column(name = "map_url", length = 1000)
+    String mapUrl;
+
     @Column(name = "open_time", nullable = false)
     LocalTime openTime;
 
