@@ -156,27 +156,50 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, token])
 
+  // Cross-tab authentication synchronization
+  useEffect(() => {
+    function handleStorageChange(e) {
+      if (e.key === 'jwtToken') {
+        if (e.newValue) setToken(e.newValue)
+        else {
+          setToken('')
+          setCurrentUser(null)
+        }
+      }
+      if (e.key === 'refreshToken') {
+        if (e.newValue) setRefreshTokenVal(e.newValue)
+        else setRefreshTokenVal('')
+      }
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
   // Proactive background session refresh (runs every 10 minutes if logged in)
   useEffect(() => {
-    if (!token || !refreshTokenVal) return
+    const activeRefToken = refreshTokenVal || token || localStorage.getItem('refreshToken') || localStorage.getItem('jwtToken')
+    if (!activeRefToken) return
 
     const interval = setInterval(() => {
+      const currentRefToken = localStorage.getItem('refreshToken') || localStorage.getItem('jwtToken') || activeRefToken
+      if (!currentRefToken) return
+
       console.log('Proactive background session refresh...')
       fetch(API_BASE + '/auth/refresh', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ token: refreshTokenVal })
+        body: JSON.stringify({ token: currentRefToken })
       })
       .then((res) => {
         if (res.ok) return res.json()
         throw new Error('Refresh failed')
       })
       .then((data) => {
-        if (data && data.result) {
+        if (data && data.result && data.result.token) {
           const accessToken = data.result.token
-          const refToken = data.result.refreshToken || refreshTokenVal
+          const refToken = data.result.refreshToken || accessToken
           setToken(accessToken)
           setRefreshTokenVal(refToken)
           localStorage.setItem('jwtToken', accessToken)
@@ -186,7 +209,7 @@ export default function App() {
       .catch((err) => {
         console.warn('Proactive background refresh failed:', err)
       })
-    }, 10 * 60 * 1000)
+    }, 10 * 60 * 1000) // 10 minutes proactive silent refresh
 
     return () => clearInterval(interval)
   }, [token, refreshTokenVal])
