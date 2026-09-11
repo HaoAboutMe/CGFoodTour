@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface StoreRatingRepository extends JpaRepository<StoreRating, Long> {
     Optional<StoreRating> findByUserIdAndStoreId(String userId, String storeId);
     long countByStoreIdAndRatingLevel(String storeId, RatingLevel ratingLevel);
+    void deleteByStoreId(String storeId);
 }

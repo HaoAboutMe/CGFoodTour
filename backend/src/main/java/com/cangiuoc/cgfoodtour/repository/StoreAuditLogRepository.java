@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface StoreAuditLogRepository extends JpaRepository<StoreAuditLog, Long> {
     List<StoreAuditLog> findByStoreIdOrderByCreatedAtDesc(String storeId);
+    void deleteByStoreId(String storeId);
 }

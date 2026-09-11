@@ -405,7 +405,12 @@ public class StoreService {
             emailService.sendStoreStatusNotificationEmail(store.getOwner().getEmail(), store.getName(), "HARD_DELETE", reason);
         }
 
+        // Delete all related records in child tables to prevent foreign key constraint errors
         foodItemRepository.deleteByStoreId(store.getId());
+        storeRatingRepository.deleteByStoreId(store.getId());
+        storeDailyReportRepository.deleteByStoreId(store.getId());
+        storeAuditLogRepository.deleteByStoreId(store.getId());
+
         storeRepository.delete(store);
     }
 
