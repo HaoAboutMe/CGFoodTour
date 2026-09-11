@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface StoreDailyReportRepository extends JpaRepository<StoreDailyReport, Long> {
     Optional<StoreDailyReport> findByUserIdAndStoreIdAndReportDate(String userId, String storeId, LocalDate reportDate);
     long countByStoreIdAndReportDate(String storeId, LocalDate reportDate);
+    void deleteByStoreId(String storeId);
 }

@@ -81,6 +81,7 @@ export default function App() {
   const [storeDesc, setStoreDesc] = useState('')
   const [storeLat, setStoreLat] = useState('')
   const [storeLng, setStoreLng] = useState('')
+  const [storeMapUrl, setStoreMapUrl] = useState('')
   const [storeAddress, setStoreAddress] = useState('')
   const [storePhone, setStorePhone] = useState('')
   const [storeOpen, setStoreOpen] = useState('')
@@ -155,27 +156,50 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, token])
 
+  // Cross-tab authentication synchronization
+  useEffect(() => {
+    function handleStorageChange(e) {
+      if (e.key === 'jwtToken') {
+        if (e.newValue) setToken(e.newValue)
+        else {
+          setToken('')
+          setCurrentUser(null)
+        }
+      }
+      if (e.key === 'refreshToken') {
+        if (e.newValue) setRefreshTokenVal(e.newValue)
+        else setRefreshTokenVal('')
+      }
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
   // Proactive background session refresh (runs every 10 minutes if logged in)
   useEffect(() => {
-    if (!token || !refreshTokenVal) return
+    const activeRefToken = refreshTokenVal || token || localStorage.getItem('refreshToken') || localStorage.getItem('jwtToken')
+    if (!activeRefToken) return
 
     const interval = setInterval(() => {
+      const currentRefToken = localStorage.getItem('refreshToken') || localStorage.getItem('jwtToken') || activeRefToken
+      if (!currentRefToken) return
+
       console.log('Proactive background session refresh...')
       fetch(API_BASE + '/auth/refresh', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ token: refreshTokenVal })
+        body: JSON.stringify({ token: currentRefToken })
       })
       .then((res) => {
         if (res.ok) return res.json()
         throw new Error('Refresh failed')
       })
       .then((data) => {
-        if (data && data.result) {
+        if (data && data.result && data.result.token) {
           const accessToken = data.result.token
-          const refToken = data.result.refreshToken || refreshTokenVal
+          const refToken = data.result.refreshToken || accessToken
           setToken(accessToken)
           setRefreshTokenVal(refToken)
           localStorage.setItem('jwtToken', accessToken)
@@ -185,7 +209,7 @@ export default function App() {
       .catch((err) => {
         console.warn('Proactive background refresh failed:', err)
       })
-    }, 10 * 60 * 1000)
+    }, 10 * 60 * 1000) // 10 minutes proactive silent refresh
 
     return () => clearInterval(interval)
   }, [token, refreshTokenVal])
@@ -997,6 +1021,7 @@ export default function App() {
       landmarkNote: storeDesc,
       latitude: storeLat ? parseFloat(storeLat) : null,
       longitude: storeLng ? parseFloat(storeLng) : null,
+      mapUrl: storeMapUrl || null,
       addressLine: storeAddress,
       phoneNumber: storePhone,
       openTime: formatTimeHHmm(storeOpen),
@@ -1014,6 +1039,7 @@ export default function App() {
       setStoreDesc('')
       setStoreLat('')
       setStoreLng('')
+      setStoreMapUrl('')
       setStoreAddress('')
       setStorePhone('')
       setStoreOpen('')
@@ -1042,6 +1068,7 @@ export default function App() {
       landmarkNote: editingStore.landmarkNote,
       latitude: editingStore.latitude ? parseFloat(editingStore.latitude) : null,
       longitude: editingStore.longitude ? parseFloat(editingStore.longitude) : null,
+      mapUrl: editingStore.mapUrl || null,
       addressLine: editingStore.addressLine,
       phoneNumber: editingStore.phoneNumber,
       openTime: formatTimeHHmm(editingStore.openTime),
@@ -1061,21 +1088,107 @@ export default function App() {
     }
   }
 
+  // Parse Google Maps URL via backend to handle shortened links (maps.app.goo.gl)
+  const handleParseGmapsUrl = async (url) => {
+    if (!url) return null
+    try {
+      const res = await makeRequest('GET', `/v1/stores/parse-gmaps?url=${encodeURIComponent(url)}`)
+      if (res && res.result && res.result.latitude && res.result.longitude) {
+        return res.result
+      }
+    } catch (err) {
+      console.error('Failed to parse Google Maps URL from backend:', err)
+    }
+    return null
+  }
+
   // Delete Store
   async function handleDeleteStore(storeId) {
-    if (!window.confirm('Delete this store submission permanently? This action is irreversible.')) {
-      return
-    }
+    return handleHardDeleteStore(storeId, '')
+  }
+
+  // Hide Store (Soft Delete)
+  async function handleHideStore(storeId, reason = '') {
     setLoading(true)
-    const res = await makeRequest('DELETE', `/v1/stores/${storeId}`)
+    const res = await makeRequest('POST', `/v1/stores/${storeId}/hide`, { reason })
     setLoading(false)
 
     if (res.success) {
-      showToast('Store removed successfully.', 'success')
+      showToast('Đã ẩn quán ăn thành công.', 'success')
+      loadGlobalData()
+      if (activeTab === 'admin') loadAdminPendingStores()
+      return res.data || true
+    } else {
+      showToast(res.error?.message || 'Không thể ẩn quán ăn.', 'error')
+      return false
+    }
+  }
+
+  // Recover Store (Restore from Hidden to Approved)
+  async function handleRecoverStore(storeId, reason = '') {
+    setLoading(true)
+    const res = await makeRequest('POST', `/v1/stores/${storeId}/recover`, { reason })
+    setLoading(false)
+
+    if (res.success) {
+      showToast('Đã khôi phục quán ăn hoạt động công khai thành công.', 'success')
+      loadGlobalData()
+      if (activeTab === 'admin') loadAdminPendingStores()
+      return res.data || true
+    } else {
+      showToast(res.error?.message || 'Không thể khôi phục quán ăn.', 'error')
+      return false
+    }
+  }
+
+  // Request Store Recovery (Owner)
+  async function handleRequestStoreRecovery(storeId, reason = '') {
+    setLoading(true)
+    const res = await makeRequest('POST', `/v1/stores/${storeId}/request-recovery`, { reason })
+    setLoading(false)
+
+    if (res.success) {
+      showToast('Đã gửi yêu cầu khôi phục quán ăn cho Admin xem xét.', 'success')
+      loadGlobalData()
+      return res.data || true
+    } else {
+      showToast(res.error?.message || 'Không thể gửi yêu cầu khôi phục.', 'error')
+      return false
+    }
+  }
+
+  // Reject Recovery Request (Admin)
+  async function handleRejectRecoveryRequest(storeId, reason = '') {
+    setLoading(true)
+    const res = await makeRequest('POST', `/v1/stores/${storeId}/reject-recovery-request`, { reason })
+    setLoading(false)
+
+    if (res.success) {
+      showToast('Đã từ chối yêu cầu khôi phục quán ăn.', 'success')
+      loadGlobalData()
+      if (activeTab === 'admin') loadAdminPendingStores()
+      return res.data || true
+    } else {
+      showToast(res.error?.message || 'Không thể từ chối yêu cầu khôi phục.', 'error')
+      return false
+    }
+  }
+
+  // Hard Delete Store
+  async function handleHardDeleteStore(storeId, reason = '') {
+    setLoading(true)
+    const res = await makeRequest('DELETE', `/v1/stores/${storeId}`, { reason })
+    setLoading(false)
+
+    if (res.success) {
+      showToast('Đã xóa vĩnh viễn quán ăn khỏi hệ thống.', 'success')
       setEditingStore(null)
       loadGlobalData()
+      if (activeTab === 'admin') loadAdminPendingStores()
+      return true
     } else {
-      showToast(res.error?.message || 'Failed to delete store.', 'error')
+      showToast(res.error?.message || 'Không thể xóa vĩnh viễn quán ăn.', 'error')
+      return false
     }
   }
 
@@ -1257,8 +1370,10 @@ export default function App() {
       showToast('Store approved and verified live!', 'success')
       loadAdminPendingStores()
       loadGlobalData()
+      return res.data || true
     } else {
       showToast(res.error?.message || 'Approve action failed.', 'error')
+      return false
     }
   }
 
@@ -1266,7 +1381,7 @@ export default function App() {
   async function handleAdminReject(storeId, reason) {
     if (!reason || !reason.trim()) {
       showToast('Rejection reason cannot be blank.', 'error')
-      return
+      return false
     }
 
     setLoading(true)
@@ -1277,8 +1392,10 @@ export default function App() {
       showToast('Submission rejected and feedback saved.', 'info')
       loadAdminPendingStores()
       loadGlobalData()
+      return res.data || true
     } else {
       showToast(res.error?.message || 'Reject action failed.', 'error')
+      return false
     }
   }
 
@@ -1460,8 +1577,13 @@ export default function App() {
             categories={categories}
             editingStore={editingStore}
             setEditingStore={setEditingStore}
+            handleParseGmapsUrl={handleParseGmapsUrl}
             handleUpdateStore={handleUpdateStore}
             handleDeleteStore={handleDeleteStore}
+            handleHideStore={handleHideStore}
+            handleRecoverStore={handleRecoverStore}
+            handleRequestStoreRecovery={handleRequestStoreRecovery}
+            handleHardDeleteStore={handleHardDeleteStore}
             handleSelectEditStore={handleSelectEditStore}
             storeName={storeName}
             setStoreName={setStoreName}
@@ -1473,6 +1595,8 @@ export default function App() {
             setStoreLat={setStoreLat}
             storeLng={storeLng}
             setStoreLng={setStoreLng}
+            storeMapUrl={storeMapUrl}
+            setStoreMapUrl={setStoreMapUrl}
             storeAddress={storeAddress}
             setStoreAddress={setStoreAddress}
             storePhone={storePhone}
@@ -1535,6 +1659,10 @@ export default function App() {
             adminPendingStores={adminPendingStores}
             handleAdminApprove={handleAdminApprove}
             handleAdminReject={handleAdminReject}
+            handleHideStore={handleHideStore}
+            handleRecoverStore={handleRecoverStore}
+            handleRejectRecoveryRequest={handleRejectRecoveryRequest}
+            handleHardDeleteStore={handleHardDeleteStore}
             adminUsersList={adminUsersList}
             handleOpenAdminEditUser={handleOpenAdminEditUser}
             handleAdminDeleteUser={handleAdminDeleteUser}

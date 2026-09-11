@@ -2,6 +2,7 @@ package com.cangiuoc.cgfoodtour.service;
 
 import com.cangiuoc.cgfoodtour.dto.request.ReportClosedRequest;
 import com.cangiuoc.cgfoodtour.dto.request.RatingRequest;
+import com.cangiuoc.cgfoodtour.dto.request.StoreActionRequest;
 import com.cangiuoc.cgfoodtour.dto.request.StoreRequest;
 import com.cangiuoc.cgfoodtour.dto.response.FoodItemResponse;
 import com.cangiuoc.cgfoodtour.dto.response.StoreResponse;
@@ -22,12 +23,17 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,7 +47,9 @@ public class StoreService {
     StoreRatingRepository storeRatingRepository;
     StoreDailyReportRepository storeDailyReportRepository;
     FoodItemRepository foodItemRepository;
-    
+    StoreAuditLogRepository storeAuditLogRepository;
+    EmailService emailService;
+
     StoreMapper storeMapper;
     FoodItemMapper foodItemMapper;
 
@@ -150,8 +158,8 @@ public class StoreService {
         storeMapper.updateStore(store, request);
         store.setCategory(category);
 
-        // If updated by owner, reset verification & status to pending for Admin review
-        if (!userIsAdmin) {
+        // If updated by owner, reset verification & status to pending for Admin review (unless store is currently HIDDEN)
+        if (!userIsAdmin && store.getStatus() != StoreStatus.HIDDEN) {
             store.setStatus(StoreStatus.PENDING);
             store.setIsVerified(false);
             store.setRejectionReason(null);
@@ -163,6 +171,11 @@ public class StoreService {
 
     @Transactional
     public void deleteStore(String id, String email) {
+        hardDeleteStore(id, null, email);
+    }
+
+    @Transactional
+    public StoreResponse hideStore(String id, StoreActionRequest request, String email) {
         Store store = storeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
 
@@ -176,7 +189,229 @@ public class StoreService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
-        storeRepository.deleteById(id);
+        // Business rule: Only APPROVED stores can be hidden
+        if (store.getStatus() != StoreStatus.APPROVED) {
+            throw new AppException(ErrorCode.INVALID_STORE_STATUS_FOR_HIDE);
+        }
+
+        String reason = request != null ? request.getReason() : null;
+        if (userIsAdmin && (reason == null || reason.isBlank())) {
+            throw new AppException(ErrorCode.STORE_REASON_REQUIRED);
+        }
+
+        store.setStatus(StoreStatus.HIDDEN);
+        store.setHiddenByAdmin(userIsAdmin);
+        store.setHideReason(reason);
+        store = storeRepository.save(store);
+
+        // Audit log
+        StoreAuditLog auditLog = StoreAuditLog.builder()
+                .storeId(store.getId())
+                .storeName(store.getName())
+                .actorId(user.getId())
+                .actorEmail(user.getEmail())
+                .actorRole(userIsAdmin ? "ADMIN" : "OWNER")
+                .actionType("HIDE")
+                .reason(reason)
+                .build();
+        storeAuditLogRepository.save(auditLog);
+
+        // Send email to owner if performed by admin
+        if (userIsAdmin && store.getOwner() != null && store.getOwner().getEmail() != null) {
+            emailService.sendStoreStatusNotificationEmail(store.getOwner().getEmail(), store.getName(), "HIDE", reason);
+        }
+
+        return toStoreResponse(store);
+    }
+
+    @Transactional
+    public StoreResponse recoverStore(String id, StoreActionRequest request, String email) {
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        boolean userIsAdmin = isAdmin(user);
+        boolean isOwner = store.getOwner() != null && user.getId().equals(store.getOwner().getId());
+
+        if (!userIsAdmin && !isOwner) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // Business rule: Only HIDDEN stores can be recovered
+        if (store.getStatus() != StoreStatus.HIDDEN) {
+            throw new AppException(ErrorCode.INVALID_STORE_STATUS_FOR_RECOVER);
+        }
+
+        // Business rule: If store was hidden by Admin, only Admin can recover it
+        if (Boolean.TRUE.equals(store.getHiddenByAdmin()) && !userIsAdmin) {
+            throw new AppException(ErrorCode.STORE_HIDDEN_BY_ADMIN_CANNOT_RECOVER);
+        }
+
+        String reason = request != null ? request.getReason() : null;
+        store.setStatus(StoreStatus.APPROVED);
+        store.setHiddenByAdmin(false);
+        store.setHideReason(null);
+        store.setRecoveryRequested(false);
+        store.setRecoveryRequestReason(null);
+        store.setRecoveryDeclineReason(null);
+        store = storeRepository.save(store);
+
+        // Audit log
+        StoreAuditLog auditLog = StoreAuditLog.builder()
+                .storeId(store.getId())
+                .storeName(store.getName())
+                .actorId(user.getId())
+                .actorEmail(user.getEmail())
+                .actorRole(userIsAdmin ? "ADMIN" : "OWNER")
+                .actionType("RECOVER")
+                .reason(reason)
+                .build();
+        storeAuditLogRepository.save(auditLog);
+
+        return toStoreResponse(store);
+    }
+
+    @Transactional
+    public StoreResponse requestStoreRecovery(String id, StoreActionRequest request, String email) {
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        boolean userIsAdmin = isAdmin(user);
+        boolean isOwner = store.getOwner() != null && user.getId().equals(store.getOwner().getId());
+
+        if (!userIsAdmin && !isOwner) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (store.getStatus() != StoreStatus.HIDDEN || !Boolean.TRUE.equals(store.getHiddenByAdmin())) {
+            throw new AppException(ErrorCode.INVALID_STORE_STATUS_FOR_RECOVER);
+        }
+
+        String reason = request != null ? request.getReason() : null;
+        if (reason == null || reason.isBlank()) {
+            throw new AppException(ErrorCode.RECOVERY_REQUEST_REASON_REQUIRED);
+        }
+
+        store.setRecoveryRequested(true);
+        store.setRecoveryRequestReason(reason);
+        store.setRecoveryDeclineReason(null);
+        store = storeRepository.save(store);
+
+        // Audit log
+        StoreAuditLog auditLog = StoreAuditLog.builder()
+                .storeId(store.getId())
+                .storeName(store.getName())
+                .actorId(user.getId())
+                .actorEmail(user.getEmail())
+                .actorRole(userIsAdmin ? "ADMIN" : "OWNER")
+                .actionType("REQUEST_RECOVERY")
+                .reason(reason)
+                .build();
+        storeAuditLogRepository.save(auditLog);
+
+        return toStoreResponse(store);
+    }
+
+    @Transactional
+    public StoreResponse rejectRecoveryRequest(String id, StoreActionRequest request, String email) {
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if (!isAdmin(user)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (!Boolean.TRUE.equals(store.getRecoveryRequested())) {
+            throw new AppException(ErrorCode.NO_PENDING_RECOVERY_REQUEST);
+        }
+
+        String reason = request != null ? request.getReason() : null;
+        if (reason == null || reason.isBlank()) {
+            throw new AppException(ErrorCode.STORE_REASON_REQUIRED);
+        }
+
+        store.setRecoveryRequested(false);
+        store.setRecoveryDeclineReason(reason);
+        // Note: Store status STAYS as HIDDEN and hiddenByAdmin STAYS as true!
+        store = storeRepository.save(store);
+
+        // Audit log
+        StoreAuditLog auditLog = StoreAuditLog.builder()
+                .storeId(store.getId())
+                .storeName(store.getName())
+                .actorId(user.getId())
+                .actorEmail(user.getEmail())
+                .actorRole("ADMIN")
+                .actionType("REJECT_RECOVERY_REQUEST")
+                .reason(reason)
+                .build();
+        storeAuditLogRepository.save(auditLog);
+
+        // Send notification email to owner
+        if (store.getOwner() != null && store.getOwner().getEmail() != null) {
+            emailService.sendStoreStatusNotificationEmail(
+                    store.getOwner().getEmail(),
+                    store.getName(),
+                    "REJECT_RECOVERY_REQUEST",
+                    "Từ chối yêu cầu khôi phục. Lý do: " + reason
+            );
+        }
+
+        return toStoreResponse(store);
+    }
+
+    @Transactional
+    public void hardDeleteStore(String id, StoreActionRequest request, String email) {
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        boolean userIsAdmin = isAdmin(user);
+        boolean isOwner = store.getOwner() != null && user.getId().equals(store.getOwner().getId());
+
+        if (!userIsAdmin && !isOwner) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        String reason = request != null ? request.getReason() : null;
+        if (userIsAdmin && (reason == null || reason.isBlank())) {
+            throw new AppException(ErrorCode.STORE_REASON_REQUIRED);
+        }
+
+        // Audit log
+        StoreAuditLog auditLog = StoreAuditLog.builder()
+                .storeId(store.getId())
+                .storeName(store.getName())
+                .actorId(user.getId())
+                .actorEmail(user.getEmail())
+                .actorRole(userIsAdmin ? "ADMIN" : "OWNER")
+                .actionType("HARD_DELETE")
+                .reason(reason)
+                .build();
+        storeAuditLogRepository.save(auditLog);
+
+        // Send email to owner if performed by admin
+        if (userIsAdmin && store.getOwner() != null && store.getOwner().getEmail() != null) {
+            emailService.sendStoreStatusNotificationEmail(store.getOwner().getEmail(), store.getName(), "HARD_DELETE", reason);
+        }
+
+        // Delete all related records in child tables to prevent foreign key constraint errors
+        foodItemRepository.deleteByStoreId(store.getId());
+        storeRatingRepository.deleteByStoreId(store.getId());
+        storeDailyReportRepository.deleteByStoreId(store.getId());
+        storeAuditLogRepository.deleteByStoreId(store.getId());
+
+        storeRepository.delete(store);
     }
 
     @Transactional
@@ -340,5 +575,72 @@ public class StoreService {
                 * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
+    }
+
+    public Map<String, String> parseGoogleMapsUrl(String inputUrl) {
+        if (inputUrl == null || inputUrl.isBlank()) {
+            return Collections.emptyMap();
+        }
+        String currentUrl = inputUrl.trim();
+
+        // 1. If short URL (maps.app.goo.gl or goo.gl/maps), expand HTTP redirect
+        if (currentUrl.contains("maps.app.goo.gl") || currentUrl.contains("goo.gl/maps")) {
+            try {
+                HttpURLConnection conn = (HttpURLConnection) new URL(currentUrl).openConnection();
+                conn.setInstanceFollowRedirects(true);
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+                conn.setConnectTimeout(6000);
+                conn.setReadTimeout(6000);
+                conn.connect();
+                currentUrl = conn.getURL().toString();
+            } catch (Exception e) {
+                log.warn("Could not expand short URL {}: {}", inputUrl, e.getMessage());
+            }
+        }
+
+        // 2. Extract coordinates from expanded or original URL
+        return extractCoordinatesFromText(currentUrl);
+    }
+
+    private Map<String, String> extractCoordinatesFromText(String text) {
+        if (text == null || text.isBlank()) return Collections.emptyMap();
+
+        // !3d...!4d...
+        var dMatcher = Pattern.compile("!3d(-?\\d+\\.\\d+)!4d(-?\\d+\\.\\d+)").matcher(text);
+        if (dMatcher.find()) {
+            return Map.of("latitude", dMatcher.group(1), "longitude", dMatcher.group(2));
+        }
+
+        // @lat,lng
+        var atMatcher = Pattern.compile("@(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)").matcher(text);
+        if (atMatcher.find()) {
+            return Map.of("latitude", atMatcher.group(1), "longitude", atMatcher.group(2));
+        }
+
+        // q=lat,lng or query=lat,lng
+        var qMatcher = Pattern.compile("[?&](?:q|ll|query|destination|near|center|point)=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)").matcher(text);
+        if (qMatcher.find()) {
+            return Map.of("latitude", qMatcher.group(1), "longitude", qMatcher.group(2));
+        }
+
+        // /place/lat,lng or /search/lat,lng
+        var pMatcher = Pattern.compile("\\/(?:place|dir|search|maps)\\/(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)").matcher(text);
+        if (pMatcher.find()) {
+            return Map.of("latitude", pMatcher.group(1), "longitude", pMatcher.group(2));
+        }
+
+        // Direct lat, lng pattern
+        var directMatcher = Pattern.compile("(-?\\d{1,2}\\.\\d+)\\s*[,;\\s]\\s*(-?\\d{1,3}\\.\\d+)").matcher(text);
+        if (directMatcher.find()) {
+            try {
+                double lat = Double.parseDouble(directMatcher.group(1));
+                double lng = Double.parseDouble(directMatcher.group(2));
+                if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+                    return Map.of("latitude", directMatcher.group(1), "longitude", directMatcher.group(2));
+                }
+            } catch (Exception ignored) {}
+        }
+
+        return Collections.emptyMap();
     }
 }

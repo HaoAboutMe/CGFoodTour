@@ -29,6 +29,7 @@ public class StoreRequest {
 
     Double latitude;
     Double longitude;
+    String mapUrl;
 
     @NotNull(message = "Open time is required")
     LocalTime openTime;

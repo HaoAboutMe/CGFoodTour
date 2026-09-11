@@ -3,6 +3,7 @@ package com.cangiuoc.cgfoodtour.controller;
 import com.cangiuoc.cgfoodtour.dto.request.ApiResponse;
 import com.cangiuoc.cgfoodtour.dto.request.RatingRequest;
 import com.cangiuoc.cgfoodtour.dto.request.ReportClosedRequest;
+import com.cangiuoc.cgfoodtour.dto.request.StoreActionRequest;
 import com.cangiuoc.cgfoodtour.dto.request.StoreRequest;
 import com.cangiuoc.cgfoodtour.dto.request.RejectStoreRequest;
 import com.cangiuoc.cgfoodtour.dto.response.StoreResponse;
@@ -18,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/v1/stores")
@@ -38,6 +40,14 @@ public class StoreController {
     @GetMapping("/events")
     public SseEmitter subscribeToStoreEvents() {
         return sseNotificationService.subscribe();
+    }
+
+    @GetMapping("/parse-gmaps")
+    public ApiResponse<Map<String, String>> parseGmapsUrl(@RequestParam("url") String url) {
+        return ApiResponse.<Map<String, String>>builder()
+                .result(storeService.parseGoogleMapsUrl(url))
+                .message("Parsed Google Maps URL")
+                .build();
     }
 
     @PostMapping
@@ -100,12 +110,60 @@ public class StoreController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ApiResponse<Void> deleteStore(@PathVariable String id) {
+    public ApiResponse<Void> deleteStore(@PathVariable String id, @RequestBody(required = false) StoreActionRequest request) {
         String email = getCurrentUserEmail();
-        storeService.deleteStore(id, email);
+        storeService.hardDeleteStore(id, request, email);
         sseNotificationService.broadcast("STORES_UPDATED");
         return ApiResponse.<Void>builder()
                 .message("Store deleted successfully")
+                .build();
+    }
+
+    @PostMapping("/{id}/hide")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<StoreResponse> hideStore(@PathVariable String id, @RequestBody(required = false) StoreActionRequest request) {
+        String email = getCurrentUserEmail();
+        StoreResponse response = storeService.hideStore(id, request, email);
+        sseNotificationService.broadcast("STORES_UPDATED");
+        return ApiResponse.<StoreResponse>builder()
+                .result(response)
+                .message("Store hidden successfully")
+                .build();
+    }
+
+    @PostMapping("/{id}/recover")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<StoreResponse> recoverStore(@PathVariable String id, @RequestBody(required = false) StoreActionRequest request) {
+        String email = getCurrentUserEmail();
+        StoreResponse response = storeService.recoverStore(id, request, email);
+        sseNotificationService.broadcast("STORES_UPDATED");
+        return ApiResponse.<StoreResponse>builder()
+                .result(response)
+                .message("Store recovered successfully")
+                .build();
+    }
+
+    @PostMapping("/{id}/request-recovery")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<StoreResponse> requestStoreRecovery(@PathVariable String id, @RequestBody @Valid StoreActionRequest request) {
+        String email = getCurrentUserEmail();
+        StoreResponse response = storeService.requestStoreRecovery(id, request, email);
+        sseNotificationService.broadcast("STORES_UPDATED");
+        return ApiResponse.<StoreResponse>builder()
+                .result(response)
+                .message("Recovery request submitted successfully")
+                .build();
+    }
+
+    @PostMapping("/{id}/reject-recovery-request")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<StoreResponse> rejectRecoveryRequest(@PathVariable String id, @RequestBody @Valid StoreActionRequest request) {
+        String email = getCurrentUserEmail();
+        StoreResponse response = storeService.rejectRecoveryRequest(id, request, email);
+        sseNotificationService.broadcast("STORES_UPDATED");
+        return ApiResponse.<StoreResponse>builder()
+                .result(response)
+                .message("Recovery request rejected successfully")
                 .build();
     }
 

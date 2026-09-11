@@ -43,6 +43,9 @@ public class Store {
     @Column(name = "longitude")
     Double longitude;
 
+    @Column(name = "map_url", length = 1000)
+    String mapUrl;
+
     @Column(name = "open_time", nullable = false)
     LocalTime openTime;
 
@@ -75,6 +78,23 @@ public class Store {
 
     @Column(name = "rejection_reason")
     String rejectionReason;
+
+    @Column(name = "hidden_by_admin")
+    @Builder.Default
+    Boolean hiddenByAdmin = false;
+
+    @Column(name = "recovery_requested")
+    @Builder.Default
+    Boolean recoveryRequested = false;
+
+    @Column(name = "recovery_request_reason", columnDefinition = "TEXT")
+    String recoveryRequestReason;
+
+    @Column(name = "recovery_decline_reason", columnDefinition = "TEXT")
+    String recoveryDeclineReason;
+
+    @Column(name = "hide_reason", columnDefinition = "TEXT")
+    String hideReason;
 
     // Denormalized counters
     @Column(name = "count_very_satisfied")

@@ -22,6 +22,7 @@ public class StoreResponse {
     String landmarkNote;
     Double latitude;
     Double longitude;
+    String mapUrl;
     LocalTime openTime;
     LocalTime closeTime;
     Double priceMin;
@@ -35,6 +36,11 @@ public class StoreResponse {
     String ownerLastname;
     String status;
     String rejectionReason;
+    Boolean hiddenByAdmin;
+    String hideReason;
+    Boolean recoveryRequested;
+    String recoveryRequestReason;
+    String recoveryDeclineReason;
 
     // Counters
     Integer countVerySatisfied;

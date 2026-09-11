@@ -39,3 +39,6 @@ build/
 /frontend/.agents/
 skills-lock.json
 /frontend/skills-lock.json
+
+# Daily log
+ProjectDaily.md
