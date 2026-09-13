@@ -257,9 +257,16 @@ export default function AdminSection({
                     
                     {/* Image Preview & Upload Row */}
                     <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-3 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                      {foodImage && (
-                        <div className="w-16 h-16 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                          <img src={foodImage} alt="Food Preview" className="w-full h-full object-cover" />
+                      {(foodImage || uploadingFood) && (
+                        <div className="w-16 h-16 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] relative flex items-center justify-center">
+                          {foodImage && (
+                            <img src={foodImage} alt="Food Preview" className="w-full h-full object-cover" />
+                          )}
+                          {uploadingFood && (
+                            <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex items-center justify-center z-10">
+                              <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" />
+                            </div>
+                          )}
                         </div>
                       )}
                       <div className="w-full flex-1 space-y-2">

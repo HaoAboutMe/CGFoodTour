@@ -590,9 +590,16 @@ export default function MyStoresSection({
               
               {/* Image Preview & Upload Row */}
               <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-4 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                {editingStore.bannerImageUrl && (
-                  <div className="w-24 h-24 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                    <img src={editingStore.bannerImageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                {(editingStore.bannerImageUrl || uploadingBanner) && (
+                  <div className="w-24 h-24 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] relative flex items-center justify-center">
+                    {editingStore.bannerImageUrl && (
+                      <img src={editingStore.bannerImageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                    )}
+                    {uploadingBanner && (
+                      <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex items-center justify-center z-10">
+                        <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
                   </div>
                 )}
                 <div className="flex-1 w-full space-y-2">
@@ -867,9 +874,16 @@ export default function MyStoresSection({
               
               {/* Image Preview & Upload Row */}
               <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-4 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                {storeBannerUrl && (
-                  <div className="w-24 h-24 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                    <img src={storeBannerUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                {(storeBannerUrl || uploadingBanner) && (
+                  <div className="w-24 h-24 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] relative flex items-center justify-center">
+                    {storeBannerUrl && (
+                      <img src={storeBannerUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                    )}
+                    {uploadingBanner && (
+                      <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex items-center justify-center z-10">
+                        <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
                   </div>
                 )}
                 <div className="flex-1 w-full space-y-2">
@@ -987,9 +1001,16 @@ export default function MyStoresSection({
                 
                 {/* Image Preview & Upload Row */}
                 <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-4 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                  {foodImage && (
-                    <div className="w-24 h-24 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                      <img src={foodImage} alt="Food Preview" className="w-full h-full object-cover" />
+                  {(foodImage || uploadingFood) && (
+                    <div className="w-24 h-24 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] relative flex items-center justify-center">
+                      {foodImage && (
+                        <img src={foodImage} alt="Food Preview" className="w-full h-full object-cover" />
+                      )}
+                      {uploadingFood && (
+                        <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex items-center justify-center z-10">
+                          <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      )}
                     </div>
                   )}
                   <div className="w-full flex-1 space-y-2">

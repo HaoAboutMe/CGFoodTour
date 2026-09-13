@@ -16,6 +16,7 @@ import ProfileSection from './components/ProfileSection'
 import AdminSection from './components/AdminSection'
 import MyStoresSection from './components/MyStoresSection'
 import ExploreSection from './components/ExploreSection'
+import AboutSection from './components/AboutSection'
 
 const API_BASE = 'http://localhost:8080/api'
 
@@ -77,6 +78,7 @@ export default function App() {
   const [pwdNew, setPwdNew] = useState('')
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState('')
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   // Form Fields - Store Submission
   const [storeName, setStoreName] = useState('')
@@ -140,7 +142,7 @@ export default function App() {
     const rawPath = location.pathname.substring(1)
     const tab = rawPath === '' ? 'explore' : rawPath
 
-    if (['explore', 'profile', 'my-stores', 'admin'].includes(tab)) {
+    if (['explore', 'about', 'profile', 'my-stores', 'admin'].includes(tab)) {
       if (!token && ['profile', 'my-stores', 'admin'].includes(tab)) {
         navigate('/explore', { replace: true })
         return
@@ -150,7 +152,7 @@ export default function App() {
       if (tab === 'admin') {
         loadAdminUsers()
         loadAdminPendingStores()
-      } else if (tab === 'explore' || tab === 'my-stores') {
+      } else if (tab === 'explore' || tab === 'my-stores' || tab === 'about') {
         loadGlobalData()
       }
     } else {
@@ -914,30 +916,34 @@ export default function App() {
   async function handleUploadAvatar(e) {
     e.preventDefault()
     if (!avatarFile) {
-      showToast('Select an avatar image file first.', 'error')
+      showToast('Vui lòng chọn ảnh đại diện trước.', 'error')
       return
     }
-    setLoading(true)
+    setUploadingAvatar(true)
     const formData = new FormData()
     formData.append('file', avatarFile)
 
     const res = await makeRequest('PATCH', '/users/me/avatar', formData, true)
-    setLoading(false)
+    setUploadingAvatar(false)
 
     if (res.success && res.data.result) {
       setCurrentUser(res.data.result)
       setAvatarPreview(res.data.result.avatarUrl)
       setAvatarFile(null)
-      showToast('Profile avatar uploaded to Cloudinary!', 'success')
+      showToast('Đã tải ảnh đại diện thành công!', 'success')
     } else {
-      showToast(res.error?.message || 'Avatar upload failed.', 'error')
+      showToast(res.error?.message || 'Tải ảnh đại diện thất bại.', 'error')
     }
+  }
+
+  function handleCancelAvatarSelection() {
+    setAvatarFile(null)
+    setAvatarPreview(currentUser?.avatarUrl || '')
   }
 
   // Upload Generic Image (Stores/Dishes)
   async function handleUploadImage(file, folder = '') {
     if (!file) return null
-    setLoading(true)
     const formData = new FormData()
     formData.append('file', file)
 
@@ -947,12 +953,11 @@ export default function App() {
     }
 
     const res = await makeRequest('POST', url, formData, true)
-    setLoading(false)
 
     if (res.success && res.data.result) {
       return res.data.result.url
     } else {
-      showToast(res.error?.message || 'Image upload failed.', 'error')
+      showToast(res.error?.message || 'Tải ảnh thất bại.', 'error')
       return null
     }
   }
@@ -1575,6 +1580,18 @@ export default function App() {
         )}
 
         {/* ========================================================================= */}
+        {/* ABOUT TAB */}
+        {/* ========================================================================= */}
+        {activeTab === 'about' && (
+          <AboutSection
+            switchTab={switchTab}
+            setShowAuthModal={setShowAuthModal}
+            setAuthMode={setAuthMode}
+            currentUser={currentUser}
+          />
+        )}
+
+        {/* ========================================================================= */}
         {/* PROFILE TAB */}
         {/* ========================================================================= */}
         {activeTab === 'profile' && currentUser && (
@@ -1584,6 +1601,8 @@ export default function App() {
             avatarFile={avatarFile}
             onAvatarFileChange={onAvatarFileChange}
             handleUploadAvatar={handleUploadAvatar}
+            handleCancelAvatarSelection={handleCancelAvatarSelection}
+            uploadingAvatar={uploadingAvatar}
             upUsername={upUsername}
             setUpUsername={setUpUsername}
             upFirstname={upFirstname}
