@@ -27,12 +27,14 @@ import {
   Phone,
   DollarSign,
   MapPin,
-  Trophy
+  Trophy,
+  ZoomIn
 } from 'lucide-react'
 import StoreActionModal from './StoreActionModal'
 import CustomSelect from './CustomSelect'
 import CategoryIcon from './CategoryIcon'
 import CategoryIconPicker from './CategoryIconPicker'
+import ImageViewerModal from './ImageViewerModal'
 
 export default function AdminSection({
   isUserAdmin,
@@ -92,6 +94,7 @@ export default function AdminSection({
   const [rejectingStore, setRejectingStore] = useState(null)
   const [rejectionReason, setRejectionReason] = useState('')
   const [viewingStore, setViewingStore] = useState(null)
+  const [previewImage, setPreviewImage] = useState(null)
   const [editingCategory, setEditingCategory] = useState(null)
   const [editCatName, setEditCatName] = useState('')
   const [editCatIcon, setEditCatIcon] = useState('fa-bread-slice')
@@ -320,18 +323,28 @@ export default function AdminSection({
 
         {/* SIDEBAR FOOTER (ADMIN ACCOUNT & ACTIONS) */}
         <div className="p-4 border-t-4 border-black bg-[#f7f6f2] space-y-3 shrink-0">
-          {/* Admin User Card */}
-          <div className="bg-white p-3 border-2 border-black rounded-xl flex items-center gap-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+          {/* Admin User Card (Clicking anywhere on card previews avatar) */}
+          <div
+            onClick={() =>
+              setPreviewImage({
+                src: currentUser?.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg',
+                alt: adminFullName,
+                caption: `Avatar Admin: ${adminFullName} (${currentUser?.email || ''})`
+              })
+            }
+            className="bg-white p-3 border-2 border-black rounded-xl flex items-center gap-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer hover:bg-neutral-50 transition-all group"
+            title="Bấm để xem ảnh đại diện Admin"
+          >
             <img
               src={currentUser?.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg'}
               alt="Admin Avatar"
-              className="w-10 h-10 rounded-full border-2 border-black object-cover shrink-0"
+              className="w-10 h-10 rounded-full border-2 border-black object-cover shrink-0 group-hover:brightness-90 transition-all"
             />
             <div className="flex-1 min-w-0">
-              <p className="font-black text-xs text-black truncate">{adminFullName}</p>
+              <p className="font-black text-xs text-black truncate group-hover:text-[#ff3e3e] transition-colors">{adminFullName}</p>
               <p className="font-bold text-[10px] text-neutral-500 truncate">{currentUser?.email}</p>
               <span className="brutalist-badge bg-[#ff3e3e] text-white text-[8px] py-0 px-1 border border-black inline-block mt-0.5">
-                ADMIN ROLE
+                ADMIN ROLE 🔍
               </span>
             </div>
           </div>
@@ -948,16 +961,27 @@ export default function AdminSection({
                       </thead>
                       <tbody className="divide-y-2 divide-neutral-200">
                         {currentPageUsers.map((u) => (
-                      <tr key={u.id} className="hover:bg-neutral-50 transition-colors">
+                      <tr
+                        key={u.id}
+                        onClick={() =>
+                          setPreviewImage({
+                            src: u.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg',
+                            alt: u.username,
+                            caption: `Avatar Người Dùng: @${u.username} (${u.email || 'N/A'})`
+                          })
+                        }
+                        className="hover:bg-red-50/40 transition-colors cursor-pointer group"
+                        title="Bấm vào thẻ tài khoản để xem ảnh đại diện"
+                      >
                         <td className="py-3">
                           <img
                             src={u.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg'}
                             alt="avatar"
-                            className="w-9 h-9 border-2 border-black object-cover rounded-full"
+                            className="w-9 h-9 border-2 border-black object-cover rounded-full group-hover:brightness-90 transition-all"
                           />
                         </td>
                         <td className="py-3">
-                          <p className="font-extrabold text-black text-sm">@{u.username}</p>
+                          <p className="font-extrabold text-black text-sm group-hover:text-[#ff3e3e] transition-colors">@{u.username}</p>
                           <p className="text-[10px] text-neutral-500 font-semibold">{u.email}</p>
                         </td>
                         <td className="py-3 font-bold text-neutral-700">
@@ -975,7 +999,7 @@ export default function AdminSection({
                             ))}
                           </div>
                         </td>
-                        <td className="py-3 text-right">
+                        <td className="py-3 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleOpenAdminEditUser(u)}
@@ -1402,18 +1426,37 @@ export default function AdminSection({
             {/* Scrollable Main Content */}
             <div className="flex-1 overflow-y-auto space-y-6">
               {/* Header Image Banner */}
-              <div className="h-56 w-full relative bg-neutral-200 border-b-4 border-black shrink-0">
+              <div
+                onClick={() =>
+                  setPreviewImage({
+                    src: viewingStore.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60',
+                    alt: viewingStore.name,
+                    caption: `Ảnh Banner Quán: ${viewingStore.name}`
+                  })
+                }
+                className="h-56 w-full relative bg-neutral-200 border-b-4 border-black shrink-0 group cursor-pointer"
+                title="Bấm để xem phóng to ảnh quán ăn"
+              >
                 <img
                   src={
                     viewingStore.bannerImageUrl ||
                     'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'
                   }
                   alt={viewingStore.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover group-hover:brightness-90 transition-all"
                 />
+                <div className="absolute top-4 left-4 pointer-events-none">
+                  <span className="brutalist-badge bg-black/70 text-white text-[10px] px-2.5 py-1 border border-white flex items-center gap-1 backdrop-blur-xs">
+                    <ZoomIn className="w-3.5 h-3.5" /> Bấm Để Phóng To Ảnh Banner
+                  </span>
+                </div>
                 <button
-                  onClick={() => setViewingStore(null)}
-                  className="absolute top-4 right-4 p-2 bg-white border-2 border-black rounded-full hover:bg-neutral-100 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setViewingStore(null)
+                  }}
+                  className="absolute top-4 right-4 p-2 bg-white border-2 border-black rounded-full hover:bg-neutral-100 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer z-10"
+                  title="Đóng cửa sổ chi tiết"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1524,19 +1567,32 @@ export default function AdminSection({
                       {viewingStore.foodItems.map((food) => (
                         <div
                           key={food.id}
-                          className="flex gap-4 p-3 bg-white border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                          onClick={() =>
+                            setPreviewImage({
+                              src: food.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60',
+                              alt: food.name,
+                              caption: `Món: ${food.name} (${food.price?.toLocaleString()}đ)`
+                            })
+                          }
+                          className="flex gap-4 p-3 bg-white border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer group/food"
+                          title="Bấm để phóng to ảnh món ăn này"
                         >
-                          <img
-                            src={
-                              food.imageUrl ||
-                              'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60'
-                            }
-                            alt={food.name}
-                            className="w-16 h-16 border-2 border-black rounded-lg object-cover shrink-0"
-                          />
+                          <div className="relative shrink-0">
+                            <img
+                              src={
+                                food.imageUrl ||
+                                'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60'
+                              }
+                              alt={food.name}
+                              className="w-16 h-16 border-2 border-black rounded-lg object-cover group-hover/food:brightness-90 transition-all"
+                            />
+                            <div className="absolute inset-0 bg-black/30 rounded-lg flex items-center justify-center opacity-0 group-hover/food:opacity-100 transition-opacity pointer-events-none">
+                              <ZoomIn className="w-5 h-5 text-white" />
+                            </div>
+                          </div>
                           <div className="min-w-0 flex-1 flex flex-col justify-between">
                             <div>
-                              <p className="text-xs font-black text-black">{food.name}</p>
+                              <p className="text-xs font-black text-black group-hover/food:text-[#ff3e3e] transition-colors">{food.name}</p>
                               <p className="text-[10px] text-neutral-600 truncate mt-0.5">{food.description}</p>
                             </div>
                             <p className="text-xs font-black text-[#ff3e3e]">
@@ -1687,6 +1743,16 @@ export default function AdminSection({
           </div>
         </div>,
         document.body
+      )}
+
+      {/* Full-Screen Image Lightbox Preview Modal */}
+      {previewImage && (
+        <ImageViewerModal
+          src={previewImage.src}
+          alt={previewImage.alt}
+          caption={previewImage.caption}
+          onClose={() => setPreviewImage(null)}
+        />
       )}
     </div>
   )
