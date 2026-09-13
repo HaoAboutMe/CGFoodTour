@@ -97,6 +97,10 @@ export default function AdminSection({
   const [userSearchQuery, setUserSearchQuery] = useState('')
   const [userRoleFilter, setUserRoleFilter] = useState('ALL')
   const [categorySortBy, setCategorySortBy] = useState('ID_ASC')
+  const [storesPage, setStoresPage] = useState(1)
+  const [usersPage, setUsersPage] = useState(1)
+  const STORES_PER_PAGE = 12
+  const USERS_PER_PAGE = 10
 
   const [adminActionModalStore, setAdminActionModalStore] = useState(null)
   const [adminActionModalType, setAdminActionModalType] = useState(null)
@@ -678,21 +682,26 @@ export default function AdminSection({
             </div>
 
             {/* Stores Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {stores
-                .filter((s) => {
-                  if (storeStatusFilter === 'RECOVERY_REQUESTED') return s.recoveryRequested
-                  if (storeStatusFilter !== 'ALL' && s.status !== storeStatusFilter) return false
-                  if (storeCategoryFilter !== 'ALL' && s.categoryName !== storeCategoryFilter) return false
-                  if (!storeSearchQuery.trim()) return true
-                  const q = storeSearchQuery.toLowerCase()
-                  return (
-                    (s.name && s.name.toLowerCase().includes(q)) ||
-                    (s.addressLine && s.addressLine.toLowerCase().includes(q)) ||
-                    (s.ownerUsername && s.ownerUsername.toLowerCase().includes(q))
-                  )
-                })
-                .map((st) => (
+            {(() => {
+              const filteredStores = stores.filter((s) => {
+                if (storeStatusFilter === 'RECOVERY_REQUESTED') return s.recoveryRequested
+                if (storeStatusFilter !== 'ALL' && s.status !== storeStatusFilter) return false
+                if (storeCategoryFilter !== 'ALL' && s.categoryName !== storeCategoryFilter) return false
+                if (!storeSearchQuery.trim()) return true
+                const q = storeSearchQuery.toLowerCase()
+                return (
+                  (s.name && s.name.toLowerCase().includes(q)) ||
+                  (s.addressLine && s.addressLine.toLowerCase().includes(q)) ||
+                  (s.ownerUsername && s.ownerUsername.toLowerCase().includes(q))
+                )
+              })
+              const totalStoresPages = Math.max(1, Math.ceil(filteredStores.length / STORES_PER_PAGE))
+              const currentPageStores = filteredStores.slice((storesPage - 1) * STORES_PER_PAGE, storesPage * STORES_PER_PAGE)
+
+              return (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {currentPageStores.map((st) => (
                   <div
                     key={st.id}
                     onClick={() => setViewingStore(st)}
@@ -831,7 +840,31 @@ export default function AdminSection({
                     </div>
                   </div>
                 ))}
-            </div>
+              </div>
+
+                  {/* Stores Pagination Bar */}
+                  {filteredStores.length > STORES_PER_PAGE && (
+                    <div className="flex items-center justify-between pt-4 border-t-2 border-black font-black text-xs">
+                      <button
+                        disabled={storesPage === 1}
+                        onClick={() => setStoresPage((p) => Math.max(1, p - 1))}
+                        className="px-3.5 py-1.5 bg-white text-black border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100 active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+                      >
+                        ◄ Trang Trước
+                      </button>
+                      <span>Trang {storesPage} / {totalStoresPages} ({filteredStores.length} quán)</span>
+                      <button
+                        disabled={storesPage >= totalStoresPages}
+                        onClick={() => setStoresPage((p) => Math.min(totalStoresPages, p + 1))}
+                        className="px-3.5 py-1.5 bg-white text-black border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100 active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+                      >
+                        Trang Sau ►
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
           </div>
         )}
 
@@ -879,32 +912,37 @@ export default function AdminSection({
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="text-black border-b-3 border-black">
-                    <th className="pb-3 font-black uppercase">Ảnh</th>
-                    <th className="pb-3 font-black uppercase">Tài Khoản</th>
-                    <th className="pb-3 font-black uppercase">Họ Và Tên</th>
-                    <th className="pb-3 font-black uppercase">Vai Trò (Roles)</th>
-                    <th className="pb-3 font-black uppercase text-right">Thao Tác</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y-2 divide-neutral-200">
-                  {adminUsersList
-                    .filter((u) => {
-                      if (userRoleFilter !== 'ALL') {
-                        const roles = (u.roles || []).map((r) => (typeof r === 'string' ? r : r.name))
-                        if (!roles.includes(userRoleFilter)) return false
-                      }
-                      if (!userSearchQuery.trim()) return true
-                      const q = userSearchQuery.toLowerCase()
-                      return (
-                        (u.username && u.username.toLowerCase().includes(q)) ||
-                        (u.email && u.email.toLowerCase().includes(q))
-                      )
-                    })
-                    .map((u) => (
+            {(() => {
+              const filteredUsers = adminUsersList.filter((u) => {
+                if (userRoleFilter !== 'ALL') {
+                  const roles = (u.roles || []).map((r) => (typeof r === 'string' ? r : r.name))
+                  if (!roles.includes(userRoleFilter)) return false
+                }
+                if (!userSearchQuery.trim()) return true
+                const q = userSearchQuery.toLowerCase()
+                return (
+                  (u.username && u.username.toLowerCase().includes(q)) ||
+                  (u.email && u.email.toLowerCase().includes(q))
+                )
+              })
+              const totalUsersPages = Math.max(1, Math.ceil(filteredUsers.length / USERS_PER_PAGE))
+              const currentPageUsers = filteredUsers.slice((usersPage - 1) * USERS_PER_PAGE, usersPage * USERS_PER_PAGE)
+
+              return (
+                <div className="space-y-4">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="text-black border-b-3 border-black">
+                          <th className="pb-3 font-black uppercase">Ảnh</th>
+                          <th className="pb-3 font-black uppercase">Tài Khoản</th>
+                          <th className="pb-3 font-black uppercase">Họ Và Tên</th>
+                          <th className="pb-3 font-black uppercase">Vai Trò (Roles)</th>
+                          <th className="pb-3 font-black uppercase text-right">Thao Tác</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y-2 divide-neutral-200">
+                        {currentPageUsers.map((u) => (
                       <tr key={u.id} className="hover:bg-neutral-50 transition-colors">
                         <td className="py-3">
                           <img
@@ -952,9 +990,33 @@ export default function AdminSection({
                         </td>
                       </tr>
                     ))}
-                </tbody>
-              </table>
-            </div>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Users Pagination Bar */}
+                  {filteredUsers.length > USERS_PER_PAGE && (
+                    <div className="flex items-center justify-between pt-4 border-t-2 border-black font-black text-xs">
+                      <button
+                        disabled={usersPage === 1}
+                        onClick={() => setUsersPage((p) => Math.max(1, p - 1))}
+                        className="px-3.5 py-1.5 bg-white text-black border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100 active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+                      >
+                        ◄ Trang Trước
+                      </button>
+                      <span>Trang {usersPage} / {totalUsersPages} ({filteredUsers.length} người dùng)</span>
+                      <button
+                        disabled={usersPage >= totalUsersPages}
+                        onClick={() => setUsersPage((p) => Math.min(totalUsersPages, p + 1))}
+                        className="px-3.5 py-1.5 bg-white text-black border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100 active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+                      >
+                        Trang Sau ►
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
           </div>
         )}
 
