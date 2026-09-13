@@ -25,6 +25,7 @@ import {
   ChevronRight
 } from 'lucide-react'
 import StoreActionModal from './StoreActionModal'
+import CustomSelect from './CustomSelect'
 
 export default function AdminSection({
   isUserAdmin,
@@ -89,8 +90,11 @@ export default function AdminSection({
   const [editCatIcon, setEditCatIcon] = useState('fa-bread-slice')
   const [uploadingFood, setUploadingFood] = useState(false)
   const [storeStatusFilter, setStoreStatusFilter] = useState('ALL')
+  const [storeCategoryFilter, setStoreCategoryFilter] = useState('ALL')
   const [storeSearchQuery, setStoreSearchQuery] = useState('')
   const [userSearchQuery, setUserSearchQuery] = useState('')
+  const [userRoleFilter, setUserRoleFilter] = useState('ALL')
+  const [categorySortBy, setCategorySortBy] = useState('ID_ASC')
 
   const [adminActionModalStore, setAdminActionModalStore] = useState(null)
   const [adminActionModalType, setAdminActionModalType] = useState(null)
@@ -649,16 +653,32 @@ export default function AdminSection({
               </div>
             </div>
 
-            {/* Search Input */}
-            <div className="relative max-w-md">
-              <input
-                type="text"
-                placeholder="Tìm theo tên quán, địa chỉ, chủ quán..."
-                value={storeSearchQuery}
-                onChange={(e) => setStoreSearchQuery(e.target.value)}
-                className="brutalist-input pl-10 text-xs"
-              />
-              <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            {/* Search Input & Category Filter */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="relative flex-1 max-w-md">
+                <input
+                  type="text"
+                  placeholder="Tìm theo tên quán, địa chỉ, chủ quán..."
+                  value={storeSearchQuery}
+                  onChange={(e) => setStoreSearchQuery(e.target.value)}
+                  className="brutalist-input pl-10 text-xs w-full"
+                />
+                <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase text-neutral-500 shrink-0">Danh Mục:</span>
+                <CustomSelect
+                  value={storeCategoryFilter}
+                  onChange={(val) => setStoreCategoryFilter(val)}
+                  options={[
+                    { value: 'ALL', label: 'Tất Cả Danh Mục' },
+                    ...categories.map((c) => ({ value: c.name, label: c.name }))
+                  ]}
+                  dropdownAlign="right"
+                  width="w-44 sm:w-52"
+                />
+              </div>
             </div>
 
             {/* Stores Grid */}
@@ -667,6 +687,7 @@ export default function AdminSection({
                 .filter((s) => {
                   if (storeStatusFilter === 'RECOVERY_REQUESTED') return s.recoveryRequested
                   if (storeStatusFilter !== 'ALL' && s.status !== storeStatusFilter) return false
+                  if (storeCategoryFilter !== 'ALL' && s.categoryName !== storeCategoryFilter) return false
                   if (!storeSearchQuery.trim()) return true
                   const q = storeSearchQuery.toLowerCase()
                   return (
@@ -833,16 +854,32 @@ export default function AdminSection({
                 </p>
               </div>
 
-              {/* Search user */}
-              <div className="relative w-full sm:w-64">
-                <input
-                  type="text"
-                  placeholder="Tìm username, email..."
-                  value={userSearchQuery}
-                  onChange={(e) => setUserSearchQuery(e.target.value)}
-                  className="brutalist-input pl-10 text-xs"
-                />
-                <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              {/* Search user & Role Filter */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black uppercase text-neutral-500 shrink-0">Vai Trò:</span>
+                  <CustomSelect
+                    value={userRoleFilter}
+                    onChange={(val) => setUserRoleFilter(val)}
+                    options={[
+                      { value: 'ALL', label: 'Tất Cả Roles' },
+                      { value: 'ADMIN', label: 'ADMIN (Quản trị)' },
+                      { value: 'USER', label: 'USER (Người dùng)' }
+                    ]}
+                    width="w-40 sm:w-48"
+                  />
+                </div>
+
+                <div className="relative w-full sm:w-64">
+                  <input
+                    type="text"
+                    placeholder="Tìm username, email..."
+                    value={userSearchQuery}
+                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                    className="brutalist-input pl-10 text-xs"
+                  />
+                  <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
               </div>
             </div>
 
@@ -860,6 +897,10 @@ export default function AdminSection({
                 <tbody className="divide-y-2 divide-neutral-200">
                   {adminUsersList
                     .filter((u) => {
+                      if (userRoleFilter !== 'ALL') {
+                        const roles = (u.roles || []).map((r) => (typeof r === 'string' ? r : r.name))
+                        if (!roles.includes(userRoleFilter)) return false
+                      }
                       if (!userSearchQuery.trim()) return true
                       const q = userSearchQuery.toLowerCase()
                       return (
@@ -947,17 +988,18 @@ export default function AdminSection({
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs uppercase font-extrabold block text-neutral-700">Icon Hiển Thị</label>
-                    <select
+                    <CustomSelect
                       value={catIcon}
-                      onChange={(e) => setCatIcon(e.target.value)}
-                      className="brutalist-input"
-                    >
-                      <option value="fa-utensils">Utensils 🍴 (Nhà hàng)</option>
-                      <option value="fa-bread-slice">Bread 🍞 (Bánh mì)</option>
-                      <option value="fa-coffee">Coffee ☕ (Cà phê/Nước)</option>
-                      <option value="fa-ice-cream">Ice Cream 🍦 (Kem/Tráng miệng)</option>
-                      <option value="fa-store">Store 🏪 (Cửa hàng)</option>
-                    </select>
+                      onChange={(val) => setCatIcon(val)}
+                      options={[
+                        { value: 'fa-utensils', label: 'Utensils 🍴 (Nhà hàng)' },
+                        { value: 'fa-bread-slice', label: 'Bread 🍞 (Bánh mì)' },
+                        { value: 'fa-coffee', label: 'Coffee ☕ (Cà phê/Nước)' },
+                        { value: 'fa-ice-cream', label: 'Ice Cream 🍦 (Kem/Tráng miệng)' },
+                        { value: 'fa-store', label: 'Store 🏪 (Cửa hàng)' }
+                      ]}
+                      className="w-full"
+                    />
                   </div>
                   <button
                     type="submit"
@@ -972,9 +1014,26 @@ export default function AdminSection({
             {/* Right Column (8/12): Categories List */}
             <div className="lg:col-span-8 space-y-8">
               <div className="brutalist-card bg-white p-6 border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-5">
-                <h3 className="text-lg font-black uppercase border-b-4 border-black pb-2 text-black flex items-center gap-2">
-                  <Folder className="w-5 h-5 text-[#ff3e3e]" /> Danh Sách Danh Mục Ẩm Thực
-                </h3>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-4 border-black pb-2">
+                  <h3 className="text-lg font-black uppercase text-black flex items-center gap-2">
+                    <Folder className="w-5 h-5 text-[#ff3e3e]" /> Danh Sách Danh Mục Ẩm Thực
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase text-neutral-500 shrink-0">Sắp xếp:</span>
+                    <CustomSelect
+                      value={categorySortBy}
+                      onChange={(val) => setCategorySortBy(val)}
+                      options={[
+                        { value: 'ID_ASC', label: 'ID Tăng Dần (1-9)' },
+                        { value: 'ID_DESC', label: 'ID Giảm Dần (9-1)' },
+                        { value: 'NAME_ASC', label: 'Tên A → Z' },
+                        { value: 'NAME_DESC', label: 'Tên Z → A' }
+                      ]}
+                      dropdownAlign="right"
+                      width="w-44 sm:w-52"
+                    />
+                  </div>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
@@ -986,7 +1045,15 @@ export default function AdminSection({
                       </tr>
                     </thead>
                     <tbody className="divide-y-2 divide-neutral-200">
-                      {categories.map((cat) => (
+                      {[...categories]
+                        .sort((a, b) => {
+                          if (categorySortBy === 'ID_ASC') return a.id - b.id
+                          if (categorySortBy === 'ID_DESC') return b.id - a.id
+                          if (categorySortBy === 'NAME_ASC') return (a.name || '').localeCompare(b.name || '', 'vi')
+                          if (categorySortBy === 'NAME_DESC') return (b.name || '').localeCompare(a.name || '', 'vi')
+                          return 0
+                        })
+                        .map((cat) => (
                         <tr key={cat.id} className="hover:bg-neutral-50 transition-colors">
                           <td className="py-3.5 font-extrabold text-black">#{cat.id}</td>
                           <td className="py-3.5">
@@ -1248,17 +1315,18 @@ export default function AdminSection({
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs uppercase font-extrabold block text-neutral-700">Icon Hiển Thị</label>
-                  <select
+                  <CustomSelect
                     value={editCatIcon}
-                    onChange={(e) => setEditCatIcon(e.target.value)}
-                    className="brutalist-input"
-                  >
-                    <option value="fa-utensils">Utensils 🍴 (Nhà hàng)</option>
-                    <option value="fa-bread-slice">Bread 🍞 (Bánh mì)</option>
-                    <option value="fa-coffee">Coffee ☕ (Cà phê/Nước)</option>
-                    <option value="fa-ice-cream">Ice Cream 🍦 (Kem/Tráng miệng)</option>
-                    <option value="fa-store">Store 🏪 (Cửa hàng)</option>
-                  </select>
+                    onChange={(val) => setEditCatIcon(val)}
+                    options={[
+                      { value: 'fa-utensils', label: 'Utensils 🍴 (Nhà hàng)' },
+                      { value: 'fa-bread-slice', label: 'Bread 🍞 (Bánh mì)' },
+                      { value: 'fa-coffee', label: 'Coffee ☕ (Cà phê/Nước)' },
+                      { value: 'fa-ice-cream', label: 'Ice Cream 🍦 (Kem/Tráng miệng)' },
+                      { value: 'fa-store', label: 'Store 🏪 (Cửa hàng)' }
+                    ]}
+                    className="w-full"
+                  />
                 </div>
                 <div className="flex justify-end gap-2 pt-4 border-t-2 border-neutral-100">
                   <button
