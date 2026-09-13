@@ -1531,21 +1531,23 @@ export default function App() {
   })
 
   return (
-    <div className="min-h-[100dvh] relative bg-[#f7f6f2] text-black pb-24 overflow-x-hidden">
+    <div className={`min-h-[100dvh] relative bg-[#f7f6f2] text-black overflow-x-hidden ${activeTab === 'admin' ? 'h-screen overflow-hidden pb-0' : 'pb-24'}`}>
 
-      <Header
-        switchTab={switchTab}
-        activeTab={activeTab}
-        currentUser={currentUser}
-        isAdmin={isAdmin}
-        getUserRoleString={getUserRoleString}
-        handleLogout={handleLogout}
-        setShowAuthModal={setShowAuthModal}
-        setAuthMode={setAuthMode}
-      />
+      {activeTab !== 'admin' && (
+        <Header
+          switchTab={switchTab}
+          activeTab={activeTab}
+          currentUser={currentUser}
+          isAdmin={isAdmin}
+          getUserRoleString={getUserRoleString}
+          handleLogout={handleLogout}
+          setShowAuthModal={setShowAuthModal}
+          setAuthMode={setAuthMode}
+        />
+      )}
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 md:px-8 pt-32 animate-fade-in-up">
+      <main className={activeTab === 'admin' ? 'h-full w-full p-0 animate-fade-in-up' : 'max-w-7xl mx-auto px-4 md:px-8 pt-32 animate-fade-in-up'}>
 
         {/* LOADING INDICATOR */}
         {loading && (
@@ -1691,6 +1693,8 @@ export default function App() {
           <AdminSection
             isUserAdmin={isAdmin()}
             switchTab={switchTab}
+            currentUser={currentUser}
+            handleLogout={handleLogout}
             catName={catName}
             setCatName={setCatName}
             catIcon={catIcon}
