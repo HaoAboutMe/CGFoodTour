@@ -98,7 +98,7 @@ public class AuthenticationController {
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Xác thực thành công - Build PC Checker</title>
+                    <title>Xác Thực Thành Công - Cần Giuộc FoodTour</title>
                     <style>
                         * {
                             margin: 0;
@@ -106,8 +106,9 @@ public class AuthenticationController {
                             box-sizing: border-box;
                         }
                         body {
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                            background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%);
+                            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                            background-color: #F7F6F2;
+                            color: #111111;
                             display: flex;
                             justify-content: center;
                             align-items: center;
@@ -115,121 +116,110 @@ public class AuthenticationController {
                             padding: 20px;
                         }
                         .container {
-                            background: white;
+                            background-color: #FFFFFF;
+                            border: 3.5px solid #111111;
                             border-radius: 20px;
-                            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                            max-width: 500px;
+                            box-shadow: 8px 8px 0px #111111;
+                            max-width: 520px;
                             width: 100%%;
-                            padding: 40px;
+                            padding: 40px 30px;
                             text-align: center;
-                            animation: slideIn 0.5s ease-out;
                         }
-                        @keyframes slideIn {
-                            from {
-                                opacity: 0;
-                                transform: translateY(-30px);
-                            }
-                            to {
-                                opacity: 1;
-                                transform: translateY(0);
-                            }
+                        .badge {
+                            display: inline-block;
+                            background-color: #00CA4E;
+                            color: #FFFFFF;
+                            padding: 8px 18px;
+                            border: 2.5px solid #111111;
+                            border-radius: 999px;
+                            font-size: 13px;
+                            font-weight: 900;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                            box-shadow: 3px 3px 0px #111111;
+                            margin-bottom: 24px;
                         }
-                        .success-icon {
-                            width: 80px;
-                            height: 80px;
-                            background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%);
+                        .icon-box {
+                            width: 72px;
+                            height: 72px;
+                            background-color: #E6FCF0;
+                            border: 3px solid #111111;
                             border-radius: 50%%;
                             display: flex;
                             align-items: center;
                             justify-content: center;
                             margin: 0 auto 20px;
-                            animation: pulse 2s infinite;
+                            box-shadow: 4px 4px 0px #111111;
                         }
-                        @keyframes pulse {
-                            0%%, 100%% {
-                                transform: scale(1);
-                            }
-                            50%% {
-                                transform: scale(1.05);
-                            }
-                        }
-                        .success-icon svg {
-                            width: 50px;
-                            height: 50px;
-                            stroke: white;
+                        .icon-box svg {
+                            width: 40px;
+                            height: 40px;
+                            stroke: #00CA4E;
                             fill: none;
-                            stroke-width: 3;
+                            stroke-width: 3.5;
                             stroke-linecap: round;
                             stroke-linejoin: round;
                         }
                         h1 {
-                            color: #667eea;
-                            font-size: 28px;
-                            margin-bottom: 15px;
+                            font-size: 26px;
+                            font-weight: 900;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                            color: #111111;
+                            margin-bottom: 12px;
                         }
                         p {
-                            color: #555;
-                            font-size: 16px;
-                            line-height: 1.6;
-                            margin-bottom: 10px;
-                        }
-                        .email {
-                            color: #667eea;
+                            font-size: 15px;
                             font-weight: 600;
+                            color: #444444;
+                            line-height: 1.6;
+                            margin-bottom: 8px;
+                        }
+                        .email-highlight {
+                            background-color: #F7F6F2;
+                            border: 2px solid #111111;
+                            border-radius: 10px;
+                            padding: 10px 16px;
+                            display: inline-block;
+                            font-weight: 800;
+                            color: #FF3E3E;
+                            font-family: monospace;
+                            margin: 12px 0 24px;
+                            box-shadow: 3px 3px 0px #111111;
                         }
                         .btn {
                             display: inline-block;
-                            margin-top: 25px;
-                            padding: 14px 40px;
-                            background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%);
-                            color: white;
+                            padding: 14px 36px;
+                            background-color: #FF3E3E;
+                            color: #FFFFFF !important;
                             text-decoration: none;
-                            border-radius: 50px;
-                            font-size: 16px;
-                            font-weight: 600;
-                            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-                            transition: transform 0.2s, box-shadow 0.2s;
-                        }
-                        .btn:hover {
-                            transform: translateY(-2px);
-                            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-                        }
-                        .info-box {
-                            background: #e7f3ff;
-                            border-left: 4px solid #2196F3;
-                            padding: 15px;
-                            border-radius: 8px;
-                            margin-top: 20px;
-                            text-align: left;
-                        }
-                        .info-box p {
-                            margin: 0;
-                            color: #0c5460;
-                            font-size: 14px;
+                            font-size: 15px;
+                            font-weight: 900;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                            border: 3px solid #111111;
+                            border-radius: 12px;
+                            box-shadow: 5px 5px 0px #111111;
+                            cursor: pointer;
                         }
                     </style>
                 </head>
                 <body>
                     <div class="container">
-                        <div class="success-icon">
+                        <div class="badge">🍜 CẦN GIUỘC FOODTOUR</div>
+                        <div class="icon-box">
                             <svg viewBox="0 0 24 24">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
                         </div>
-                        <h1>🎉 Xác thực thành công!</h1>
-                        <p>Tài khoản của bạn đã được kích hoạt.</p>
-                        <p>Email: <span class="email">%s</span></p>
-                        <div class="info-box">
-                            <p>✓ Bạn có thể đăng nhập ngay bây giờ để sử dụng dịch vụ Build PC Checker.</p>
+                        <h1>XÁC THỰC THÀNH CÔNG! 🎉</h1>
+                        <p>Tài khoản của bạn đã được kích hoạt thành công.</p>
+                        <div>
+                            <span class="email-highlight">%s</span>
                         </div>
-                        <a href="#" class="btn" onclick="alert('Đăng ký thành công! Bạn có thể đăng nhập.'); return false;">Đóng</a>
+                        <p style="font-size: 14px; color: #666; margin-bottom: 24px;">Bây giờ bạn có thể quay lại ứng dụng để tiến hành Đăng Nhập và trải nghiệm dịch vụ.</p>
+                        <a href="javascript:void(0)" class="btn" onclick="if(window.opener){window.close();}else{location.href='/';}">Quay Lại Đăng Nhập ↗</a>
                     </div>
-                    <script>
-                        // Tự động hiện alert khi trang load
-                        window.onload = function() {
-                            alert('🎉 Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.');
-                        };
-                    </script>
                 </body>
                 </html>
                 """
@@ -243,7 +233,7 @@ public class AuthenticationController {
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Xác thực thất bại - Build PC Checker</title>
+                    <title>Xác Thực Thất Bại - Cần Giuộc FoodTour</title>
                     <style>
                         * {
                             margin: 0;
@@ -251,8 +241,9 @@ public class AuthenticationController {
                             box-sizing: border-box;
                         }
                         body {
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                            background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%);
+                            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                            background-color: #F7F6F2;
+                            color: #111111;
                             display: flex;
                             justify-content: center;
                             align-items: center;
@@ -260,112 +251,118 @@ public class AuthenticationController {
                             padding: 20px;
                         }
                         .container {
-                            background: white;
+                            background-color: #FFFFFF;
+                            border: 3.5px solid #111111;
                             border-radius: 20px;
-                            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                            max-width: 500px;
+                            box-shadow: 8px 8px 0px #111111;
+                            max-width: 520px;
                             width: 100%%;
-                            padding: 40px;
+                            padding: 40px 30px;
                             text-align: center;
-                            animation: slideIn 0.5s ease-out;
                         }
-                        @keyframes slideIn {
-                            from {
-                                opacity: 0;
-                                transform: translateY(-30px);
-                            }
-                            to {
-                                opacity: 1;
-                                transform: translateY(0);
-                            }
+                        .badge {
+                            display: inline-block;
+                            background-color: #FF3E3E;
+                            color: #FFFFFF;
+                            padding: 8px 18px;
+                            border: 2.5px solid #111111;
+                            border-radius: 999px;
+                            font-size: 13px;
+                            font-weight: 900;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                            box-shadow: 3px 3px 0px #111111;
+                            margin-bottom: 24px;
                         }
-                        .error-icon {
-                            width: 80px;
-                            height: 80px;
-                            background: linear-gradient(135deg, #f44336 0%%, #e91e63 100%%);
+                        .icon-box {
+                            width: 72px;
+                            height: 72px;
+                            background-color: #FFEBEB;
+                            border: 3px solid #111111;
                             border-radius: 50%%;
                             display: flex;
                             align-items: center;
                             justify-content: center;
                             margin: 0 auto 20px;
+                            box-shadow: 4px 4px 0px #111111;
                         }
-                        .error-icon svg {
-                            width: 50px;
-                            height: 50px;
-                            stroke: white;
+                        .icon-box svg {
+                            width: 40px;
+                            height: 40px;
+                            stroke: #FF3E3E;
                             fill: none;
-                            stroke-width: 3;
+                            stroke-width: 3.5;
                             stroke-linecap: round;
                             stroke-linejoin: round;
                         }
                         h1 {
-                            color: #f44336;
-                            font-size: 28px;
-                            margin-bottom: 15px;
+                            font-size: 26px;
+                            font-weight: 900;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                            color: #111111;
+                            margin-bottom: 12px;
                         }
                         p {
-                            color: #555;
-                            font-size: 16px;
+                            font-size: 15px;
+                            font-weight: 600;
+                            color: #444444;
                             line-height: 1.6;
-                            margin-bottom: 10px;
+                            margin-bottom: 8px;
                         }
-                        .error-message {
-                            background: #ffebee;
-                            border-left: 4px solid #f44336;
-                            padding: 15px;
-                            border-radius: 8px;
-                            margin: 20px 0;
+                        .error-card {
+                            background-color: #FFFBEB;
+                            border: 2.5px solid #111111;
+                            border-radius: 12px;
+                            padding: 14px 18px;
+                            margin: 18px 0 24px;
+                            box-shadow: 3px 3px 0px #111111;
                             text-align: left;
                         }
-                        .error-message p {
+                        .error-card p {
                             margin: 0;
-                            color: #c62828;
-                            font-size: 14px;
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: #B45309;
                         }
                         .btn {
                             display: inline-block;
-                            margin-top: 25px;
-                            padding: 14px 40px;
-                            background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%);
-                            color: white;
+                            padding: 14px 36px;
+                            background-color: #111111;
+                            color: #FFFFFF !important;
                             text-decoration: none;
-                            border-radius: 50px;
-                            font-size: 16px;
-                            font-weight: 600;
-                            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-                            transition: transform 0.2s, box-shadow 0.2s;
-                        }
-                        .btn:hover {
-                            transform: translateY(-2px);
-                            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+                            font-size: 15px;
+                            font-weight: 900;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                            border: 3px solid #111111;
+                            border-radius: 12px;
+                            box-shadow: 5px 5px 0px #888888;
+                            cursor: pointer;
                         }
                     </style>
                 </head>
                 <body>
                     <div class="container">
-                        <div class="error-icon">
+                        <div class="badge">❌ XÁC THỰC THẤT BẠI</div>
+                        <div class="icon-box">
                             <svg viewBox="0 0 24 24">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
                                 <line x1="6" y1="6" x2="18" y2="18"></line>
                             </svg>
                         </div>
-                        <h1>❌ Xác thực thất bại</h1>
-                        <p>Rất tiếc, không thể xác thực tài khoản của bạn.</p>
-                        <div class="error-message">
-                            <p><strong>Lỗi:</strong> %s</p>
+                        <h1>LIÊN KẾT KHÔNG HỢP LỆ!</h1>
+                        <p>Rất tiếc, không thể kích hoạt tài khoản của bạn.</p>
+                        <div class="error-card">
+                            <p>📌 <strong>Chi tiết lỗi:</strong> %s</p>
                         </div>
-                        <p>Vui lòng kiểm tra lại hoặc yêu cầu gửi lại email xác thực.</p>
-                        <a href="#" class="btn" onclick="alert('Vui lòng thử lại hoặc liên hệ hỗ trợ.'); return false;">Đóng</a>
+                        <p style="font-size: 14px; color: #666; margin-bottom: 24px;">Liên kết kích hoạt có thể đã hết hạn hoặc đã được sử dụng trước đó. Bạn có thể gửi lại yêu cầu kích hoạt mới từ ứng dụng.</p>
+                        <a href="javascript:void(0)" class="btn" onclick="if(window.opener){window.close();}else{location.href='/';}">Đóng Cửa Sổ ↗</a>
                     </div>
-                    <script>
-                        window.onload = function() {
-                            alert('❌ Xác thực thất bại! ' + '%s');
-                        };
-                    </script>
                 </body>
                 </html>
                 """
-                .formatted(errorMessage, errorMessage);
+                .formatted((errorMessage != null && !errorMessage.isBlank()) ? errorMessage : "Token kích hoạt không tồn tại hoặc đã hết hạn.");
     }
 
     @PostMapping("/resend-verification")

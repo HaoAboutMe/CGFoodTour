@@ -52,6 +52,9 @@ export default function App() {
   const [regFirstname, setRegFirstname] = useState('')
   const [regLastname, setRegLastname] = useState('')
   const [regPassword, setRegPassword] = useState('')
+  const [regConfirmPassword, setRegConfirmPassword] = useState('')
+  const [showRegPassword, setShowRegPassword] = useState(false)
+  const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false)
   const [regDob, setRegDob] = useState('')
   const [verifyTokenVal, setVerifyTokenVal] = useState('')
   const [resendEmail, setResendEmail] = useState('')
@@ -610,28 +613,59 @@ export default function App() {
   // Register
   async function handleRegister(e) {
     e.preventDefault()
+
+    // Client-side validations
+    const cleanUsername = regUsername.trim()
+    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/
+    if (!usernameRegex.test(cleanUsername)) {
+      showToast('Username chỉ được gồm 3-20 ký tự chữ cái tiếng Anh không dấu, chữ số hoặc dấu gạch dưới (_)', 'error')
+      return
+    }
+
+    const cleanEmail = regEmail.trim()
+    if (cleanEmail.length > 50) {
+      showToast('Email không được vượt quá 50 ký tự', 'error')
+      return
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(cleanEmail)) {
+      showToast('Địa chỉ Email không đúng định dạng', 'error')
+      return
+    }
+
+    if (regPassword.length < 6) {
+      showToast('Mật khẩu phải có ít nhất 6 ký tự', 'error')
+      return
+    }
+
+    if (regPassword !== regConfirmPassword) {
+      showToast('Mật khẩu và Xác nhận mật khẩu không trùng khớp!', 'error')
+      return
+    }
+
     setLoading(true)
     const res = await makeRequest('POST', '/users', {
-      username: regUsername,
-      email: regEmail,
-      firstname: regFirstname,
-      lastname: regLastname,
+      username: cleanUsername,
+      email: cleanEmail,
+      firstname: regFirstname.trim(),
+      lastname: regLastname.trim(),
       password: regPassword,
       dateOfBirth: regDob
     })
     setLoading(false)
 
     if (res.success) {
-      showToast('Registration successful! Please check your email inbox.', 'success')
-      setAuthMode('verify')
+      showToast('Đăng ký tài khoản thành công! Vui lòng kiểm tra hộp thư Email để bấm liên kết kích hoạt trước khi đăng nhập.', 'success')
+      setAuthMode('login')
       setRegUsername('')
       setRegEmail('')
       setRegFirstname('')
       setRegLastname('')
       setRegPassword('')
+      setRegConfirmPassword('')
       setRegDob('')
     } else {
-      showToast(res.error?.message || 'Registration failed.', 'error')
+      showToast(res.error?.message || 'Đăng ký thất bại.', 'error')
     }
   }
 
@@ -1718,6 +1752,12 @@ export default function App() {
         setRegLastname={setRegLastname}
         regPassword={regPassword}
         setRegPassword={setRegPassword}
+        regConfirmPassword={regConfirmPassword}
+        setRegConfirmPassword={setRegConfirmPassword}
+        showRegPassword={showRegPassword}
+        setShowRegPassword={setShowRegPassword}
+        showRegConfirmPassword={showRegConfirmPassword}
+        setShowRegConfirmPassword={setShowRegConfirmPassword}
         regDob={regDob}
         setRegDob={setRegDob}
         handleRegister={handleRegister}
@@ -1742,6 +1782,7 @@ export default function App() {
         resendEmail={resendEmail}
         setResendEmail={setResendEmail}
         handleResendVerification={handleResendVerification}
+        showToast={showToast}
       />
 
       <StoreDetailDrawer
