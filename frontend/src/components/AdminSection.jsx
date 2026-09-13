@@ -26,6 +26,8 @@ import {
 } from 'lucide-react'
 import StoreActionModal from './StoreActionModal'
 import CustomSelect from './CustomSelect'
+import CategoryIcon from './CategoryIcon'
+import CategoryIconPicker from './CategoryIconPicker'
 
 export default function AdminSection({
   isUserAdmin,
@@ -134,13 +136,7 @@ export default function AdminSection({
     }
   }
 
-  function getCategoryIcon(iconName) {
-    const name = iconName ? iconName.toLowerCase() : ''
-    if (name.includes('utensils') || name.includes('bowl')) return <Utensils className="w-4 h-4" />
-    if (name.includes('coffee') || name.includes('beer') || name.includes('glass')) return <Coffee className="w-4 h-4" />
-    if (name.includes('ice-cream') || name.includes('cookie')) return <IceCream className="w-4 h-4" />
-    return <Compass className="w-4 h-4" />
-  }
+
 
   if (!isUserAdmin) {
     return (
@@ -987,19 +983,10 @@ export default function AdminSection({
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs uppercase font-extrabold block text-neutral-700">Icon Hiển Thị</label>
-                    <CustomSelect
-                      value={catIcon}
-                      onChange={(val) => setCatIcon(val)}
-                      options={[
-                        { value: 'fa-utensils', label: 'Utensils 🍴 (Nhà hàng)' },
-                        { value: 'fa-bread-slice', label: 'Bread 🍞 (Bánh mì)' },
-                        { value: 'fa-coffee', label: 'Coffee ☕ (Cà phê/Nước)' },
-                        { value: 'fa-ice-cream', label: 'Ice Cream 🍦 (Kem/Tráng miệng)' },
-                        { value: 'fa-store', label: 'Store 🏪 (Cửa hàng)' }
-                      ]}
-                      className="w-full"
-                    />
+                  <CategoryIconPicker
+                    value={catIcon}
+                    onChange={(iconId) => setCatIcon(iconId)}
+                  />
                   </div>
                   <button
                     type="submit"
@@ -1057,8 +1044,8 @@ export default function AdminSection({
                         <tr key={cat.id} className="hover:bg-neutral-50 transition-colors">
                           <td className="py-3.5 font-extrabold text-black">#{cat.id}</td>
                           <td className="py-3.5">
-                            <div className="w-8 h-8 border-2 border-black bg-[#f7f6f2] flex items-center justify-center rounded">
-                              {getCategoryIcon(cat.icon || cat.iconUrl)}
+                            <div className="w-8 h-8 border-2 border-black bg-[#f7f6f2] flex items-center justify-center rounded-lg shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)] text-black">
+                              <CategoryIcon icon={cat.icon || cat.iconUrl} name={cat.name} className="w-4 h-4" />
                             </div>
                           </td>
                           <td className="py-3.5 font-extrabold text-black text-sm">{cat.name}</td>
@@ -1298,7 +1285,7 @@ export default function AdminSection({
                 onSubmit={(e) => {
                   e.preventDefault()
                   if (!editCatName.trim()) return
-                  handleUpdateCategory(editingCategory.id, { name: editCatName, icon: editCatIcon })
+                  handleUpdateCategory(editingCategory.id, editCatName, editCatIcon)
                   setEditingCategory(null)
                 }}
                 className="space-y-4"
@@ -1313,21 +1300,10 @@ export default function AdminSection({
                     className="brutalist-input"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs uppercase font-extrabold block text-neutral-700">Icon Hiển Thị</label>
-                  <CustomSelect
-                    value={editCatIcon}
-                    onChange={(val) => setEditCatIcon(val)}
-                    options={[
-                      { value: 'fa-utensils', label: 'Utensils 🍴 (Nhà hàng)' },
-                      { value: 'fa-bread-slice', label: 'Bread 🍞 (Bánh mì)' },
-                      { value: 'fa-coffee', label: 'Coffee ☕ (Cà phê/Nước)' },
-                      { value: 'fa-ice-cream', label: 'Ice Cream 🍦 (Kem/Tráng miệng)' },
-                      { value: 'fa-store', label: 'Store 🏪 (Cửa hàng)' }
-                    ]}
-                    className="w-full"
-                  />
-                </div>
+                <CategoryIconPicker
+                  value={editCatIcon}
+                  onChange={(iconId) => setEditCatIcon(iconId)}
+                />
                 <div className="flex justify-end gap-2 pt-4 border-t-2 border-neutral-100">
                   <button
                     type="button"

@@ -1017,11 +1017,19 @@ export default function App() {
   }
 
   // Update Category (Admin)
-  async function handleUpdateCategory(id, name, iconUrl) {
+  async function handleUpdateCategory(id, nameOrData, iconUrl) {
     setLoading(true)
+    let finalName = nameOrData
+    let finalIcon = iconUrl
+
+    if (typeof nameOrData === 'object' && nameOrData !== null) {
+      finalName = nameOrData.name
+      finalIcon = nameOrData.icon || nameOrData.iconUrl || iconUrl
+    }
+
     const res = await makeRequest('PUT', `/v1/categories/${id}`, {
-      name,
-      iconUrl
+      name: finalName,
+      iconUrl: finalIcon
     })
     setLoading(false)
 

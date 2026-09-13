@@ -1,15 +1,8 @@
 import React, { useState } from 'react'
-import { Sparkles, RefreshCw, Compass, Utensils, Coffee, IceCream, LayoutGrid, ListFilter, Search } from 'lucide-react'
+import { Sparkles, RefreshCw, Compass, Utensils, LayoutGrid, ListFilter, Search } from 'lucide-react'
 import StoreCard from './StoreCard'
 import WidgetsSection from './WidgetsSection'
-
-function getCategoryIcon(iconName) {
-  const name = iconName ? iconName.toLowerCase() : ''
-  if (name.includes('utensils') || name.includes('bowl')) return <Utensils className="w-4 h-4" />
-  if (name.includes('coffee') || name.includes('beer') || name.includes('glass')) return <Coffee className="w-4 h-4" />
-  if (name.includes('ice-cream') || name.includes('cookie')) return <IceCream className="w-4 h-4" />
-  return <Compass className="w-4 h-4" />
-}
+import CategoryIcon from './CategoryIcon'
 
 export default function ExploreSection({
   stores,
@@ -154,7 +147,7 @@ export default function ExploreSection({
                       : 'bg-white text-black hover:bg-neutral-50'
                   }`}
                 >
-                  {getCategoryIcon(cat.icon || cat.iconUrl)}
+                  <CategoryIcon icon={cat.icon || cat.iconUrl} name={cat.name} />
                   <span>{cat.name}</span>
                   <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-extrabold ${isSelected ? 'bg-white text-[#ff3e3e]' : 'bg-[#f7f6f2] text-black border border-black'}`}>
                     {count}
