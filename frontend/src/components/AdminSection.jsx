@@ -22,7 +22,12 @@ import {
   AlertTriangle,
   Search,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Clock,
+  Phone,
+  DollarSign,
+  MapPin,
+  Trophy
 } from 'lucide-react'
 import StoreActionModal from './StoreActionModal'
 import CustomSelect from './CustomSelect'
@@ -108,7 +113,7 @@ export default function AdminSection({
   const handleAdminActionConfirm = async ({ reason }) => {
     if (!adminActionModalStore || !adminActionModalType) return
     const storeId = adminActionModalStore.id
-    let resData = null
+    let resData = false
     if (adminActionModalType === 'HIDE') {
       if (handleHideStore) resData = await handleHideStore(storeId, reason)
     } else if (adminActionModalType === 'RECOVER') {
@@ -118,7 +123,7 @@ export default function AdminSection({
     } else if (adminActionModalType === 'HARD_DELETE') {
       if (handleHardDeleteStore) resData = await handleHardDeleteStore(storeId, reason)
     }
-    if (resData) {
+    if (resData !== false) {
       if (adminActionModalType === 'HARD_DELETE' && viewingStore?.id === storeId) {
         setViewingStore(null)
       } else if (viewingStore?.id === storeId && typeof resData === 'object') {
@@ -1152,7 +1157,8 @@ export default function AdminSection({
       <StoreActionModal
         isOpen={!!adminActionModalStore}
         actionType={adminActionModalType}
-        storeName={adminActionModalStore?.name}
+        store={adminActionModalStore}
+        isStaffOrAdmin={true}
         onClose={() => setAdminActionModalStore(null)}
         onConfirm={handleAdminActionConfirm}
       />
@@ -1388,21 +1394,26 @@ export default function AdminSection({
         document.body
       )}
 
-      {/* Admin Store Detail Drawer Modal */}
+      {/* Admin Store Detail Drawer Modal (Matching User StoreDetailDrawer Layout) */}
       {viewingStore && createPortal(
         <div className="fixed inset-0 z-50 bg-black/60 flex justify-end">
           <div className="absolute inset-0" onClick={() => setViewingStore(null)} />
           <div className="w-full max-w-lg bg-white border-l-4 border-black h-full overflow-hidden relative z-10 shadow-2xl flex flex-col justify-between animate-fade-in-up">
-            <div className="flex-1 overflow-y-auto">
+            {/* Scrollable Main Content */}
+            <div className="flex-1 overflow-y-auto space-y-6">
+              {/* Header Image Banner */}
               <div className="h-56 w-full relative bg-neutral-200 border-b-4 border-black shrink-0">
                 <img
-                  src={viewingStore.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'}
+                  src={
+                    viewingStore.bannerImageUrl ||
+                    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'
+                  }
                   alt={viewingStore.name}
                   className="w-full h-full object-cover"
                 />
                 <button
                   onClick={() => setViewingStore(null)}
-                  className="absolute top-4 right-4 p-2 bg-white border-2 border-black hover:bg-neutral-100 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                  className="absolute top-4 right-4 p-2 bg-white border-2 border-black rounded-full hover:bg-neutral-100 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1413,25 +1424,264 @@ export default function AdminSection({
                     </span>
                     <h2 className="text-lg md:text-xl font-black text-black truncate">{viewingStore.name}</h2>
                   </div>
+                  <div className="flex items-center gap-1 bg-white border-2 border-black rounded-full px-2.5 py-0.5 text-xs font-black text-black shrink-0 shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)]">
+                    <Trophy className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                    <span>{viewingStore.satisfactionRate || 100}%</span>
+                    <span className="text-[9px] text-neutral-500 font-semibold">({viewingStore.totalVotes || 0})</span>
+                  </div>
                 </div>
               </div>
 
+              {/* Main Content Details (Matching User StoreDetailDrawer) */}
               <div className="p-6 space-y-6">
-                <div className="space-y-3 bg-[#f7f6f2] p-4 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                  <h4 className="text-xs uppercase font-extrabold text-neutral-500 tracking-wider">Thông Tin Người Đăng</h4>
-                  <div className="text-xs space-y-1.5 font-semibold text-neutral-700">
-                    <p><span className="font-extrabold text-black">Username:</span> {viewingStore.ownerUsername || 'N/A'}</p>
-                    <p><span className="font-extrabold text-black">Email:</span> {viewingStore.ownerEmail || 'N/A'}</p>
-                    <p><span className="font-extrabold text-black">Địa chỉ quán:</span> {viewingStore.addressLine}</p>
+                {/* Details layout list (Address, Phone, Hours, Price Range) */}
+                <div className="space-y-4 brutalist-card p-4 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] border-2 border-black rounded-xl">
+                  {/* Address & Google Maps */}
+                  <div className="flex items-start gap-3 text-xs text-black">
+                    <MapPin className="w-4 h-4 text-[#ff3e3e] shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="font-extrabold text-sm uppercase">Địa Chỉ Chi Tiết</p>
+                      {viewingStore.mapUrl || (viewingStore.latitude && viewingStore.longitude) ? (
+                        <a
+                          href={viewingStore.mapUrl || `https://www.google.com/maps/search/?api=1&query=${viewingStore.latitude},${viewingStore.longitude}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-bold text-neutral-800 hover:text-[#ff3e3e] underline block transition-colors leading-snug"
+                          title="Bấm để mở địa chỉ chi tiết trên Google Maps"
+                        >
+                          {viewingStore.addressLine || 'Địa chỉ chưa cập nhật'} ↗
+                        </a>
+                      ) : (
+                        <p className="font-bold text-neutral-600">{viewingStore.addressLine || 'Địa chỉ chưa cập nhật'}</p>
+                      )}
+                      {viewingStore.landmarkNote && (
+                        <p className="text-[#ff3e3e] italic font-black">“ {viewingStore.landmarkNote} ”</p>
+                      )}
+                      {(viewingStore.mapUrl || (viewingStore.latitude && viewingStore.longitude)) && (
+                        <a
+                          href={viewingStore.mapUrl || `https://www.google.com/maps/search/?api=1&query=${viewingStore.latitude},${viewingStore.longitude}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-300 px-2.5 py-1 rounded-lg mt-1 shadow-xs transition-colors cursor-pointer"
+                        >
+                          🗺️ Xem địa chỉ chi tiết trên Google Maps ↗
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div className="flex items-center gap-3 text-xs text-black border-t-2 border-neutral-100 pt-3">
+                    <Phone className="w-4 h-4 text-neutral-500 shrink-0" />
+                    <div>
+                      <p className="font-extrabold uppercase">Số Điện Thoại</p>
+                      <p className="font-bold text-neutral-600">{viewingStore.phoneNumber || 'Không có số liên hệ'}</p>
+                    </div>
+                  </div>
+
+                  {/* Opening Hours */}
+                  <div className="flex items-center gap-3 text-xs text-black border-t-2 border-neutral-100 pt-3">
+                    <Clock className="w-4 h-4 text-[#ff3e3e] shrink-0" />
+                    <div>
+                      <p className="font-extrabold uppercase">Giờ Mở Cửa & Đóng Cửa</p>
+                      <p className="font-bold text-neutral-600">
+                        {viewingStore.openTime || 'N/A'} - {viewingStore.closeTime || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Price Range */}
+                  <div className="flex items-center gap-3 text-xs text-black border-t-2 border-neutral-100 pt-3">
+                    <DollarSign className="w-4 h-4 text-[#ff3e3e] shrink-0" />
+                    <div>
+                      <p className="font-extrabold uppercase">Khoảng Giá Món Ăn</p>
+                      <p className="font-black text-[#ff3e3e]">
+                        {viewingStore.priceMin ? viewingStore.priceMin.toLocaleString() + 'đ' : 'N/A'} - {viewingStore.priceMax ? viewingStore.priceMax.toLocaleString() + 'đ' : 'N/A'}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <h4 className="text-xs uppercase font-extrabold text-neutral-500 tracking-wider">Mô Tả Quán</h4>
-                  <p className="text-xs font-semibold text-neutral-800 leading-relaxed bg-white p-3 border-2 border-black rounded-xl">
-                    {viewingStore.description || 'Chưa có mô tả.'}
-                  </p>
+                {/* Store Description */}
+                {viewingStore.description && (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-500">Mô Tả Quán Ăn</h3>
+                    <p className="text-xs font-semibold text-neutral-800 leading-relaxed bg-white p-4 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] whitespace-pre-line">
+                      {viewingStore.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Food Items Menu */}
+                <div className="space-y-4 pt-4 border-t-2 border-black">
+                  <h3 className="text-sm font-black uppercase tracking-wider text-black flex items-center gap-1.5">
+                    🍽️ Thực Đơn Quán Ăn ({viewingStore.foodItems?.length || 0} Món)
+                  </h3>
+                  {!viewingStore.foodItems || viewingStore.foodItems.length === 0 ? (
+                    <p className="text-xs text-neutral-500 italic font-semibold">Chưa có món ăn nào được đăng.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {viewingStore.foodItems.map((food) => (
+                        <div
+                          key={food.id}
+                          className="flex gap-4 p-3 bg-white border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                        >
+                          <img
+                            src={
+                              food.imageUrl ||
+                              'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60'
+                            }
+                            alt={food.name}
+                            className="w-16 h-16 border-2 border-black rounded-lg object-cover shrink-0"
+                          />
+                          <div className="min-w-0 flex-1 flex flex-col justify-between">
+                            <div>
+                              <p className="text-xs font-black text-black">{food.name}</p>
+                              <p className="text-[10px] text-neutral-600 truncate mt-0.5">{food.description}</p>
+                            </div>
+                            <p className="text-xs font-black text-[#ff3e3e]">
+                              {food.price?.toLocaleString()}đ
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
+
+                {/* Admin Audit & Owner Information Section */}
+                <div className="space-y-3 bg-[#f7f6f2] p-4 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                  <h4 className="text-xs uppercase font-black text-black tracking-wider border-b border-neutral-300 pb-2">
+                    🛡️ Thông Tin Kiểm Duyệt & Chủ Quán
+                  </h4>
+                  <div className="text-xs space-y-2 font-semibold text-neutral-800">
+                    <p className="flex justify-between">
+                      <span className="font-extrabold text-neutral-500">Chủ quán / Người đăng:</span>
+                      <span className="font-black text-black">@{viewingStore.ownerUsername || 'N/A'}</span>
+                    </p>
+                    <p className="flex justify-between">
+                      <span className="font-extrabold text-neutral-500">Email liên hệ:</span>
+                      <span className="font-black text-black">{viewingStore.ownerEmail || 'N/A'}</span>
+                    </p>
+                    <p className="flex justify-between items-center pt-1 border-t border-neutral-200">
+                      <span className="font-extrabold text-neutral-500">Trạng thái hiện tại:</span>
+                      {viewingStore.status === 'APPROVED' ? (
+                        <span className="brutalist-badge bg-[#e6fcf5] text-[#0ca678] border-[#0ca678] text-[10px]">
+                          APPROVED (Công khai)
+                        </span>
+                      ) : viewingStore.status === 'HIDDEN' ? (
+                        <span className="brutalist-badge bg-[#fff9db] text-[#b45309] border-[#b45309] text-[10px]">
+                          HIDDEN (Đã ẩn)
+                        </span>
+                      ) : viewingStore.status === 'REJECTED' ? (
+                        <span className="brutalist-badge bg-[#fff5f5] text-[#c92a2a] border-[#c92a2a] text-[10px]">
+                          REJECTED (Bị từ chối)
+                        </span>
+                      ) : (
+                        <span className="brutalist-badge bg-[#eef2ff] text-[#4338ca] border-[#4338ca] text-[10px]">
+                          PENDING (Chờ duyệt)
+                        </span>
+                      )}
+                    </p>
+
+                    {/* Recovery Requested Alert */}
+                    {viewingStore.recoveryRequested && (
+                      <div className="bg-[#fff9db] border-2 border-[#b45309] p-3 rounded-lg mt-2 space-y-1">
+                        <p className="text-[11px] font-black text-[#b45309] uppercase flex items-center gap-1">
+                          <RotateCcw className="w-3.5 h-3.5" /> Yêu Cầu Khôi Phục:
+                        </p>
+                        <p className="text-xs font-bold text-neutral-800 italic">
+                          “{viewingStore.recoveryRequestReason || 'Không có lý do giải trình.'}”
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Direct Admin Action Buttons Footer */}
+            <div className="p-4 bg-[#f7f6f2] border-t-4 border-black shrink-0 space-y-2">
+              <p className="text-[10px] font-black uppercase text-neutral-500 tracking-wider">Thao Tác Admin Trực Tiếp:</p>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {viewingStore.status === 'PENDING' && (
+                  <>
+                    <button
+                      onClick={() => handleAdminApprove(viewingStore.id)}
+                      className="flex-1 py-2 px-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+                    >
+                      Duyệt Quán
+                    </button>
+                    <button
+                      onClick={() => {
+                        setRejectionReason('')
+                        setRejectingStore(viewingStore)
+                      }}
+                      className="flex-1 py-2 px-3 bg-[#ff3e3e] hover:bg-[#e03535] text-white font-black text-xs uppercase border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+                    >
+                      Từ Chối
+                    </button>
+                  </>
+                )}
+
+                {viewingStore.status === 'HIDDEN' && viewingStore.recoveryRequested && (
+                  <>
+                    <button
+                      onClick={() => {
+                        setAdminActionModalStore(viewingStore)
+                        setAdminActionModalType('RECOVER')
+                      }}
+                      className="flex-1 py-2 px-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+                    >
+                      Duyệt Khôi Phục
+                    </button>
+                    <button
+                      onClick={() => {
+                        setAdminActionModalStore(viewingStore)
+                        setAdminActionModalType('REJECT_RECOVERY_REQUEST')
+                      }}
+                      className="flex-1 py-2 px-3 bg-[#ff3e3e] hover:bg-[#e03535] text-white font-black text-xs uppercase border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+                    >
+                      Từ Chối KP
+                    </button>
+                  </>
+                )}
+
+                {viewingStore.status === 'APPROVED' && (
+                  <button
+                    onClick={() => {
+                      setAdminActionModalStore(viewingStore)
+                      setAdminActionModalType('HIDE')
+                    }}
+                    className="flex-1 py-2 px-3 bg-[#fab005] hover:bg-[#e69c00] text-black font-black text-xs uppercase border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <EyeOff className="w-4 h-4" /> Ẩn Quán
+                  </button>
+                )}
+
+                {viewingStore.status === 'HIDDEN' && !viewingStore.recoveryRequested && (
+                  <button
+                    onClick={() => {
+                      setAdminActionModalStore(viewingStore)
+                      setAdminActionModalType('RECOVER')
+                    }}
+                    className="flex-1 py-2 px-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <RotateCcw className="w-4 h-4" /> Hiện Quán
+                  </button>
+                )}
+
+                <button
+                  onClick={() => {
+                    setAdminActionModalStore(viewingStore)
+                    setAdminActionModalType('HARD_DELETE')
+                  }}
+                  className="py-2 px-3 bg-white hover:bg-red-50 text-red-600 font-black text-xs uppercase border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-center gap-1.5 cursor-pointer"
+                  title="Xóa Vĩnh Viễn"
+                >
+                  <Trash2 className="w-4 h-4" /> Xóa Quán
+                </button>
               </div>
             </div>
           </div>
