@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import StoreCard from './StoreCard'
 import WidgetsSection from './WidgetsSection'
+import CS2StoreCardCTA from './CS2StoreCardCTA'
 import CategoryIcon from './CategoryIcon'
 import { checkStoreOpenStatus } from '../utils/timeUtils'
 
@@ -43,6 +44,7 @@ export default function ExploreSection({
   rollingRandom,
   randomResult,
   setRandomResult,
+  switchTab,
   loadLeaderboard,
   leaderboard,
 }) {
@@ -369,6 +371,8 @@ export default function ExploreSection({
           loadLeaderboard={loadLeaderboard}
           leaderboard={leaderboard}
           stores={stores}
+          categories={categories}
+          switchTab={switchTab}
         />
       </div>
     </div>

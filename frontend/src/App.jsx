@@ -17,6 +17,7 @@ import AdminSection from './components/AdminSection'
 import MyStoresSection from './components/MyStoresSection'
 import ExploreSection from './components/ExploreSection'
 import AboutSection from './components/AboutSection'
+import CS2CaseOpener from './components/CS2CaseOpener'
 
 const API_BASE = 'http://localhost:8080/api'
 
@@ -142,7 +143,7 @@ export default function App() {
     const rawPath = location.pathname.substring(1)
     const tab = rawPath === '' ? 'explore' : rawPath
 
-    if (['explore', 'about', 'profile', 'my-stores', 'admin'].includes(tab)) {
+    if (['explore', 'about', 'cs2-spinner', 'profile', 'my-stores', 'admin'].includes(tab)) {
       if (!token && ['profile', 'my-stores', 'admin'].includes(tab)) {
         navigate('/explore', { replace: true })
         return
@@ -152,7 +153,7 @@ export default function App() {
       if (tab === 'admin') {
         loadAdminUsers()
         loadAdminPendingStores()
-      } else if (tab === 'explore' || tab === 'my-stores' || tab === 'about') {
+      } else if (tab === 'explore' || tab === 'my-stores' || tab === 'about' || tab === 'cs2-spinner') {
         loadGlobalData()
       }
     } else {
@@ -1524,6 +1525,7 @@ export default function App() {
 
   // Switch tabs and load appropriate data
   function switchTab(tabId) {
+    setActiveStore(null)
     navigate('/' + tabId)
   }
 
@@ -1586,7 +1588,21 @@ export default function App() {
             setRandomResult={setRandomResult}
             loadLeaderboard={loadLeaderboard}
             leaderboard={leaderboard}
+            switchTab={switchTab}
           />
+        )}
+
+        {/* ========================================================================= */}
+        {/* CS2 SPINNER TAB */}
+        {/* ========================================================================= */}
+        {activeTab === 'cs2-spinner' && (
+          <div className="space-y-6">
+            <CS2CaseOpener
+              stores={stores}
+              categories={categories}
+              setActiveStore={setActiveStore}
+            />
+          </div>
         )}
 
         {/* ========================================================================= */}

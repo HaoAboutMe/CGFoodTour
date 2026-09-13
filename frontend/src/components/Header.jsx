@@ -68,6 +68,16 @@ export default function Header({
             🔍 Khám Phá Ẩm Thực
           </button>
           <button
+            onClick={() => switchTab('cs2-spinner')}
+            className={`brutalist-badge cursor-pointer px-5 py-1.5 text-xs font-black transition-all flex items-center gap-1.5 ${
+              activeTab === 'cs2-spinner'
+                ? 'bg-[#ff3e3e] text-white border-[#ff3e3e] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] -translate-x-[1px] -translate-y-[1px]'
+                : 'bg-white text-black border-black hover:bg-neutral-50 shadow-none'
+            }`}
+          >
+            🎲 Vòng Xoay Quán Ăn
+          </button>
+          <button
             onClick={() => switchTab('about')}
             className={`brutalist-badge cursor-pointer px-5 py-1.5 text-xs font-black transition-all ${
               activeTab === 'about'
@@ -223,6 +233,17 @@ export default function Header({
               }`}
             >
               🔍 Khám Phá Ẩm Thực
+            </button>
+
+            <button
+              onClick={() => handleNavClick('cs2-spinner')}
+              className={`w-full text-left brutalist-badge cursor-pointer px-4 py-2 text-xs font-black transition-all ${
+                activeTab === 'cs2-spinner'
+                  ? 'bg-[#ff3e3e] text-white border-[#ff3e3e] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
+                  : 'bg-white text-black border-black hover:bg-neutral-50'
+              }`}
+            >
+              🎲 Vòng Xoay Quán Ăn
             </button>
 
             <button
