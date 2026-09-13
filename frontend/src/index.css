@@ -157,6 +157,50 @@ body {
   box-shadow: inset 2px 2px 0px 0px rgba(0, 0, 0, 0.1);
 }
 
+.brutalist-select {
+  width: 100%;
+  background-color: #ffffff;
+  border: 2px solid #111111;
+  border-radius: 9999px;
+  padding: 8px 38px 8px 18px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #111111;
+  box-shadow: 3px 3px 0px 0px #111111;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23111111' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.brutalist-select:hover {
+  background-color: #f7f6f2;
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px 0px #111111;
+}
+
+.brutalist-select:focus {
+  outline: none;
+  background-color: #fff9f9;
+  border-color: #ff3e3e;
+  box-shadow: 3px 3px 0px 0px #ff3e3e;
+}
+
+select.brutalist-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23111111' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 38px;
+  cursor: pointer;
+}
+
 .brutalist-badge {
   display: inline-flex;
   align-items: center;

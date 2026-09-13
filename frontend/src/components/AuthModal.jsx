@@ -30,6 +30,12 @@ export default function AuthModal({
   setRegLastname,
   regPassword,
   setRegPassword,
+  regConfirmPassword,
+  setRegConfirmPassword,
+  showRegPassword,
+  setShowRegPassword,
+  showRegConfirmPassword,
+  setShowRegConfirmPassword,
   regDob,
   setRegDob,
   handleRegister,
@@ -52,7 +58,8 @@ export default function AuthModal({
   handleVerifyEmail,
   resendEmail,
   setResendEmail,
-  handleResendVerification
+  handleResendVerification,
+  showToast
 }) {
   if (!showAuthModal) return null
 
@@ -107,7 +114,7 @@ export default function AuthModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 sm:p-4">
-      <div className="w-full max-w-md brutalist-card bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative max-h-[92vh] overflow-y-auto animate-fade-in-up">
+      <div className={`w-full ${authMode === 'register' ? 'max-w-xl sm:max-w-2xl' : 'max-w-md'} brutalist-card bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative max-h-[92vh] overflow-y-auto overflow-x-hidden animate-fade-in-up transition-all duration-300`}>
         {/* Close Button */}
         <button
           onClick={() => setShowAuthModal(false)}
@@ -191,7 +198,7 @@ export default function AuthModal({
               {/* Social Buttons Container */}
               <div className="space-y-3">
                 {/* Neo-Brutalist Google Button Container */}
-                <div className="relative w-full h-12">
+                <div className="relative w-full h-12 overflow-hidden">
                   {/* Visual Custom Neo-Brutalist Button */}
                   <div className="w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] transition-all select-none">
                     <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
@@ -206,12 +213,12 @@ export default function AuthModal({
                   {/* Real Google GSI SDK iframe container overlaid transparently */}
                   <div
                     id="googleSignInBtn"
-                    className="absolute inset-0 opacity-0 overflow-hidden cursor-pointer flex justify-center items-center scale-150 z-10"
+                    className="absolute inset-0 opacity-0 overflow-hidden cursor-pointer flex justify-center items-center z-10 w-full h-full"
                     onClick={() => {
                       if (window.google?.accounts?.id) {
                         window.google.accounts.id.prompt()
                       } else {
-                        alert('Google Sign-In SDK đang khởi tạo, vui lòng thử lại sau giây lát!')
+                        if (showToast) showToast('Google Sign-In SDK đang khởi tạo, vui lòng thử lại sau giây lát!', 'info')
                       }
                     }}
                   ></div>
@@ -286,23 +293,32 @@ export default function AuthModal({
           {authMode === 'register' && (
             <div className="space-y-6">
               <form onSubmit={handleRegister} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                  <div className="space-y-1.5">
                     <label className="text-xs uppercase font-extrabold tracking-wider block">Username</label>
                     <input
                       type="text"
                       required
+                      maxLength={20}
                       placeholder="foodlover"
                       value={regUsername}
-                      onChange={(e) => setRegUsername(e.target.value)}
-                      className="brutalist-input"
+                      onChange={(e) => setRegUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                      className={`brutalist-input ${
+                        regUsername
+                          ? regUsername.length >= 3 && /^[a-z0-9_]+$/.test(regUsername)
+                            ? 'border-[#00ca4e] focus:bg-[#e6fcf0]'
+                            : 'border-[#ff3e3e] focus:bg-[#ffebeb]'
+                          : ''
+                      }`}
                     />
+                    <span className="text-[10px] text-neutral-500 font-bold block">(3-20 ký tự, không dấu / khoảng trắng)</span>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-xs uppercase font-extrabold tracking-wider block">Email</label>
                     <input
                       type="email"
                       required
+                      maxLength={50}
                       placeholder="yourname@gmail.com"
                       value={regEmail}
                       onChange={(e) => setRegEmail(e.target.value)}
@@ -311,22 +327,24 @@ export default function AuthModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                  <div className="space-y-1.5">
                     <label className="text-xs uppercase font-extrabold tracking-wider block">Họ</label>
                     <input
                       type="text"
-                      placeholder="Alex"
+                      maxLength={30}
+                      placeholder="Nguyễn"
                       value={regFirstname}
                       onChange={(e) => setRegFirstname(e.target.value)}
                       className="brutalist-input"
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-xs uppercase font-extrabold tracking-wider block">Tên</label>
                     <input
                       type="text"
-                      placeholder="Smith"
+                      maxLength={30}
+                      placeholder="Văn A"
                       value={regLastname}
                       onChange={(e) => setRegLastname(e.target.value)}
                       className="brutalist-input"
@@ -334,33 +352,81 @@ export default function AuthModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                  <div className="space-y-1.5">
                     <label className="text-xs uppercase font-extrabold tracking-wider block">Mật Khẩu</label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="••••••••"
-                      value={regPassword}
-                      onChange={(e) => setRegPassword(e.target.value)}
-                      className="brutalist-input"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showRegPassword ? 'text' : 'password'}
+                        required
+                        minLength={6}
+                        maxLength={40}
+                        placeholder="••••••••"
+                        value={regPassword}
+                        onChange={(e) => setRegPassword(e.target.value)}
+                        className="brutalist-input pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegPassword(!showRegPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-black cursor-pointer"
+                      >
+                        {showRegPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-xs uppercase font-extrabold tracking-wider block">Ngày Sinh</label>
-                    <input
-                      type="date"
-                      required
-                      value={regDob}
-                      onChange={(e) => setRegDob(e.target.value)}
-                      className="brutalist-input"
-                    />
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs uppercase font-extrabold tracking-wider block">Xác Nhận Mật Khẩu</label>
+                    <div className="relative">
+                      <input
+                        type={showRegConfirmPassword ? 'text' : 'password'}
+                        required
+                        placeholder="••••••••"
+                        value={regConfirmPassword}
+                        onChange={(e) => setRegConfirmPassword(e.target.value)}
+                        className={`brutalist-input pr-10 ${
+                          regConfirmPassword
+                            ? regPassword === regConfirmPassword
+                              ? 'border-[#00ca4e] focus:bg-[#e6fcf0]'
+                              : 'border-[#ff3e3e] focus:bg-[#ffebeb]'
+                            : ''
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-black cursor-pointer"
+                      >
+                        {showRegConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
+                </div>
+
+                {regConfirmPassword && (
+                  <p className={`text-[10px] font-black uppercase tracking-wider ${
+                    regPassword === regConfirmPassword ? 'text-[#00ca4e]' : 'text-[#ff3e3e]'
+                  }`}>
+                    {regPassword === regConfirmPassword ? 'Mật khẩu trùng khớp ✓' : 'Mật khẩu không trùng khớp ✗'}
+                  </p>
+                )}
+
+                <div className="space-y-1.5">
+                  <label className="text-xs uppercase font-extrabold tracking-wider block">Ngày Sinh</label>
+                  <input
+                    type="date"
+                    required
+                    value={regDob}
+                    onChange={(e) => setRegDob(e.target.value)}
+                    className="brutalist-input"
+                  />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full brutalist-btn-red py-3 text-sm font-black"
+                  disabled={!regPassword || regPassword !== regConfirmPassword || regUsername.length < 3}
+                  className="w-full brutalist-btn-red py-3 text-sm font-black disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                 >
                   Hoàn Tất Đăng Ký ↗
                 </button>
@@ -376,7 +442,7 @@ export default function AuthModal({
               {/* Social Buttons for Registration */}
               <div className="space-y-3">
                 {/* Neo-Brutalist Google Button Container */}
-                <div className="relative w-full h-12">
+                <div className="relative w-full h-12 overflow-hidden">
                   {/* Visual Custom Neo-Brutalist Button */}
                   <div className="w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] transition-all select-none">
                     <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
@@ -391,12 +457,12 @@ export default function AuthModal({
                   {/* Real Google GSI SDK iframe container overlaid transparently */}
                   <div
                     id="googleSignInBtnRegister"
-                    className="absolute inset-0 opacity-0 overflow-hidden cursor-pointer flex justify-center items-center scale-150 z-10"
+                    className="absolute inset-0 opacity-0 overflow-hidden cursor-pointer flex justify-center items-center z-10 w-full h-full"
                     onClick={() => {
                       if (window.google?.accounts?.id) {
                         window.google.accounts.id.prompt()
                       } else {
-                        alert('Google Sign-In SDK đang khởi tạo, vui lòng thử lại sau giây lát!')
+                        if (showToast) showToast('Google Sign-In SDK đang khởi tạo, vui lòng thử lại sau giây lát!', 'info')
                       }
                     }}
                   ></div>

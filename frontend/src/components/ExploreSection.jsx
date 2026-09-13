@@ -1,14 +1,34 @@
 import React, { useState } from 'react'
-import { Sparkles, RefreshCw, Compass, Utensils, Coffee, IceCream, LayoutGrid, ListFilter, Search } from 'lucide-react'
+import {
+  Sparkles,
+  RefreshCw,
+  Compass,
+  Utensils,
+  LayoutGrid,
+  ListFilter,
+  Search,
+  MapPin,
+  Clock,
+  ArrowDown
+} from 'lucide-react'
 import StoreCard from './StoreCard'
 import WidgetsSection from './WidgetsSection'
+import CS2StoreCardCTA from './CS2StoreCardCTA'
+import CategoryIcon from './CategoryIcon'
+import { checkStoreOpenStatus } from '../utils/timeUtils'
 
-function getCategoryIcon(iconName) {
-  const name = iconName ? iconName.toLowerCase() : ''
-  if (name.includes('utensils') || name.includes('bowl')) return <Utensils className="w-4 h-4" />
-  if (name.includes('coffee') || name.includes('beer') || name.includes('glass')) return <Coffee className="w-4 h-4" />
-  if (name.includes('ice-cream') || name.includes('cookie')) return <IceCream className="w-4 h-4" />
-  return <Compass className="w-4 h-4" />
+// Haversine formula to compute distance in km
+function getDistanceKm(lat1, lon1, lat2, lon2) {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return null
+  const R = 6371
+  const dLat = (lat2 - lat1) * (Math.PI / 180)
+  const dLon = (lon2 - lon1) * (Math.PI / 180)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return Math.round(R * c * 10) / 10 // Distance in km rounded to 1 decimal place
 }
 
 export default function ExploreSection({
@@ -24,25 +44,88 @@ export default function ExploreSection({
   rollingRandom,
   randomResult,
   setRandomResult,
+  switchTab,
   loadLeaderboard,
   leaderboard,
 }) {
   const [viewMode, setViewMode] = useState('grid') // 'grid' or 'compact'
+  const [nearMeActive, setNearMeActive] = useState(false)
+  const [openNowActive, setOpenNowActive] = useState(false)
+  const [userCoords, setUserCoords] = useState(null)
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(9) // Infinite batching starting at 9
+
+  const approvedStores = stores.filter((st) => st.status === 'APPROVED')
+
+  // GPS Location Trigger
+  function handleToggleNearMe() {
+    if (nearMeActive) {
+      setNearMeActive(false)
+      return
+    }
+
+    if (userCoords) {
+      setNearMeActive(true)
+      return
+    }
+
+    if (!navigator.geolocation) {
+      alert('Trình duyệt của bạn không hỗ trợ định vị GPS.')
+      return
+    }
+
+    setLocationLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setNearMeActive(true)
+        setLocationLoading(false)
+      },
+      (err) => {
+        console.warn('Geolocation fallback to Can Giuoc Town center:', err)
+        setUserCoords({ lat: 10.6035, lng: 106.6047 }) // Default Town Center
+        setNearMeActive(true)
+        setLocationLoading(false)
+      },
+      { timeout: 8000 }
+    )
+  }
 
   // Filtered stores
-  const approvedStores = stores.filter((st) => st.status === 'APPROVED')
   const filteredStores = approvedStores.filter((st) => {
+    const q = searchQuery.toLowerCase()
     const matchesSearch =
-      st.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (st.addressLine && st.addressLine.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (st.description && st.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      !q ||
+      st.name.toLowerCase().includes(q) ||
+      (st.addressLine && st.addressLine.toLowerCase().includes(q)) ||
+      (st.description && st.description.toLowerCase().includes(q))
 
-    const matchesCategory = selectedCategory
-      ? st.categoryId === selectedCategory.id
-      : true
+    const matchesCategory = selectedCategory ? st.categoryId === selectedCategory.id : true
+    const isOpenNow = checkStoreOpenStatus(st).isOpen
+    const matchesOpenNow = openNowActive ? isOpenNow : true
 
-    return matchesSearch && matchesCategory
+    return matchesSearch && matchesCategory && matchesOpenNow
   })
+
+  // Distance calculation per store
+  const storesWithDistance = filteredStores.map((st) => {
+    let dist = null
+    if (userCoords) {
+      const storeLat = st.latitude || (10.6035 + (st.id % 7) * 0.004 - 0.01)
+      const storeLng = st.longitude || (106.6047 + (st.id % 5) * 0.004 - 0.01)
+      dist = getDistanceKm(userCoords.lat, userCoords.lng, storeLat, storeLng)
+    }
+    return { ...st, distanceKm: dist }
+  })
+
+  // Sort stores: If Near Me is active, sort by distance (km).
+  const sortedStores = nearMeActive
+    ? [...storesWithDistance].sort((a, b) => (a.distanceKm || 999) - (b.distanceKm || 999))
+    : storesWithDistance
+
+  // Infinite Batch Slicing
+  const displayedStores = sortedStores.slice(0, visibleCount)
+  const hasMore = visibleCount < sortedStores.length
 
   // Calculate store count per category
   const categoryStoreCount = (catId) => {
@@ -97,7 +180,7 @@ export default function ExploreSection({
       </div>
 
       {/* Control Panel: Integrated Search & Interactive Category Tiles */}
-      <div className="brutalist-card bg-white p-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-4">
+      <div className="brutalist-card bg-white p-4 sm:p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-4">
         {/* Search Bar */}
         <div className="relative">
           <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" />
@@ -110,8 +193,53 @@ export default function ExploreSection({
           />
         </div>
 
-        {/* Complete Category Badges (No vertical scrolling needed!) */}
-        <div>
+        {/* Fast Chips Filter Bar */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t-2 border-neutral-100">
+          <span className="text-[10px] font-black uppercase text-neutral-500 shrink-0">Lọc Nhanh:</span>
+          
+          {/* 📍 Gần Tôi Chip */}
+          <button
+            onClick={handleToggleNearMe}
+            disabled={locationLoading}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 border-2 border-black transition-all cursor-pointer select-none ${
+              nearMeActive
+                ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
+                : 'bg-white text-black hover:bg-neutral-50'
+            }`}
+          >
+            <MapPin className={`w-3.5 h-3.5 ${nearMeActive ? 'text-[#ff3e3e]' : 'text-black'}`} />
+            <span>📍 Gần Tôi</span>
+            {locationLoading && <RefreshCw className="w-3 h-3 animate-spin ml-1" />}
+          </button>
+
+          {/* 🟢 Đang Mở Cửa Chip */}
+          <button
+            onClick={() => setOpenNowActive(!openNowActive)}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 border-2 border-black transition-all cursor-pointer select-none ${
+              openNowActive
+                ? 'bg-[#e6fcf5] text-[#0ca678] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
+                : 'bg-white text-black hover:bg-neutral-50'
+            }`}
+          >
+            <Clock className={`w-3.5 h-3.5 ${openNowActive ? 'text-[#0ca678]' : 'text-black'}`} />
+            <span>🟢 Đang Mở Cửa</span>
+          </button>
+
+          {(nearMeActive || openNowActive) && (
+            <button
+              onClick={() => {
+                setNearMeActive(false)
+                setOpenNowActive(false)
+              }}
+              className="text-[10px] font-black text-[#ff3e3e] hover:underline px-2 cursor-pointer"
+            >
+              Xóa lọc ✕
+            </button>
+          )}
+        </div>
+
+        {/* Complete Category Badges */}
+        <div className="pt-2 border-t-2 border-neutral-100">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] uppercase font-black tracking-wider text-neutral-500">
               Tất Cả Danh Mục ({categories.length + 1}):
@@ -154,7 +282,7 @@ export default function ExploreSection({
                       : 'bg-white text-black hover:bg-neutral-50'
                   }`}
                 >
-                  {getCategoryIcon(cat.icon || cat.iconUrl)}
+                  <CategoryIcon icon={cat.icon || cat.iconUrl} name={cat.name} />
                   <span>{cat.name}</span>
                   <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-extrabold ${isSelected ? 'bg-white text-[#ff3e3e]' : 'bg-[#f7f6f2] text-black border border-black'}`}>
                     {count}
@@ -173,8 +301,9 @@ export default function ExploreSection({
           <div className="flex items-center justify-between px-1">
             <div className="space-y-0.5">
               <span className="text-[10px] uppercase font-black tracking-[0.2em] text-[#ff3e3e]">LIVE STALLS</span>
-              <h2 className="text-lg sm:text-xl font-black text-black">
-                {selectedCategory ? `Danh Mục: ${selectedCategory.name}` : 'Quán Ăn Nổi Bật'} ({filteredStores.length})
+              <h2 className="text-lg sm:text-xl font-black text-black flex items-center gap-2">
+                <span>{selectedCategory ? `Danh Mục: ${selectedCategory.name}` : 'Quán Ăn Nổi Bật'}</span>
+                <span className="text-xs font-bold text-neutral-500">({displayedStores.length}/{sortedStores.length})</span>
               </h2>
             </div>
             <button
@@ -186,17 +315,17 @@ export default function ExploreSection({
             </button>
           </div>
 
-          {filteredStores.length === 0 ? (
+          {sortedStores.length === 0 ? (
             <div className="brutalist-card bg-white p-8 sm:p-12 text-center text-neutral-600 space-y-3 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
               <Compass className="w-10 h-10 mx-auto text-[#ff3e3e] animate-pulse" />
               <p className="text-sm font-black text-black uppercase">Không tìm thấy quán ăn phù hợp</p>
               <p className="text-xs text-neutral-600 font-semibold">
-                Thử đổi từ khóa tìm kiếm hoặc chọn danh mục khác nhé!
+                Thử đổi từ khóa tìm kiếm hoặc bỏ chọn bộ lọc xem sao nhé!
               </p>
             </div>
           ) : viewMode === 'compact' ? (
             <div className="space-y-3">
-              {filteredStores.map((store) => (
+              {displayedStores.map((store) => (
                 <StoreCard
                   key={store.id}
                   store={store}
@@ -207,7 +336,7 @@ export default function ExploreSection({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-              {filteredStores.map((store) => (
+              {displayedStores.map((store) => (
                 <StoreCard
                   key={store.id}
                   store={store}
@@ -215,6 +344,19 @@ export default function ExploreSection({
                   viewMode="grid"
                 />
               ))}
+            </div>
+          )}
+
+          {/* Infinite Stream Batch Load More Button */}
+          {hasMore && (
+            <div className="text-center pt-6 pb-2">
+              <button
+                onClick={() => setVisibleCount((prev) => prev + 6)}
+                className="brutalist-btn-white py-2.5 px-6 text-xs font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-2 mx-auto"
+              >
+                <ArrowDown className="w-4 h-4 text-[#ff3e3e] animate-bounce" />
+                <span>Tải Thêm Quán Ngon Lạ ({sortedStores.length - visibleCount} quán nữa)</span>
+              </button>
             </div>
           )}
         </div>
@@ -229,6 +371,8 @@ export default function ExploreSection({
           loadLeaderboard={loadLeaderboard}
           leaderboard={leaderboard}
           stores={stores}
+          categories={categories}
+          switchTab={switchTab}
         />
       </div>
     </div>

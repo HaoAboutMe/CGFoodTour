@@ -11,7 +11,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-export default function MapPicker({ initialLat, initialLng, onSelect, onClose }) {
+export default function MapPicker({ initialLat, initialLng, onSelect, onClose, showToast }) {
   const mapContainerRef = useRef(null)
   const mapRef = useRef(null)
   const markerRef = useRef(null)
@@ -146,12 +146,12 @@ export default function MapPicker({ initialLat, initialLng, onSelect, onClose })
         setSearchResults(filtered.slice(0, 5))
 
         if (filtered.length === 0) {
-          alert('Không tìm thấy địa điểm này trong khu vực Cần Giuộc. Vui lòng thử từ khóa khác!')
+          if (showToast) showToast('Không tìm thấy địa điểm này trong khu vực Cần Giuộc. Vui lòng thử từ khóa khác!', 'error')
         }
       }
     } catch (err) {
       console.error('Geocoding search failed:', err)
-      alert('Không thể kết nối đến máy chủ tìm kiếm địa điểm. Vui lòng thử lại sau!')
+      if (showToast) showToast('Không thể kết nối đến máy chủ tìm kiếm địa điểm. Vui lòng thử lại sau!', 'error')
     } finally {
       setIsSearching(false)
     }

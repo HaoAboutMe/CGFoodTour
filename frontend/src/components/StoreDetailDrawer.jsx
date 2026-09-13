@@ -1,6 +1,7 @@
-import React from 'react'
-import { X, Trophy, MapPin, Phone, DollarSign, ThumbsUp, Meh, ThumbsDown } from 'lucide-react'
+import React, { useState } from 'react'
+import { X, Trophy, MapPin, Phone, DollarSign, ThumbsUp, Meh, ThumbsDown, ZoomIn } from 'lucide-react'
 import { checkStoreOpenStatus } from '../utils/timeUtils'
+import ImageViewerModal from './ImageViewerModal'
 
 export default function StoreDetailDrawer({
   activeStore,
@@ -12,6 +13,8 @@ export default function StoreDetailDrawer({
   gpsLng,
   setGpsLng
 }) {
+  const [previewImage, setPreviewImage] = useState(null)
+
   if (!activeStore) return null
 
   const statusInfo = checkStoreOpenStatus(activeStore)
@@ -24,19 +27,40 @@ export default function StoreDetailDrawer({
       {/* Drawer content (Bottom-sheet on mobile, Right slide-in on desktop) */}
       <div className="w-full sm:max-w-lg bg-white border-t-4 sm:border-t-0 sm:border-l-4 border-black h-[90vh] sm:h-full rounded-t-3xl sm:rounded-none overflow-y-auto relative z-10 shadow-2xl flex flex-col justify-between animate-slide-in-right">
         <div>
-          {/* Header Image banner */}
-          <div className="h-56 w-full relative bg-neutral-200 border-b-4 border-black shrink-0">
+          {/* Header Image banner (Clicking anywhere in header area opens store banner image) */}
+          <div
+            onClick={() =>
+              setPreviewImage({
+                src: activeStore.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60',
+                alt: activeStore.name,
+                caption: `Ảnh Quán Ăn: ${activeStore.name}`
+              })
+            }
+            className="h-56 w-full relative bg-neutral-200 border-b-4 border-black shrink-0 group cursor-pointer"
+            title="Bấm để xem phóng to ảnh quán ăn"
+          >
             <img
               src={
                 activeStore.bannerImageUrl ||
                 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'
               }
               alt={activeStore.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover group-hover:brightness-90 transition-all"
             />
+            {/* Floating Zoom Badge */}
+            <div className="absolute top-4 left-4 pointer-events-none">
+              <span className="brutalist-badge bg-black/70 text-white text-[10px] px-2.5 py-1 border border-white flex items-center gap-1 backdrop-blur-xs">
+                <ZoomIn className="w-3.5 h-3.5" /> Bấm Để Phóng To Ảnh Banner
+              </span>
+            </div>
+
             <button
-              onClick={() => setActiveStore(null)}
-              className="absolute top-4 right-4 p-2 bg-white border-2 border-black rounded-full hover:bg-neutral-100 text-black transition-colors cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
+              onClick={(e) => {
+                e.stopPropagation()
+                setActiveStore(null)
+              }}
+              className="absolute top-4 right-4 p-2 bg-white border-2 border-black rounded-full hover:bg-neutral-100 text-black transition-colors cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] z-10"
+              title="Đóng cửa sổ chi tiết"
             >
               <X className="w-4 h-4" />
             </button>
@@ -129,7 +153,7 @@ export default function StoreDetailDrawer({
               </div>
             </div>
 
-            {/* Food Items menu */}
+            {/* Food Items menu (Clicking anywhere on food card opens food image preview) */}
             <div className="space-y-4 pt-6 border-t-2 border-black">
               <h3 className="text-sm font-black uppercase tracking-wider text-black flex items-center gap-1.5">
                 🍽️ Thực Đơn Quán Ăn
@@ -141,19 +165,32 @@ export default function StoreDetailDrawer({
                   {activeStore.foodItems.map((food) => (
                     <div
                       key={food.id}
-                      className="flex gap-4 p-3 bg-white border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                      onClick={() =>
+                        setPreviewImage({
+                          src: food.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60',
+                          alt: food.name,
+                          caption: `Món: ${food.name} (${food.price?.toLocaleString()}đ)`
+                        })
+                      }
+                      className="flex gap-4 p-3 bg-white border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer group/food"
+                      title="Bấm để phóng to ảnh món ăn này"
                     >
-                      <img
-                        src={
-                          food.imageUrl ||
-                          'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60'
-                        }
-                        alt={food.name}
-                        className="w-16 h-16 border-2 border-black rounded-lg object-cover shrink-0"
-                      />
+                      <div className="relative shrink-0">
+                        <img
+                          src={
+                            food.imageUrl ||
+                            'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60'
+                          }
+                          alt={food.name}
+                          className="w-16 h-16 border-2 border-black rounded-lg object-cover group-hover/food:brightness-90 transition-all"
+                        />
+                        <div className="absolute inset-0 bg-black/30 rounded-lg flex items-center justify-center opacity-0 group-hover/food:opacity-100 transition-opacity pointer-events-none">
+                          <ZoomIn className="w-5 h-5 text-white" />
+                        </div>
+                      </div>
                       <div className="min-w-0 flex-1 flex flex-col justify-between">
                         <div>
-                          <p className="text-xs font-black text-black">{food.name}</p>
+                          <p className="text-xs font-black text-black group-hover/food:text-[#ff3e3e] transition-colors">{food.name}</p>
                           <p className="text-[10px] text-neutral-600 truncate mt-0.5">{food.description}</p>
                         </div>
                         <p className="text-xs font-black text-[#ff3e3e]">
@@ -238,6 +275,16 @@ export default function StoreDetailDrawer({
           </div>
         </div>
       </div>
+
+      {/* Full-Screen Image Lightbox Preview Modal */}
+      {previewImage && (
+        <ImageViewerModal
+          src={previewImage.src}
+          alt={previewImage.alt}
+          caption={previewImage.caption}
+          onClose={() => setPreviewImage(null)}
+        />
+      )}
     </div>
   )
 }

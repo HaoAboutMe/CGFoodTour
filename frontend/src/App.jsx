@@ -16,6 +16,8 @@ import ProfileSection from './components/ProfileSection'
 import AdminSection from './components/AdminSection'
 import MyStoresSection from './components/MyStoresSection'
 import ExploreSection from './components/ExploreSection'
+import AboutSection from './components/AboutSection'
+import CS2CaseOpener from './components/CS2CaseOpener'
 
 const API_BASE = 'http://localhost:8080/api'
 
@@ -52,6 +54,9 @@ export default function App() {
   const [regFirstname, setRegFirstname] = useState('')
   const [regLastname, setRegLastname] = useState('')
   const [regPassword, setRegPassword] = useState('')
+  const [regConfirmPassword, setRegConfirmPassword] = useState('')
+  const [showRegPassword, setShowRegPassword] = useState(false)
+  const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false)
   const [regDob, setRegDob] = useState('')
   const [verifyTokenVal, setVerifyTokenVal] = useState('')
   const [resendEmail, setResendEmail] = useState('')
@@ -74,6 +79,7 @@ export default function App() {
   const [pwdNew, setPwdNew] = useState('')
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState('')
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   // Form Fields - Store Submission
   const [storeName, setStoreName] = useState('')
@@ -137,7 +143,7 @@ export default function App() {
     const rawPath = location.pathname.substring(1)
     const tab = rawPath === '' ? 'explore' : rawPath
 
-    if (['explore', 'profile', 'my-stores', 'admin'].includes(tab)) {
+    if (['explore', 'about', 'cs2-spinner', 'profile', 'my-stores', 'admin'].includes(tab)) {
       if (!token && ['profile', 'my-stores', 'admin'].includes(tab)) {
         navigate('/explore', { replace: true })
         return
@@ -147,7 +153,7 @@ export default function App() {
       if (tab === 'admin') {
         loadAdminUsers()
         loadAdminPendingStores()
-      } else if (tab === 'explore' || tab === 'my-stores') {
+      } else if (tab === 'explore' || tab === 'my-stores' || tab === 'about' || tab === 'cs2-spinner') {
         loadGlobalData()
       }
     } else {
@@ -610,28 +616,59 @@ export default function App() {
   // Register
   async function handleRegister(e) {
     e.preventDefault()
+
+    // Client-side validations
+    const cleanUsername = regUsername.trim()
+    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/
+    if (!usernameRegex.test(cleanUsername)) {
+      showToast('Username chỉ được gồm 3-20 ký tự chữ cái tiếng Anh không dấu, chữ số hoặc dấu gạch dưới (_)', 'error')
+      return
+    }
+
+    const cleanEmail = regEmail.trim()
+    if (cleanEmail.length > 50) {
+      showToast('Email không được vượt quá 50 ký tự', 'error')
+      return
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(cleanEmail)) {
+      showToast('Địa chỉ Email không đúng định dạng', 'error')
+      return
+    }
+
+    if (regPassword.length < 6) {
+      showToast('Mật khẩu phải có ít nhất 6 ký tự', 'error')
+      return
+    }
+
+    if (regPassword !== regConfirmPassword) {
+      showToast('Mật khẩu và Xác nhận mật khẩu không trùng khớp!', 'error')
+      return
+    }
+
     setLoading(true)
     const res = await makeRequest('POST', '/users', {
-      username: regUsername,
-      email: regEmail,
-      firstname: regFirstname,
-      lastname: regLastname,
+      username: cleanUsername,
+      email: cleanEmail,
+      firstname: regFirstname.trim(),
+      lastname: regLastname.trim(),
       password: regPassword,
       dateOfBirth: regDob
     })
     setLoading(false)
 
     if (res.success) {
-      showToast('Registration successful! Please check your email inbox.', 'success')
-      setAuthMode('verify')
+      showToast('Đăng ký tài khoản thành công! Vui lòng kiểm tra hộp thư Email để bấm liên kết kích hoạt trước khi đăng nhập.', 'success')
+      setAuthMode('login')
       setRegUsername('')
       setRegEmail('')
       setRegFirstname('')
       setRegLastname('')
       setRegPassword('')
+      setRegConfirmPassword('')
       setRegDob('')
     } else {
-      showToast(res.error?.message || 'Registration failed.', 'error')
+      showToast(res.error?.message || 'Đăng ký thất bại.', 'error')
     }
   }
 
@@ -880,30 +917,34 @@ export default function App() {
   async function handleUploadAvatar(e) {
     e.preventDefault()
     if (!avatarFile) {
-      showToast('Select an avatar image file first.', 'error')
+      showToast('Vui lòng chọn ảnh đại diện trước.', 'error')
       return
     }
-    setLoading(true)
+    setUploadingAvatar(true)
     const formData = new FormData()
     formData.append('file', avatarFile)
 
     const res = await makeRequest('PATCH', '/users/me/avatar', formData, true)
-    setLoading(false)
+    setUploadingAvatar(false)
 
     if (res.success && res.data.result) {
       setCurrentUser(res.data.result)
       setAvatarPreview(res.data.result.avatarUrl)
       setAvatarFile(null)
-      showToast('Profile avatar uploaded to Cloudinary!', 'success')
+      showToast('Đã tải ảnh đại diện thành công!', 'success')
     } else {
-      showToast(res.error?.message || 'Avatar upload failed.', 'error')
+      showToast(res.error?.message || 'Tải ảnh đại diện thất bại.', 'error')
     }
+  }
+
+  function handleCancelAvatarSelection() {
+    setAvatarFile(null)
+    setAvatarPreview(currentUser?.avatarUrl || '')
   }
 
   // Upload Generic Image (Stores/Dishes)
   async function handleUploadImage(file, folder = '') {
     if (!file) return null
-    setLoading(true)
     const formData = new FormData()
     formData.append('file', file)
 
@@ -913,12 +954,11 @@ export default function App() {
     }
 
     const res = await makeRequest('POST', url, formData, true)
-    setLoading(false)
 
     if (res.success && res.data.result) {
       return res.data.result.url
     } else {
-      showToast(res.error?.message || 'Image upload failed.', 'error')
+      showToast(res.error?.message || 'Tải ảnh thất bại.', 'error')
       return null
     }
   }
@@ -978,11 +1018,19 @@ export default function App() {
   }
 
   // Update Category (Admin)
-  async function handleUpdateCategory(id, name, iconUrl) {
+  async function handleUpdateCategory(id, nameOrData, iconUrl) {
     setLoading(true)
+    let finalName = nameOrData
+    let finalIcon = iconUrl
+
+    if (typeof nameOrData === 'object' && nameOrData !== null) {
+      finalName = nameOrData.name
+      finalIcon = nameOrData.icon || nameOrData.iconUrl || iconUrl
+    }
+
     const res = await makeRequest('PUT', `/v1/categories/${id}`, {
-      name,
-      iconUrl
+      name: finalName,
+      iconUrl: finalIcon
     })
     setLoading(false)
 
@@ -1477,6 +1525,7 @@ export default function App() {
 
   // Switch tabs and load appropriate data
   function switchTab(tabId) {
+    setActiveStore(null)
     navigate('/' + tabId)
   }
 
@@ -1492,21 +1541,23 @@ export default function App() {
   })
 
   return (
-    <div className="min-h-[100dvh] relative bg-[#f7f6f2] text-black pb-24 overflow-x-hidden">
+    <div className={`min-h-[100dvh] relative bg-[#f7f6f2] text-black overflow-x-hidden ${activeTab === 'admin' ? 'h-screen overflow-hidden pb-0' : 'pb-24'}`}>
 
-      <Header
-        switchTab={switchTab}
-        activeTab={activeTab}
-        currentUser={currentUser}
-        isAdmin={isAdmin}
-        getUserRoleString={getUserRoleString}
-        handleLogout={handleLogout}
-        setShowAuthModal={setShowAuthModal}
-        setAuthMode={setAuthMode}
-      />
+      {activeTab !== 'admin' && (
+        <Header
+          switchTab={switchTab}
+          activeTab={activeTab}
+          currentUser={currentUser}
+          isAdmin={isAdmin}
+          getUserRoleString={getUserRoleString}
+          handleLogout={handleLogout}
+          setShowAuthModal={setShowAuthModal}
+          setAuthMode={setAuthMode}
+        />
+      )}
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 md:px-8 pt-32 animate-fade-in-up">
+      <main className={activeTab === 'admin' ? 'h-full w-full p-0 animate-fade-in-up' : 'max-w-7xl mx-auto px-4 md:px-8 pt-32 animate-fade-in-up'}>
 
         {/* LOADING INDICATOR */}
         {loading && (
@@ -1537,6 +1588,32 @@ export default function App() {
             setRandomResult={setRandomResult}
             loadLeaderboard={loadLeaderboard}
             leaderboard={leaderboard}
+            switchTab={switchTab}
+          />
+        )}
+
+        {/* ========================================================================= */}
+        {/* CS2 SPINNER TAB */}
+        {/* ========================================================================= */}
+        {activeTab === 'cs2-spinner' && (
+          <div className="space-y-6">
+            <CS2CaseOpener
+              stores={stores}
+              categories={categories}
+              setActiveStore={setActiveStore}
+            />
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* ABOUT TAB */}
+        {/* ========================================================================= */}
+        {activeTab === 'about' && (
+          <AboutSection
+            switchTab={switchTab}
+            setShowAuthModal={setShowAuthModal}
+            setAuthMode={setAuthMode}
+            currentUser={currentUser}
           />
         )}
 
@@ -1550,6 +1627,8 @@ export default function App() {
             avatarFile={avatarFile}
             onAvatarFileChange={onAvatarFileChange}
             handleUploadAvatar={handleUploadAvatar}
+            handleCancelAvatarSelection={handleCancelAvatarSelection}
+            uploadingAvatar={uploadingAvatar}
             upUsername={upUsername}
             setUpUsername={setUpUsername}
             upFirstname={upFirstname}
@@ -1638,6 +1717,8 @@ export default function App() {
           <AdminSection
             isUserAdmin={isAdmin()}
             switchTab={switchTab}
+            currentUser={currentUser}
+            handleLogout={handleLogout}
             catName={catName}
             setCatName={setCatName}
             catIcon={catIcon}
@@ -1718,6 +1799,12 @@ export default function App() {
         setRegLastname={setRegLastname}
         regPassword={regPassword}
         setRegPassword={setRegPassword}
+        regConfirmPassword={regConfirmPassword}
+        setRegConfirmPassword={setRegConfirmPassword}
+        showRegPassword={showRegPassword}
+        setShowRegPassword={setShowRegPassword}
+        showRegConfirmPassword={showRegConfirmPassword}
+        setShowRegConfirmPassword={setShowRegConfirmPassword}
         regDob={regDob}
         setRegDob={setRegDob}
         handleRegister={handleRegister}
@@ -1742,6 +1829,7 @@ export default function App() {
         resendEmail={resendEmail}
         setResendEmail={setResendEmail}
         handleResendVerification={handleResendVerification}
+        showToast={showToast}
       />
 
       <StoreDetailDrawer

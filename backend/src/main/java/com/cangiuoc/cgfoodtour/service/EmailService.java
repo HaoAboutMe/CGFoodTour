@@ -84,153 +84,161 @@ public class EmailService {
                             box-sizing: border-box;
                         }
                         body {
-                            font-family: 'Outfit', 'Lexend', system-ui, -apple-system, sans-serif;
-                            background-color: #F7F6F0;
-                            color: #0F172A;
-                            padding: 40px 20px;
+                            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                            background-color: #F7F6F2;
+                            color: #111111;
+                            padding: 30px 15px;
                         }
                         .container {
-                            max-width: 600px;
+                            max-width: 580px;
                             margin: 0 auto;
                             background-color: #FFFFFF;
-                            border: 2px solid #0F172A;
-                            border-radius: 32px;
-                            box-shadow: 6px 6px 0px #0F172A;
-                            padding: 30px;
+                            border: 3px solid #111111;
+                            border-radius: 20px;
+                            box-shadow: 8px 8px 0px #111111;
+                            padding: 32px 28px;
                         }
-                        .content {
-                            padding: 10px 10px;
+                        .header-pill {
+                            background-color: #FF3E3E;
+                            color: #FFFFFF;
+                            padding: 10px 20px;
+                            border: 2.5px solid #111111;
+                            border-radius: 999px;
+                            font-size: 13px;
+                            font-weight: 900;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                            display: inline-block;
+                            box-shadow: 3px 3px 0px #111111;
+                        }
+                        .header-table {
+                            width: 100%%;
+                            margin-bottom: 28px;
+                            border-bottom: 3px solid #111111;
+                            padding-bottom: 16px;
                         }
                         .content h2 {
                             font-size: 24px;
-                            font-weight: 800;
-                            margin-bottom: 15px;
-                            color: #0F172A;
+                            font-weight: 900;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                            margin-bottom: 14px;
+                            color: #111111;
                         }
                         .content p {
                             font-size: 15px;
-                            font-weight: 500;
+                            font-weight: 600;
                             line-height: 1.6;
-                            margin-bottom: 25px;
-                            color: #334155;
+                            margin-bottom: 20px;
+                            color: #333333;
                         }
                         .button-container {
                             text-align: center;
-                            margin: 35px 0;
+                            margin: 32px 0;
                         }
                         .button {
                             display: inline-block;
-                            padding: 14px 40px;
-                            background-color: #FF5F38;
+                            padding: 16px 36px;
+                            background-color: #FF3E3E;
                             color: #FFFFFF !important;
                             text-decoration: none;
-                            font-size: 16px;
-                            font-weight: 800;
+                            font-size: 15px;
+                            font-weight: 900;
                             text-transform: uppercase;
                             letter-spacing: 1px;
-                            border: 2px solid #0F172A;
-                            border-radius: 9999px;
-                            box-shadow: 4px 4px 0px #0F172A;
-                            transition: all 0.15s ease-in-out;
-                        }
-                        .button:hover {
-                            transform: translate(-2px, -2px);
-                            box-shadow: 6px 6px 0px #0F172A;
+                            border: 3px solid #111111;
+                            border-radius: 14px;
+                            box-shadow: 5px 5px 0px #111111;
                         }
                         .info-card {
-                            background-color: #F8FAFC;
-                            border: 2px solid #0F172A;
-                            border-radius: 20px;
-                            padding: 20px;
-                            margin: 25px 0;
-                            box-shadow: 4px 4px 0px #0F172A;
+                            background-color: #F7F6F2;
+                            border: 2.5px solid #111111;
+                            border-radius: 16px;
+                            padding: 18px;
+                            margin: 24px 0;
+                            box-shadow: 4px 4px 0px #111111;
                         }
                         .info-card p {
                             margin: 0;
-                            font-size: 14px;
-                            font-weight: 600;
-                            color: #0F172A;
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: #111111;
                         }
                         .link-pill {
-                            background-color: #F1F5F9;
-                            border: 2px solid #0F172A;
-                            border-radius: 9999px;
-                            padding: 12px 24px;
-                            margin: 20px 0;
+                            background-color: #FFFFFF;
+                            border: 2px solid #111111;
+                            border-radius: 10px;
+                            padding: 12px 16px;
+                            margin-top: 12px;
                             word-break: break-all;
-                            text-align: center;
+                            text-align: left;
                         }
                         .link-pill p {
                             margin: 0;
-                            font-size: 13px;
-                            font-family: monospace;
-                            font-weight: 600;
-                            color: #1E60D5;
+                            font-size: 12px;
+                            font-family: 'Courier New', Courier, monospace;
+                            font-weight: 700;
+                            color: #FF3E3E;
                         }
                         .footer {
-                            margin-top: 40px;
-                            border-top: 2px solid #E2E8F0;
-                            padding-top: 25px;
+                            margin-top: 32px;
+                            border-top: 3px solid #111111;
+                            padding-top: 20px;
                             text-align: center;
                         }
                         .footer p {
-                            font-size: 13px;
-                            font-weight: 600;
-                            color: #64748B;
-                            margin-bottom: 8px;
-                        }
-                        .footer a {
-                            color: #1E60D5;
-                            text-decoration: none;
-                            font-weight: 700;
-                            margin: 0 8px;
+                            font-size: 12px;
+                            font-weight: 800;
+                            color: #555555;
+                            margin-bottom: 6px;
                         }
                         @media only screen and (max-width: 600px) {
                             body {
-                                padding: 20px 10px;
+                                padding: 15px 8px;
                             }
                             .container {
-                                padding: 20px;
-                                border-radius: 24px;
+                                padding: 20px 16px;
+                                border-radius: 16px;
+                            }
+                            .button {
+                                padding: 14px 24px;
+                                font-size: 14px;
                             }
                         }
                     </style>
                 </head>
                 <body>
                     <div class="container">
-                        <table width="100%%" border="0" cellspacing="0" cellpadding="0" style="background-color: #FFFFFF; border: 2px solid #0F172A; border-radius: 9999px; padding: 8px 12px; box-shadow: 4px 4px 0px #0F172A; margin-bottom: 35px;">
+                        <table class="header-table" border="0" cellspacing="0" cellpadding="0">
                             <tr>
                                 <td align="left">
-                                    <span style="background-color: #1E60D5; color: #FFFFFF; padding: 8px 20px; border-radius: 9999px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: inline-block;">🍜 CGFoodTour</span>
+                                    <span class="header-pill">🍜 CẦN GIUỘC FOODTOUR</span>
                                 </td>
-                                <td align="right" style="padding-right: 10px;">
-                                    <span style="font-size: 12px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">Verification</span>
+                                <td align="right">
+                                    <span style="font-size: 12px; font-weight: 900; color: #111111; text-transform: uppercase; letter-spacing: 0.5px;">XÁC THỰC EMAIL</span>
                                 </td>
                             </tr>
                         </table>
 
                         <div class="content">
-                            <h2>Verify Your Email</h2>
-                            <p>Thank you for signing up for Can Giuoc Food Tour. To get started exploring amazing local culinary destinations, please verify your email address by clicking the button below.</p>
+                            <h2>Kích Hoạt Tài Khoản Của Bạn 🚀</h2>
+                            <p>Cảm ơn bạn đã đăng ký tài khoản tại <strong>Cần Giuộc FoodTour</strong>! Để bắt đầu trải nghiệm và khám phá bản đồ ẩm thực đặc sản hấp dẫn, vui lòng bấm vào nút bên dưới để kích hoạt tài khoản:</p>
 
                             <div class="button-container">
-                                <a href="%s" class="button">Verify My Account</a>
+                                <a href="%s" class="button">Kích Hoạt Tài Khoản Ngay ↗</a>
                             </div>
 
                             <div class="info-card">
-                                <p>📌 If the button above does not work, please copy and paste the following web link directly into your browser address bar:</p>
-                                <div class="link-pill" style="margin-bottom: 0; margin-top: 15px;">
+                                <p>📌 <strong>Mẹo:</strong> Nếu nút bấm trên không hoạt động, bạn có thể sao chép liên kết dưới đây và dán trực tiếp vào trình duyệt:</p>
+                                <div class="link-pill">
                                     <p>%s</p>
                                 </div>
                             </div>
                         </div>
 
                         <div class="footer">
-                            <p><strong>Can Giuoc Food Tour Team</strong></p>
-                            <p>&copy; 2026 CGFoodTour. All rights reserved.</p>
-                            <p style="margin-top: 10px;">
-                                <a href="#">Support</a> | <a href="#">Privacy Policy</a>
-                            </p>
+                            <p><strong>Cần Giuộc FoodTour Team &copy; 2026</strong></p>
+                            <p>Khám phá văn hóa ẩm thực Cần Giuộc - Nhanh chóng & Tiện lợi</p>
                         </div>
                     </div>
                 </body>
@@ -253,131 +261,146 @@ public class EmailService {
                             box-sizing: border-box;
                         }
                         body {
-                            font-family: 'Outfit', 'Lexend', system-ui, -apple-system, sans-serif;
-                            background-color: #F7F6F0;
-                            color: #0F172A;
-                            padding: 40px 20px;
+                            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                            background-color: #F7F6F2;
+                            color: #111111;
+                            padding: 30px 15px;
                         }
                         .container {
-                            max-width: 600px;
+                            max-width: 580px;
                             margin: 0 auto;
                             background-color: #FFFFFF;
-                            border: 2px solid #0F172A;
-                            border-radius: 32px;
-                            box-shadow: 6px 6px 0px #0F172A;
-                            padding: 30px;
+                            border: 3px solid #111111;
+                            border-radius: 20px;
+                            box-shadow: 8px 8px 0px #111111;
+                            padding: 32px 28px;
                         }
-                        .content {
-                            padding: 10px 10px;
+                        .header-pill {
+                            background-color: #FF3E3E;
+                            color: #FFFFFF;
+                            padding: 10px 20px;
+                            border: 2.5px solid #111111;
+                            border-radius: 999px;
+                            font-size: 13px;
+                            font-weight: 900;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                            display: inline-block;
+                            box-shadow: 3px 3px 0px #111111;
+                        }
+                        .header-table {
+                            width: 100%%;
+                            margin-bottom: 28px;
+                            border-bottom: 3px solid #111111;
+                            padding-bottom: 16px;
                         }
                         .content p {
                             font-size: 15px;
-                            font-weight: 500;
+                            font-weight: 600;
                             line-height: 1.6;
-                            margin-bottom: 25px;
-                            color: #334155;
+                            margin-bottom: 20px;
+                            color: #333333;
                         }
                         .otp-container {
                             text-align: center;
-                            margin: 35px 0;
+                            margin: 32px 0;
                         }
-                        .otp-pill {
+                        .otp-box {
                             display: inline-block;
-                            background-color: #FFFFFF;
-                            border: 2px solid #0F172A;
-                            border-radius: 9999px;
-                            padding: 18px 50px;
-                            box-shadow: 4px 4px 0px #0F172A;
+                            background-color: #FFE600;
+                            border: 3px solid #111111;
+                            border-radius: 16px;
+                            padding: 20px 44px;
+                            box-shadow: 6px 6px 0px #111111;
                         }
                         .otp-label {
-                            font-size: 11px;
-                            font-weight: 800;
+                            font-size: 12px;
+                            font-weight: 900;
                             text-transform: uppercase;
                             letter-spacing: 2px;
-                            color: #64748B;
-                            margin-bottom: 6px;
+                            color: #111111;
+                            margin-bottom: 8px;
                         }
                         .otp-code {
-                            font-size: 40px;
+                            font-size: 42px;
                             font-weight: 900;
-                            letter-spacing: 8px;
-                            color: #1E60D5;
+                            letter-spacing: 10px;
+                            color: #FF3E3E;
                             font-family: 'Courier New', Courier, monospace;
                         }
                         .warning-card {
                             background-color: #FFFBEB;
-                            border: 2px solid #0F172A;
-                            border-radius: 20px;
-                            padding: 20px;
-                            margin: 25px 0;
-                            box-shadow: 4px 4px 0px #0F172A;
+                            border: 2.5px solid #111111;
+                            border-radius: 14px;
+                            padding: 16px;
+                            margin: 24px 0;
+                            box-shadow: 4px 4px 0px #111111;
                         }
                         .warning-card p {
                             margin: 0;
-                            font-size: 14px;
-                            font-weight: 600;
+                            font-size: 13px;
+                            font-weight: 700;
                             color: #B45309;
                         }
                         .footer {
-                            margin-top: 40px;
-                            border-top: 2px solid #E2E8F0;
-                            padding-top: 25px;
+                            margin-top: 32px;
+                            border-top: 3px solid #111111;
+                            padding-top: 20px;
                             text-align: center;
                         }
                         .footer p {
-                            font-size: 13px;
-                            font-weight: 600;
-                            color: #64748B;
-                            margin-bottom: 8px;
+                            font-size: 12px;
+                            font-weight: 800;
+                            color: #555555;
+                            margin-bottom: 6px;
                         }
                         @media only screen and (max-width: 600px) {
                             body {
-                                padding: 20px 10px;
+                                padding: 15px 8px;
                             }
                             .container {
-                                padding: 20px;
-                                border-radius: 24px;
+                                padding: 20px 16px;
                             }
-                            .otp-pill {
-                                padding: 14px 30px;
+                            .otp-box {
+                                padding: 16px 28px;
                             }
                             .otp-code {
-                                font-size: 32px;
+                                font-size: 34px;
+                                letter-spacing: 6px;
                             }
                         }
                     </style>
                 </head>
                 <body>
                     <div class="container">
-                        <table width="100%%" border="0" cellspacing="0" cellpadding="0" style="background-color: #FFFFFF; border: 2px solid #0F172A; border-radius: 9999px; padding: 8px 12px; box-shadow: 4px 4px 0px #0F172A; margin-bottom: 35px;">
+                        <table class="header-table" border="0" cellspacing="0" cellpadding="0">
                             <tr>
                                 <td align="left">
-                                    <span style="background-color: #1E60D5; color: #FFFFFF; padding: 8px 20px; border-radius: 9999px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: inline-block;">🔐 Security</span>
+                                    <span class="header-pill">🔐 BẢO MẬT HỆ THỐNG</span>
                                 </td>
-                                <td align="right" style="padding-right: 10px;">
-                                    <span style="font-size: 12px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">OTP Code</span>
+                                <td align="right">
+                                    <span style="font-size: 12px; font-weight: 900; color: #111111; text-transform: uppercase; letter-spacing: 0.5px;">MÃ OTP</span>
                                 </td>
                             </tr>
                         </table>
 
                         <div class="content">
-                            <p>We received a request to reset the password for your CGFoodTour account. Use the following One-Time Password (OTP) to complete your verification:</p>
+                            <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản Cần Giuộc FoodTour của bạn. Vui lòng sử dụng mã OTP gồm 6 chữ số dưới đây để tiến hành đổi mật khẩu:</p>
 
                             <div class="otp-container">
-                                <div class="otp-pill">
-                                    <div class="otp-label">Verification OTP Code</div>
+                                <div class="otp-box">
+                                    <div class="otp-label">MÃ OTP XÁC THỰC</div>
                                     <div class="otp-code">%s</div>
                                 </div>
                             </div>
 
                             <div class="warning-card">
-                                <p>⏰ <strong>Valid for 5 minutes.</strong> For security reasons, please do not share this code with anyone.</p>
+                                <p>⏰ <strong>Lưu ý:</strong> Mã OTP có hiệu lực trong <strong>5 phút</strong>. Vì mục đích bảo mật, tuyệt đối không chia sẻ mã này cho bất kỳ ai.</p>
                             </div>
                         </div>
 
                         <div class="footer">
-                            <p><strong>Can Giuoc Food Tour Team</strong></p>
-                            <p>&copy; 2026 CGFoodTour. All rights reserved.</p>
+                            <p><strong>Cần Giuộc FoodTour Team &copy; 2026</strong></p>
                         </div>
                     </div>
                 </body>
@@ -405,23 +428,24 @@ public class EmailService {
                 <head>
                     <meta charset="UTF-8">
                     <style>
-                        body { font-family: sans-serif; background-color: #F7F6F0; color: #0F172A; padding: 20px; }
-                        .container { max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border: 2px solid #0F172A; border-radius: 20px; padding: 25px; box-shadow: 4px 4px 0px #0F172A; }
-                        .header { background-color: #FF5F38; color: #FFFFFF; padding: 10px 20px; border-radius: 12px; font-size: 16px; font-weight: bold; margin-bottom: 20px; }
-                        .reason-card { background-color: #FFFBEB; border: 1px solid #0F172A; border-radius: 12px; padding: 15px; margin: 20px 0; }
+                        body { font-family: 'Space Grotesk', sans-serif; background-color: #F7F6F2; color: #111111; padding: 25px 15px; }
+                        .container { max-width: 580px; margin: 0 auto; background-color: #FFFFFF; border: 3px solid #111111; border-radius: 20px; padding: 28px; box-shadow: 6px 6px 0px #111111; }
+                        .header { background-color: #FF3E3E; color: #FFFFFF; padding: 12px 20px; border: 2.5px solid #111111; border-radius: 12px; font-size: 15px; font-weight: 900; text-transform: uppercase; margin-bottom: 24px; box-shadow: 3px 3px 0px #111111; }
+                        .reason-card { background-color: #FFFBEB; border: 2.5px solid #111111; border-radius: 14px; padding: 18px; margin: 20px 0; box-shadow: 4px 4px 0px #111111; }
+                        .reason-card p { margin: 0; font-size: 14px; font-weight: 700; color: #111111; }
                     </style>
                 </head>
                 <body>
                     <div class="container">
                         <div class="header">📢 THÔNG BÁO TỪ QUẢN TRỊ VIÊN CGFoodTour</div>
-                        <p>Xin chào Chủ quán,</p>
-                        <p>Quản trị viên hệ thống đã thực hiện thao tác đối với quán ăn <strong>%s</strong> của bạn. Trạng thái hiện tại: <strong>%s</strong>.</p>
+                        <p style="font-size: 15px; font-weight: 600;">Xin chào Chủ quán,</p>
+                        <p style="font-size: 15px; font-weight: 600; margin-top: 10px;">Quản trị viên hệ thống đã thực hiện thao tác đối với quán ăn <strong>%s</strong> của bạn. Trạng thái hiện tại: <strong style="color: #FF3E3E;">%s</strong>.</p>
                         <div class="reason-card">
                             <p>📌 <strong>Lý do từ Admin:</strong></p>
-                            <p><em>%s</em></p>
+                            <p style="margin-top: 6px; font-style: italic;">"%s"</p>
                         </div>
-                        <p>Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ với bộ phận hỗ trợ CGFoodTour.</p>
-                        <p>Trân trọng,<br><strong>CGFoodTour Team</strong></p>
+                        <p style="font-size: 14px; font-weight: 600; color: #555555;">Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ với bộ phận hỗ trợ CGFoodTour.</p>
+                        <p style="font-size: 14px; font-weight: 800; margin-top: 16px;">Trân trọng,<br><strong>Cần Giuộc FoodTour Team</strong></p>
                     </div>
                 </body>
                 </html>
