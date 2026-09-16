@@ -2,7 +2,7 @@ import React from 'react'
 import { Trophy, MapPin, Clock } from 'lucide-react'
 import { checkStoreOpenStatus } from '../utils/timeUtils'
 
-export default function StoreCard({ store, setActiveStore, viewMode = 'grid' }) {
+function StoreCard({ store, setActiveStore, viewMode = 'grid' }) {
   if (!store) return null
   const statusInfo = checkStoreOpenStatus(store)
 
@@ -146,4 +146,6 @@ export default function StoreCard({ store, setActiveStore, viewMode = 'grid' }) 
     </div>
   )
 }
+
+export default React.memo(StoreCard)
 

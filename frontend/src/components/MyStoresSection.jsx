@@ -5,37 +5,44 @@ import MySubmissionsSection from './MySubmissionsSection'
 import MapPicker from './MapPicker'
 import StoreActionModal from './StoreActionModal'
 
+// Hoisted RegExp patterns per Vercel Best Practices (js-hoist-regexp)
+const RE_3D_4D = /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/
+const RE_AT_LAT_LNG = /@(-?\d+\.\d+),(-?\d+\.\d+)/
+const RE_QUERY_LAT_LNG = /[?&](?:q|ll|query|destination|near|center|point)=(-?\d+\.\d+),(-?\d+\.\d+)/
+const RE_PLACE_LAT_LNG = /\/(?:place|dir|search|maps)\/(-?\d+\.\d+),(-?\d+\.\d+)/
+const RE_DIRECT_LAT_LNG = /(-?\d{1,2}\.\d+)\s*[,;\s]\s*(-?\d{1,3}\.\d+)/
+
 // Utility function to extract latitude & longitude from Google Maps URL or text
 export function parseGoogleMapsUrl(input) {
   if (!input) return null
   const str = input.trim()
 
   // 1. Check for !3d10.51234!4d106.65432 format (Google Maps place data params - exact pin location)
-  const dMatch = str.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)
+  const dMatch = str.match(RE_3D_4D)
   if (dMatch) {
     return { latitude: dMatch[1], longitude: dMatch[2] }
   }
 
   // 2. Check for @lat,lng format in URL (e.g. https://www.google.com/maps/place/.../@10.51234,106.65432,17z)
-  const atMatch = str.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+  const atMatch = str.match(RE_AT_LAT_LNG)
   if (atMatch) {
     return { latitude: atMatch[1], longitude: atMatch[2] }
   }
 
   // 3. Check for q=lat,lng, ll=lat,lng, query=lat,lng, destination=lat,lng, etc.
-  const queryMatch = str.match(/[?&](?:q|ll|query|destination|near|center|point)=(-?\d+\.\d+),(-?\d+\.\d+)/)
+  const queryMatch = str.match(RE_QUERY_LAT_LNG)
   if (queryMatch) {
     return { latitude: queryMatch[1], longitude: queryMatch[2] }
   }
 
   // 4. Check for /place/lat,lng or /dir/.../lat,lng or /search/lat,lng
-  const placeMatch = str.match(/\/(?:place|dir|search|maps)\/(-?\d+\.\d+),(-?\d+\.\d+)/)
+  const placeMatch = str.match(RE_PLACE_LAT_LNG)
   if (placeMatch) {
     return { latitude: placeMatch[1], longitude: placeMatch[2] }
   }
 
   // 5. Flexible match for direct coordinates typed or copied anywhere in text (e.g. 10.51234, 106.65432 or 10.51234 106.65432)
-  const directMatch = str.match(/(-?\d{1,2}\.\d+)\s*[,;\s]\s*(-?\d{1,3}\.\d+)/)
+  const directMatch = str.match(RE_DIRECT_LAT_LNG)
   if (directMatch) {
     const lat = parseFloat(directMatch[1])
     const lng = parseFloat(directMatch[2])
