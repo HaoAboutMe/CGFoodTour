@@ -36,10 +36,6 @@ export default function WidgetsSection({
           </button>
         </div>
 
-        <p className="text-xs font-semibold text-neutral-600 leading-relaxed">
-          Các quán ăn được đánh giá hài lòng cao nhất (tối thiểu 10 lượt vote để lên bảng).
-        </p>
-
         {leaderboard.length === 0 ? (
           <div className="p-8 text-center text-neutral-500 text-xs border-2 border-dashed border-neutral-300 rounded font-bold bg-[#f7f6f2]">
             Bấm "Tải Lại" để hiển thị danh sách quán ngon hàng đầu.

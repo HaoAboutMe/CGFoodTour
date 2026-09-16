@@ -408,7 +408,7 @@ export default function AuthModal({
                   <p className={`text-[10px] font-black uppercase tracking-wider ${
                     regPassword === regConfirmPassword ? 'text-[#00ca4e]' : 'text-[#ff3e3e]'
                   }`}>
-                    {regPassword === regConfirmPassword ? 'Mật khẩu trùng khớp ✓' : 'Mật khẩu không trùng khớp ✗'}
+                    {regPassword === regConfirmPassword ? 'Mật khẩu trùng khớp' : 'Mật khẩu không trùng khớp'}
                   </p>
                 )}
 
@@ -609,7 +609,7 @@ export default function AuthModal({
                 <form onSubmit={handleResetPassword} className="space-y-4 animate-fade-in-up">
                   <div className="bg-[#f7f6f2] p-3 border-2 border-black text-xs font-bold text-neutral-700 space-y-1">
                     <div>Tài khoản: <span className="text-black font-black">{resetEmail}</span></div>
-                    <div>Xác thực OTP: <span className="text-[#00ca4e] font-black">Hợp lệ ✓</span></div>
+                    <div>Xác thực OTP: <span className="text-[#00ca4e] font-black">Hợp lệ</span></div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs uppercase font-extrabold tracking-wider block">Mật Khẩu Mới</label>
@@ -643,7 +643,7 @@ export default function AuthModal({
                       <p className={`text-[10px] font-black uppercase tracking-wider ${
                         resetPassword === resetConfirmPassword ? 'text-[#00ca4e]' : 'text-[#ff3e3e]'
                       }`}>
-                        {resetPassword === resetConfirmPassword ? 'Mật khẩu trùng khớp ✓' : 'Mật khẩu không trùng khớp ✗'}
+                        {resetPassword === resetConfirmPassword ? 'Mật khẩu trùng khớp' : 'Mật khẩu không trùng khớp'}
                       </p>
                     )}
                   </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Loader2,
@@ -9,15 +9,18 @@ import {
 import './App.css'
 
 import Header from './components/Header'
+import BottomNav from './components/BottomNav'
 import AuthModal from './components/AuthModal'
-import DevConsole from './components/DevConsole'
 import StoreDetailDrawer from './components/StoreDetailDrawer'
 import ProfileSection from './components/ProfileSection'
-import AdminSection from './components/AdminSection'
-import MyStoresSection from './components/MyStoresSection'
 import ExploreSection from './components/ExploreSection'
 import AboutSection from './components/AboutSection'
-import CS2CaseOpener from './components/CS2CaseOpener'
+
+// Code splitting & Dynamic imports for heavy sections per Vercel Best Practices (bundle-dynamic-imports)
+const AdminSection = lazy(() => import('./components/AdminSection'))
+const MyStoresSection = lazy(() => import('./components/MyStoresSection'))
+const CS2CaseOpener = lazy(() => import('./components/CS2CaseOpener'))
+const DevConsole = lazy(() => import('./components/DevConsole'))
 
 const API_BASE = 'http://localhost:8080/api'
 
@@ -25,9 +28,9 @@ export default function App() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Navigation & Authentication
-  const [token, setToken] = useState(localStorage.getItem('jwtToken') || '')
-  const [refreshTokenVal, setRefreshTokenVal] = useState(localStorage.getItem('refreshToken') || '')
+  // Navigation & Authentication - Lazy State Initialization (rerender-lazy-state-init)
+  const [token, setToken] = useState(() => localStorage.getItem('jwtToken') || '')
+  const [refreshTokenVal, setRefreshTokenVal] = useState(() => localStorage.getItem('refreshToken') || '')
   const [currentUser, setCurrentUser] = useState(null)
   const [activeTab, setActiveTab] = useState('explore')
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -1141,8 +1144,8 @@ export default function App() {
     if (!url) return null
     try {
       const res = await makeRequest('GET', `/v1/stores/parse-gmaps?url=${encodeURIComponent(url)}`)
-      if (res && res.result && res.result.latitude && res.result.longitude) {
-        return res.result
+      if (res && res.success && res.data && res.data.result && res.data.result.latitude && res.data.result.longitude) {
+        return res.data.result
       }
     } catch (err) {
       console.error('Failed to parse Google Maps URL from backend:', err)
@@ -1557,7 +1560,7 @@ export default function App() {
       )}
 
       {/* Main Container */}
-      <main className={activeTab === 'admin' ? 'h-full w-full p-0 animate-fade-in-up' : 'max-w-7xl mx-auto px-4 md:px-8 pt-32 animate-fade-in-up'}>
+      <main className={activeTab === 'admin' ? 'h-full w-full p-0 pb-20 md:pb-0 animate-fade-in-up' : 'max-w-7xl mx-auto px-4 md:px-8 pt-24 sm:pt-28 md:pt-32 pb-24 md:pb-8 animate-fade-in-up'}>
 
         {/* LOADING INDICATOR */}
         {loading && (
@@ -1596,13 +1599,15 @@ export default function App() {
         {/* CS2 SPINNER TAB */}
         {/* ========================================================================= */}
         {activeTab === 'cs2-spinner' && (
-          <div className="space-y-6">
-            <CS2CaseOpener
-              stores={stores}
-              categories={categories}
-              setActiveStore={setActiveStore}
-            />
-          </div>
+          <Suspense fallback={<div className="p-12 text-center flex flex-col items-center justify-center gap-3"><Loader2 className="w-8 h-8 animate-spin text-black" /><span className="font-bold">Đang tải Vòng quay CS2...</span></div>}>
+            <div className="space-y-6">
+              <CS2CaseOpener
+                stores={stores}
+                categories={categories}
+                setActiveStore={setActiveStore}
+              />
+            </div>
+          </Suspense>
         )}
 
         {/* ========================================================================= */}
@@ -1651,122 +1656,126 @@ export default function App() {
         {/* MY STORES TAB */}
         {/* ========================================================================= */}
         {activeTab === 'my-stores' && currentUser && (
-          <MyStoresSection
-            myStores={myStores}
-            categories={categories}
-            editingStore={editingStore}
-            setEditingStore={setEditingStore}
-            handleParseGmapsUrl={handleParseGmapsUrl}
-            handleUpdateStore={handleUpdateStore}
-            handleDeleteStore={handleDeleteStore}
-            handleHideStore={handleHideStore}
-            handleRecoverStore={handleRecoverStore}
-            handleRequestStoreRecovery={handleRequestStoreRecovery}
-            handleHardDeleteStore={handleHardDeleteStore}
-            handleSelectEditStore={handleSelectEditStore}
-            storeName={storeName}
-            setStoreName={setStoreName}
-            storeCategoryId={storeCategoryId}
-            setStoreCategoryId={setStoreCategoryId}
-            storeDesc={storeDesc}
-            setStoreDesc={setStoreDesc}
-            storeLat={storeLat}
-            setStoreLat={setStoreLat}
-            storeLng={storeLng}
-            setStoreLng={setStoreLng}
-            storeMapUrl={storeMapUrl}
-            setStoreMapUrl={setStoreMapUrl}
-            storeAddress={storeAddress}
-            setStoreAddress={setStoreAddress}
-            storePhone={storePhone}
-            setStorePhone={setStorePhone}
-            storeOpen={storeOpen}
-            setStoreOpen={setStoreOpen}
-            storeClose={storeClose}
-            setStoreClose={setStoreClose}
-            storePriceMin={storePriceMin}
-            setStorePriceMin={setStorePriceMin}
-            storePriceMax={storePriceMax}
-            setStorePriceMax={setStorePriceMax}
-            storeBannerUrl={storeBannerUrl}
-            setStoreBannerUrl={setStoreBannerUrl}
-            handleCreateStore={handleCreateStore}
-            loading={loading}
-            foodName={foodName}
-            setFoodName={setFoodName}
-            foodPrice={foodPrice}
-            setFoodPrice={setFoodPrice}
-            foodImage={foodImage}
-            setFoodImage={setFoodImage}
-            foodDesc={foodDesc}
-            setFoodDesc={setFoodDesc}
-            foodStoreId={foodStoreId}
-            setFoodStoreId={setFoodStoreId}
-            handleCreateFoodItem={handleCreateFoodItem}
-            handleUpdateFoodItem={handleUpdateFoodItem}
-            handleDeleteFoodItem={handleDeleteFoodItem}
-            handleUploadImage={handleUploadImage}
-            loadGlobalData={loadGlobalData}
-          />
+          <Suspense fallback={<div className="p-12 text-center flex flex-col items-center justify-center gap-3"><Loader2 className="w-8 h-8 animate-spin text-black" /><span className="font-bold">Đang tải Quản lý Quán ăn...</span></div>}>
+            <MyStoresSection
+              myStores={myStores}
+              categories={categories}
+              editingStore={editingStore}
+              setEditingStore={setEditingStore}
+              handleParseGmapsUrl={handleParseGmapsUrl}
+              handleUpdateStore={handleUpdateStore}
+              handleDeleteStore={handleDeleteStore}
+              handleHideStore={handleHideStore}
+              handleRecoverStore={handleRecoverStore}
+              handleRequestStoreRecovery={handleRequestStoreRecovery}
+              handleHardDeleteStore={handleHardDeleteStore}
+              handleSelectEditStore={handleSelectEditStore}
+              storeName={storeName}
+              setStoreName={setStoreName}
+              storeCategoryId={storeCategoryId}
+              setStoreCategoryId={setStoreCategoryId}
+              storeDesc={storeDesc}
+              setStoreDesc={setStoreDesc}
+              storeLat={storeLat}
+              setStoreLat={setStoreLat}
+              storeLng={storeLng}
+              setStoreLng={setStoreLng}
+              storeMapUrl={storeMapUrl}
+              setStoreMapUrl={setStoreMapUrl}
+              storeAddress={storeAddress}
+              setStoreAddress={setStoreAddress}
+              storePhone={storePhone}
+              setStorePhone={setStorePhone}
+              storeOpen={storeOpen}
+              setStoreOpen={setStoreOpen}
+              storeClose={storeClose}
+              setStoreClose={setStoreClose}
+              storePriceMin={storePriceMin}
+              setStorePriceMin={setStorePriceMin}
+              storePriceMax={storePriceMax}
+              setStorePriceMax={setStorePriceMax}
+              storeBannerUrl={storeBannerUrl}
+              setStoreBannerUrl={setStoreBannerUrl}
+              handleCreateStore={handleCreateStore}
+              loading={loading}
+              foodName={foodName}
+              setFoodName={setFoodName}
+              foodPrice={foodPrice}
+              setFoodPrice={setFoodPrice}
+              foodImage={foodImage}
+              setFoodImage={setFoodImage}
+              foodDesc={foodDesc}
+              setFoodDesc={setFoodDesc}
+              foodStoreId={foodStoreId}
+              setFoodStoreId={setFoodStoreId}
+              handleCreateFoodItem={handleCreateFoodItem}
+              handleUpdateFoodItem={handleUpdateFoodItem}
+              handleDeleteFoodItem={handleDeleteFoodItem}
+              handleUploadImage={handleUploadImage}
+              loadGlobalData={loadGlobalData}
+            />
+          </Suspense>
         )}
 
         {/* ========================================================================= */}
         {/* ADMIN CONTROL PANEL */}
         {/* ========================================================================= */}
         {activeTab === 'admin' && (
-          <AdminSection
-            isUserAdmin={isAdmin()}
-            switchTab={switchTab}
-            currentUser={currentUser}
-            handleLogout={handleLogout}
-            catName={catName}
-            setCatName={setCatName}
-            catIcon={catIcon}
-            setCatIcon={setCatIcon}
-            handleCreateCategory={handleCreateCategory}
-            foodStoreId={foodStoreId}
-            setFoodStoreId={setFoodStoreId}
-            stores={stores}
-            foodName={foodName}
-            setFoodName={setFoodName}
-            foodPrice={foodPrice}
-            setFoodPrice={setFoodPrice}
-            foodImage={foodImage}
-            setFoodImage={setFoodImage}
-            foodDesc={foodDesc}
-            setFoodDesc={setFoodDesc}
-            handleCreateFoodItem={handleCreateFoodItem}
-            handleUploadImage={handleUploadImage}
-            adminPendingStores={adminPendingStores}
-            handleAdminApprove={handleAdminApprove}
-            handleAdminReject={handleAdminReject}
-            handleHideStore={handleHideStore}
-            handleRecoverStore={handleRecoverStore}
-            handleRejectRecoveryRequest={handleRejectRecoveryRequest}
-            handleHardDeleteStore={handleHardDeleteStore}
-            adminUsersList={adminUsersList}
-            handleOpenAdminEditUser={handleOpenAdminEditUser}
-            handleAdminDeleteUser={handleAdminDeleteUser}
-            editingUser={editingUser}
-            setEditingUser={setEditingUser}
-            adminUserUsername={adminUserUsername}
-            setAdminUserUsername={setAdminUserUsername}
-            adminUserFirst={adminUserFirst}
-            setAdminUserFirst={setAdminUserFirst}
-            adminUserLast={adminUserLast}
-            setAdminUserLast={setAdminUserLast}
-            adminUserDob={adminUserDob}
-            setAdminUserDob={setAdminUserDob}
-            adminUserRoles={adminUserRoles}
-            setAdminUserRoles={setAdminUserRoles}
-            handleAdminUserEditSubmit={handleAdminUserEditSubmit}
-            categories={categories}
-            handleUpdateCategory={handleUpdateCategory}
-            handleDeleteCategory={handleDeleteCategory}
-            loadAdminUsers={loadAdminUsers}
-            loadAdminPendingStores={loadAdminPendingStores}
-            loadGlobalData={loadGlobalData}
-          />
+          <Suspense fallback={<div className="p-12 text-center flex flex-col items-center justify-center gap-3"><Loader2 className="w-8 h-8 animate-spin text-black" /><span className="font-bold">Đang tải Admin Dashboard...</span></div>}>
+            <AdminSection
+              isUserAdmin={isAdmin()}
+              switchTab={switchTab}
+              currentUser={currentUser}
+              handleLogout={handleLogout}
+              catName={catName}
+              setCatName={setCatName}
+              catIcon={catIcon}
+              setCatIcon={setCatIcon}
+              handleCreateCategory={handleCreateCategory}
+              foodStoreId={foodStoreId}
+              setFoodStoreId={setFoodStoreId}
+              stores={stores}
+              foodName={foodName}
+              setFoodName={setFoodName}
+              foodPrice={foodPrice}
+              setFoodPrice={setFoodPrice}
+              foodImage={foodImage}
+              setFoodImage={setFoodImage}
+              foodDesc={foodDesc}
+              setFoodDesc={setFoodDesc}
+              handleCreateFoodItem={handleCreateFoodItem}
+              handleUploadImage={handleUploadImage}
+              adminPendingStores={adminPendingStores}
+              handleAdminApprove={handleAdminApprove}
+              handleAdminReject={handleAdminReject}
+              handleHideStore={handleHideStore}
+              handleRecoverStore={handleRecoverStore}
+              handleRejectRecoveryRequest={handleRejectRecoveryRequest}
+              handleHardDeleteStore={handleHardDeleteStore}
+              adminUsersList={adminUsersList}
+              handleOpenAdminEditUser={handleOpenAdminEditUser}
+              handleAdminDeleteUser={handleAdminDeleteUser}
+              editingUser={editingUser}
+              setEditingUser={setEditingUser}
+              adminUserUsername={adminUserUsername}
+              setAdminUserUsername={setAdminUserUsername}
+              adminUserFirst={adminUserFirst}
+              setAdminUserFirst={setAdminUserFirst}
+              adminUserLast={adminUserLast}
+              setAdminUserLast={setAdminUserLast}
+              adminUserDob={adminUserDob}
+              setAdminUserDob={setAdminUserDob}
+              adminUserRoles={adminUserRoles}
+              setAdminUserRoles={setAdminUserRoles}
+              handleAdminUserEditSubmit={handleAdminUserEditSubmit}
+              categories={categories}
+              handleUpdateCategory={handleUpdateCategory}
+              handleDeleteCategory={handleDeleteCategory}
+              loadAdminUsers={loadAdminUsers}
+              loadAdminPendingStores={loadAdminPendingStores}
+              loadGlobalData={loadGlobalData}
+            />
+          </Suspense>
         )}
       </main>
 
@@ -1843,14 +1852,16 @@ export default function App() {
         setGpsLng={setGpsLng}
       />
 
-      <DevConsole
-        isConsoleOpen={isConsoleOpen}
-        setIsConsoleOpen={setIsConsoleOpen}
-        consoleLogs={consoleLogs}
-        clearConsole={clearConsole}
-        token={token}
-        handleRefreshToken={handleRefreshToken}
-      />
+      <Suspense fallback={null}>
+        <DevConsole
+          isConsoleOpen={isConsoleOpen}
+          setIsConsoleOpen={setIsConsoleOpen}
+          consoleLogs={consoleLogs}
+          clearConsole={clearConsole}
+          token={token}
+          handleRefreshToken={handleRefreshToken}
+        />
+      </Suspense>
 
       {/* Toast Notification Stack (Top-Right, below header) */}
       <div className="fixed top-24 right-6 z-[9999] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
@@ -1878,6 +1889,14 @@ export default function App() {
           </div>
         ))}
       </div>
+      <BottomNav
+        activeTab={activeTab}
+        switchTab={switchTab}
+        currentUser={currentUser}
+        isUserAdmin={isAdmin()}
+        setShowAuthModal={setShowAuthModal}
+        setAuthMode={setAuthMode}
+      />
     </div>
   )
 }

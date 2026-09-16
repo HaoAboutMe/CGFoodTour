@@ -65,7 +65,7 @@ export default function Header({
                 : 'bg-white text-black border-black hover:bg-neutral-50 shadow-none'
             }`}
           >
-            🔍 Khám Phá Ẩm Thực
+            Khám Phá Ẩm Thực
           </button>
           <button
             onClick={() => switchTab('cs2-spinner')}
@@ -75,7 +75,7 @@ export default function Header({
                 : 'bg-white text-black border-black hover:bg-neutral-50 shadow-none'
             }`}
           >
-            🎲 Vòng Xoay Quán Ăn
+            Vòng Xoay Quán Ăn
           </button>
           <button
             onClick={() => switchTab('about')}
@@ -85,12 +85,12 @@ export default function Header({
                 : 'bg-white text-black border-black hover:bg-neutral-50 shadow-none'
             }`}
           >
-            ℹ️ Về Chúng Tôi
+            Về Chúng Tôi
           </button>
         </nav>
 
         {/* Desktop & Mobile Right Actions (User Avatar & Dropdown / Auth Button) */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {currentUser ? (
             <div className="relative" ref={dropdownRef}>
               {/* Avatar Pill Button */}
@@ -206,98 +206,7 @@ export default function Header({
               Đăng Nhập ↗
             </button>
           )}
-
-          {/* Mobile Menu Hamburger Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-1.5 bg-white border-2 border-black rounded-lg text-black hover:bg-neutral-100 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
-            title="Menu"
-          >
-            {mobileMenuOpen ? (
-              <X className="w-5 h-5 text-[#ff3e3e]" />
-            ) : (
-              <Menu className="w-5 h-5 text-black" />
-            )}
-          </button>
         </div>
-
-        {/* Collapsible Mobile Dropdown Navigation Menu */}
-        {mobileMenuOpen && (
-          <div className="w-full md:hidden pt-3 border-t-2 border-black mt-1 flex flex-col gap-2 animate-fade-in-up">
-            <button
-              onClick={() => handleNavClick('explore')}
-              className={`w-full text-left brutalist-badge cursor-pointer px-4 py-2 text-xs font-black transition-all ${
-                activeTab === 'explore'
-                  ? 'bg-[#ff3e3e] text-white border-[#ff3e3e] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
-                  : 'bg-white text-black border-black hover:bg-neutral-50'
-              }`}
-            >
-              🔍 Khám Phá Ẩm Thực
-            </button>
-
-            <button
-              onClick={() => handleNavClick('cs2-spinner')}
-              className={`w-full text-left brutalist-badge cursor-pointer px-4 py-2 text-xs font-black transition-all ${
-                activeTab === 'cs2-spinner'
-                  ? 'bg-[#ff3e3e] text-white border-[#ff3e3e] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
-                  : 'bg-white text-black border-black hover:bg-neutral-50'
-              }`}
-            >
-              🎲 Vòng Xoay Quán Ăn
-            </button>
-
-            <button
-              onClick={() => handleNavClick('about')}
-              className={`w-full text-left brutalist-badge cursor-pointer px-4 py-2 text-xs font-black transition-all ${
-                activeTab === 'about'
-                  ? 'bg-[#ff3e3e] text-white border-[#ff3e3e] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
-                  : 'bg-white text-black border-black hover:bg-neutral-50'
-              }`}
-            >
-              ℹ️ Về Chúng Tôi
-            </button>
-
-            {currentUser && (
-              <>
-                <button
-                  onClick={() => handleNavClick('profile')}
-                  className={`w-full text-left brutalist-badge cursor-pointer px-4 py-2 text-xs font-black transition-all ${
-                    activeTab === 'profile'
-                      ? 'bg-[#ff3e3e] text-white border-[#ff3e3e] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
-                      : 'bg-white text-black border-black hover:bg-neutral-50'
-                  }`}
-                >
-                  👤 Thông Tin Tài Khoản
-                </button>
-
-                <button
-                  onClick={() => handleNavClick('my-stores')}
-                  className={`w-full text-left brutalist-badge cursor-pointer px-4 py-2 text-xs font-black transition-all ${
-                    activeTab === 'my-stores'
-                      ? 'bg-[#ff3e3e] text-white border-[#ff3e3e] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
-                      : 'bg-white text-black border-black hover:bg-neutral-50'
-                  }`}
-                >
-                  🏪 Quán Ăn Của Tôi
-                </button>
-
-                {isAdmin && isAdmin() && (
-                  <button
-                    onClick={() => handleNavClick('admin')}
-                    className={`w-full text-left brutalist-badge cursor-pointer px-4 py-2 text-xs font-black flex items-center gap-2 transition-all ${
-                      activeTab === 'admin'
-                        ? 'bg-black text-white border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
-                        : 'bg-white text-black border-black hover:bg-neutral-50'
-                    }`}
-                  >
-                    <Shield className="w-4 h-4 text-[#ff3e3e] fill-[#ff3e3e]" />
-                    🛡️ Bảng Quản Trị Hệ Thống
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        )}
       </div>
     </header>
   )

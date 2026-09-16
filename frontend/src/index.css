@@ -139,6 +139,35 @@ body {
   box-shadow: 2px 2px 0px 0px #111111;
 }
 
+.brutalist-btn-yellow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fab005;
+  color: #111111;
+  border: 2px solid #111111;
+  border-radius: 9999px;
+  box-shadow: 4px 4px 0px 0px #111111;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 24px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+.brutalist-btn-yellow:hover {
+  background-color: #f59f00;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px #111111;
+}
+
+.brutalist-btn-yellow:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px 0px #111111;
+}
+
 .brutalist-input {
   width: 100%;
   background-color: #ffffff;

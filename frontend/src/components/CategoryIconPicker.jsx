@@ -21,7 +21,7 @@ export default function CategoryIconPicker({ value, onChange, className = '' }) 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-b-2 border-neutral-200 pb-2">
         <div className="flex items-center gap-2 whitespace-nowrap">
           <label className="text-[11px] uppercase font-black text-black whitespace-nowrap">
-            🎨 Chọn Icon
+            Chọn Icon
           </label>
           <span className="text-[9px] bg-black text-white px-2 py-0.5 rounded-full font-extrabold whitespace-nowrap">
             {AVAILABLE_CATEGORY_ICONS.length} Icons
