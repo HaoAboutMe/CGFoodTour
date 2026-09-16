@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Compass, Dices, Store, Shield, Info, User, LogIn } from 'lucide-react'
 
 export default function BottomNav({
@@ -9,6 +9,42 @@ export default function BottomNav({
   setShowAuthModal,
   setAuthMode
 }) {
+  const [isVisible, setIsVisible] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
+
+  // Auto hide/show BottomNav on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+
+      // Always show at top of page
+      if (currentScrollY <= 60) {
+        setIsVisible(true)
+        setLastScrollY(currentScrollY)
+        return
+      }
+
+      // Scroll down -> hide
+      if (currentScrollY > lastScrollY + 10) {
+        setIsVisible(false)
+      }
+      // Scroll up -> show
+      else if (currentScrollY < lastScrollY - 10) {
+        setIsVisible(true)
+      }
+
+      setLastScrollY(currentScrollY)
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [lastScrollY])
+
+  // Reset visibility when changing tabs
+  useEffect(() => {
+    setIsVisible(true)
+  }, [activeTab])
+
   const handleTabClick = (tabKey, requiresAuth = false) => {
     if (requiresAuth && !currentUser) {
       setAuthMode('login')
@@ -19,7 +55,7 @@ export default function BottomNav({
   }
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-50 md:hidden bg-white border-t-4 border-black shadow-[0px_-4px_0px_0px_rgba(0,0,0,1)] px-1 py-1.5 flex items-center justify-around select-none">
+    <nav className={`fixed bottom-0 inset-x-0 z-50 md:hidden bg-white border-t-4 border-black shadow-[0px_-4px_0px_0px_rgba(0,0,0,1)] px-1 py-1.5 flex items-center justify-around select-none transition-transform duration-300 ease-in-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
       {/* 1. Explore Tab */}
       <button
         onClick={() => handleTabClick('explore')}

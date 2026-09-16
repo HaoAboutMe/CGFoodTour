@@ -9,7 +9,7 @@ export default function ImageViewerModal({ src, alt = 'Hình ảnh', caption = '
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center p-4 animate-fade-in select-none"
+      className="fixed inset-0 z-[100000] bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center p-4 animate-fade-in select-none"
       onClick={onClose}
     >
       {/* Container Box */}

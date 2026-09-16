@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Trophy, MapPin, Phone, DollarSign, ThumbsUp, Meh, ThumbsDown, ZoomIn } from 'lucide-react'
 import { checkStoreOpenStatus } from '../utils/timeUtils'
 import ImageViewerModal from './ImageViewerModal'
@@ -15,17 +16,43 @@ export default function StoreDetailDrawer({
 }) {
   const [previewImage, setPreviewImage] = useState(null)
 
+  // Prevent background page scrolling when store detail is open
+  useEffect(() => {
+    if (activeStore) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [activeStore])
+
   if (!activeStore) return null
 
   const statusInfo = checkStoreOpenStatus(activeStore)
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex justify-end items-end sm:items-stretch">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-black/60 flex justify-end items-end sm:items-stretch">
       {/* Close click backdrop */}
-      <div className="absolute inset-0" onClick={() => setActiveStore(null)} />
+      <div className="fixed inset-0 bg-black/60 cursor-pointer" onClick={() => setActiveStore(null)} />
 
       {/* Drawer content (Bottom-sheet on mobile, Right slide-in on desktop) */}
-      <div className="w-full sm:max-w-lg bg-white border-t-4 sm:border-t-0 sm:border-l-4 border-black h-[90vh] sm:h-full rounded-t-3xl sm:rounded-none overflow-y-auto relative z-10 shadow-2xl flex flex-col justify-between animate-slide-in-right">
+      <div className="w-full sm:max-w-lg bg-white border-t-4 sm:border-t-0 sm:border-l-4 border-black h-[90vh] sm:h-full rounded-t-3xl sm:rounded-none overflow-y-auto no-scrollbar relative z-10 shadow-2xl flex flex-col justify-between animate-slide-in-right">
+        {/* Sticky Top Close Button (Stays visible on top-right at all scroll positions) */}
+        <div className="sticky top-3 right-3 z-50 flex justify-end px-4 pt-1 pointer-events-none -mb-12">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setActiveStore(null)
+            }}
+            className="p-2 bg-white border-2 border-black rounded-full hover:bg-neutral-100 text-black transition-colors cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] pointer-events-auto"
+            title="Đóng cửa sổ chi tiết"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
         {/* Mobile Drag Handle Indicator */}
         <div className="w-12 h-1.5 bg-neutral-300 rounded-full mx-auto my-2 shrink-0 sm:hidden" />
         <div>
@@ -55,17 +82,6 @@ export default function StoreDetailDrawer({
                 <ZoomIn className="w-3.5 h-3.5" /> Bấm Để Phóng To Ảnh Banner
               </span>
             </div>
-
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                setActiveStore(null)
-              }}
-              className="absolute top-4 right-4 p-2 bg-white border-2 border-black rounded-full hover:bg-neutral-100 text-black transition-colors cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] z-10"
-              title="Đóng cửa sổ chi tiết"
-            >
-              <X className="w-4 h-4" />
-            </button>
 
             <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between bg-white border-2 border-black rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
               <div className="space-y-1 min-w-0">
@@ -287,6 +303,7 @@ export default function StoreDetailDrawer({
           onClose={() => setPreviewImage(null)}
         />
       )}
-    </div>
+    </div>,
+    document.body
   )
 }
