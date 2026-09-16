@@ -1144,8 +1144,8 @@ export default function App() {
     if (!url) return null
     try {
       const res = await makeRequest('GET', `/v1/stores/parse-gmaps?url=${encodeURIComponent(url)}`)
-      if (res && res.result && res.result.latitude && res.result.longitude) {
-        return res.result
+      if (res && res.success && res.data && res.data.result && res.data.result.latitude && res.data.result.longitude) {
+        return res.data.result
       }
     } catch (err) {
       console.error('Failed to parse Google Maps URL from backend:', err)
