@@ -141,7 +141,7 @@ export default function ProfileSection({
             <div className="space-y-1.5">
               <label className="text-xs uppercase font-extrabold tracking-wider text-black flex items-center justify-between">
                 <span>Địa Chỉ Email Đăng Ký</span>
-                <span className="text-[10px] text-neutral-500 font-bold lowercase">🔒 không thể thay đổi</span>
+                <span className="text-[10px] text-neutral-500 font-bold lowercase">không thể thay đổi</span>
               </label>
               <input
                 type="email"

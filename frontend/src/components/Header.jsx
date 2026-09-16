@@ -65,7 +65,7 @@ export default function Header({
                 : 'bg-white text-black border-black hover:bg-neutral-50 shadow-none'
             }`}
           >
-            🔍 Khám Phá Ẩm Thực
+            Khám Phá Ẩm Thực
           </button>
           <button
             onClick={() => switchTab('cs2-spinner')}
@@ -75,7 +75,7 @@ export default function Header({
                 : 'bg-white text-black border-black hover:bg-neutral-50 shadow-none'
             }`}
           >
-            🎲 Vòng Xoay Quán Ăn
+            Vòng Xoay Quán Ăn
           </button>
           <button
             onClick={() => switchTab('about')}
@@ -85,7 +85,7 @@ export default function Header({
                 : 'bg-white text-black border-black hover:bg-neutral-50 shadow-none'
             }`}
           >
-            ℹ️ Về Chúng Tôi
+            Về Chúng Tôi
           </button>
         </nav>
 

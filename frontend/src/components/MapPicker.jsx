@@ -239,7 +239,7 @@ export default function MapPicker({ initialLat, initialLng, onSelect, onClose, s
                     onClick={() => selectSearchResult(result)}
                     className="w-full text-left p-2.5 hover:bg-neutral-100 font-bold text-xs block cursor-pointer transition-colors"
                   >
-                    📍 {label}
+                    {label}
                   </button>
                 )
               })}

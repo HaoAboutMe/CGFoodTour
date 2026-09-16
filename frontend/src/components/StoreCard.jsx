@@ -53,7 +53,7 @@ function StoreCard({ store, setActiveStore, viewMode = 'grid' }) {
             </span>
             {store.distanceKm && (
               <span className="text-[9px] font-extrabold text-[#ff3e3e] shrink-0">
-                📍 {store.distanceKm} km
+                {store.distanceKm} km
               </span>
             )}
           </div>

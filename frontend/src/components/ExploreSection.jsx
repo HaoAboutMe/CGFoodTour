@@ -184,7 +184,7 @@ export default function ExploreSection({
               <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 inline mr-1 align-middle" /> Cần Giuộc Food Tour
             </span>
             <span className="brutalist-badge bg-[#fff9db] text-black border-black text-[10px] sm:text-xs">
-              🔥 {approvedStores.length} Địa điểm đang phục vụ
+              {approvedStores.length} Địa điểm đang phục vụ
             </span>
           </div>
           <h1 className="text-xl sm:text-4xl font-black uppercase tracking-tight text-black">
@@ -249,7 +249,7 @@ export default function ExploreSection({
             }`}
           >
             <MapPin className={`w-3.5 h-3.5 ${nearMeActive ? 'text-[#ff3e3e]' : 'text-black'}`} />
-            <span>📍 Gần Tôi</span>
+            <span>Gần Tôi</span>
             {locationLoading && <RefreshCw className="w-3 h-3 animate-spin ml-1" />}
           </button>
 
@@ -263,7 +263,7 @@ export default function ExploreSection({
             }`}
           >
             <Clock className={`w-3.5 h-3.5 ${openNowActive ? 'text-[#0ca678]' : 'text-black'}`} />
-            <span>🟢 Đang Mở Cửa</span>
+            <span>Đang Mở Cửa</span>
           </button>
 
           {/* 🏷️ Mở Bộ Lọc 50+ Danh Mục (Multi-Select Filter) */}
@@ -280,7 +280,7 @@ export default function ExploreSection({
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span>
-              🏷️ {selectedCategoryIds.length > 0 ? `Đã Chọn (${selectedCategoryIds.length})` : `Tất Cả Danh Mục (${categories.length})`}
+              {selectedCategoryIds.length > 0 ? `Đã Chọn (${selectedCategoryIds.length})` : `Tất Cả Danh Mục (${categories.length})`}
             </span>
             <span className="text-[10px] font-black ml-0.5">▾</span>
           </button>
@@ -323,7 +323,7 @@ export default function ExploreSection({
                   : 'bg-white text-black hover:bg-neutral-50'
               }`}
             >
-              <span>🍽️ Tất Cả Món</span>
+              <span>Tất Cả Món</span>
               <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-extrabold ${selectedCategoryIds.length === 0 && selectedCategory === null ? 'bg-white text-[#ff3e3e]' : 'bg-neutral-100 text-black'}`}>
                 {approvedStores.length}
               </span>
@@ -466,7 +466,6 @@ export default function ExploreSection({
               {/* Modal Header */}
               <div className="flex items-center justify-between gap-2 pb-2 border-b-2 border-black">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">🏷️</span>
                   <div>
                     <h3 className="font-black text-base sm:text-lg uppercase text-black">Bộ Lọc Tất Cả Danh Mục ({categories.length})</h3>
                     <p className="text-[10px] sm:text-xs font-semibold text-neutral-500">
@@ -515,7 +514,7 @@ export default function ExploreSection({
                       : 'bg-[#f7f6f2] hover:bg-neutral-200 text-black font-bold'
                   }`}
                 >
-                  <span className="text-xs truncate">🍽️ Tất Cả Món</span>
+                  <span className="text-xs truncate">Tất Cả Món</span>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${selectedCategoryIds.length === 0 ? 'bg-white text-[#ff3e3e]' : 'bg-white text-black border border-black'}`}>
                     {approvedStores.length}
                   </span>

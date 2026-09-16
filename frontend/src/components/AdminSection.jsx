@@ -216,7 +216,7 @@ export default function AdminSection({
                   Cần Giuộc
                 </h1>
                 <span className="text-[10px] font-black uppercase text-[#ff3e3e] tracking-widest block mt-0.5">
-                  Admin Portal 🛡️
+                  Admin Portal
                 </span>
               </div>
             </div>
@@ -344,7 +344,7 @@ export default function AdminSection({
               <p className="font-black text-xs text-black truncate group-hover:text-[#ff3e3e] transition-colors">{adminFullName}</p>
               <p className="font-bold text-[10px] text-neutral-500 truncate">{currentUser?.email}</p>
               <span className="brutalist-badge bg-[#ff3e3e] text-white text-[8px] py-0 px-1 border border-black inline-block mt-0.5">
-                ADMIN ROLE 🔍
+                ADMIN ROLE
               </span>
             </div>
           </div>
@@ -1507,7 +1507,7 @@ export default function AdminSection({
                           rel="noreferrer"
                           className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-300 px-2.5 py-1 rounded-lg mt-1 shadow-xs transition-colors cursor-pointer"
                         >
-                          🗺️ Xem địa chỉ chi tiết trên Google Maps ↗
+                          Xem địa chỉ chi tiết trên Google Maps
                         </a>
                       )}
                     </div>

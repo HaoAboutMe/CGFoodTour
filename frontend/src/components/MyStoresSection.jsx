@@ -447,7 +447,7 @@ export default function MyStoresSection({
                 : 'bg-white text-black hover:bg-neutral-100'
             }`}
           >
-            <span>🏪 Quán Ăn Của Tôi</span>
+            <span>Quán Ăn Của Tôi</span>
             <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${activeSubTab === 'stores' ? 'bg-white text-black' : 'bg-neutral-100 text-black border border-black'}`}>
               {myStores.length}
             </span>
@@ -463,7 +463,7 @@ export default function MyStoresSection({
                 : 'bg-white text-black hover:bg-neutral-100'
             }`}
           >
-            <span>📜 Lịch Sử Đăng Quán</span>
+            <span>Lịch Sử Đăng Quán</span>
           </button>
         </div>
       )}
@@ -549,7 +549,7 @@ export default function MyStoresSection({
                           })()}
                         </div>
                         <span className="text-[10px] font-extrabold bg-white border border-black text-black px-2 py-0.5 rounded-full shrink-0">
-                          {editingStore.categoryId ? 'Đổi danh mục' : 'Chọn ngay ↗'}
+                          {editingStore.categoryId ? 'Đổi danh mục' : 'Chọn ngay'}
                         </span>
                       </button>
                     </div>
@@ -674,7 +674,7 @@ export default function MyStoresSection({
                         </p>
                       ) : editGmapsUrl ? (
                         <p className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-300 p-2 rounded">
-                          ⚠️ Chưa tìm thấy số tọa độ trong link này. Vui lòng kiểm tra lại link hoặc dán trực tiếp dãy số tọa độ (VD: 10.51234, 106.65432).
+                          Chưa tìm thấy số tọa độ trong link này. Vui lòng kiểm tra lại link hoặc dán trực tiếp dãy số tọa độ (VD: 10.51234, 106.65432).
                         </p>
                       ) : (
                         <p className="text-[11px] text-neutral-500 font-semibold">
@@ -826,7 +826,7 @@ export default function MyStoresSection({
               type="submit"
               className="w-full brutalist-btn-red py-3 text-sm font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
             >
-              💾 Lưu Thay Đổi Quán Ăn
+              Lưu Thay Đổi Quán Ăn
             </button>
           </form>
         </div>
@@ -869,7 +869,7 @@ export default function MyStoresSection({
                 }`}
               >
                 <span className="flex items-center gap-1">
-                  {createStep > 1 ? <CheckCircle2 className="w-3.5 h-3.5" /> : '1️⃣'}
+                  {createStep > 1 ? <CheckCircle2 className="w-3.5 h-3.5" /> : '1.'}
                   <span>Thông Tin</span>
                 </span>
                 {createStep > 1 && <span className="text-[9px] font-extrabold bg-white/20 px-1 rounded hidden sm:inline">(Sửa)</span>}
@@ -888,7 +888,7 @@ export default function MyStoresSection({
                 }`}
               >
                 <span className="flex items-center gap-1">
-                  {createStep > 2 ? <CheckCircle2 className="w-3.5 h-3.5" /> : '2️⃣'}
+                  {createStep > 2 ? <CheckCircle2 className="w-3.5 h-3.5" /> : '2.'}
                   <span>Địa Chỉ & GPS</span>
                 </span>
                 {createStep > 2 && <span className="text-[9px] font-extrabold bg-white/20 px-1 rounded hidden sm:inline">(Sửa)</span>}
@@ -905,7 +905,7 @@ export default function MyStoresSection({
                 }`}
               >
                 <span className="flex items-center gap-1">
-                  3️⃣ <span>Banner & Gửi</span>
+                  3. <span>Banner & Gửi</span>
                 </span>
               </button>
             </div>
@@ -922,7 +922,7 @@ export default function MyStoresSection({
           {/* Validation Error Message Alert */}
           {createStepError && (
             <div className="bg-red-50 border-2 border-red-500 p-3 rounded-xl text-red-700 text-xs font-bold flex items-center justify-between animate-fade-in-up">
-              <span>⚠️ {createStepError}</span>
+              <span>{createStepError}</span>
               <button
                 type="button"
                 onClick={() => setCreateStepError('')}
@@ -1062,7 +1062,6 @@ export default function MyStoresSection({
                     className="brutalist-btn-red py-2.5 px-6 text-xs font-black uppercase flex items-center gap-1.5"
                   >
                     <span>Tiếp Tục: Địa Chỉ & GPS</span>
-                    <span>➔</span>
                   </button>
                 </div>
               </div>
@@ -1102,7 +1101,7 @@ export default function MyStoresSection({
                     />
                     {parsingGmapsUrl ? (
                       <p className="text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-300 p-2 rounded animate-pulse">
-                        ⏳ Đang tự động giải mã link Google Maps từ hệ thống...
+                        Đang tự động giải mã link Google Maps từ hệ thống...
                       </p>
                     ) : storeLat && storeLng ? (
                       <p className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-300 p-2 rounded flex items-center gap-1">
@@ -1110,7 +1109,7 @@ export default function MyStoresSection({
                       </p>
                     ) : addGmapsUrl ? (
                       <p className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-300 p-2 rounded">
-                        ⚠️ Chưa tìm thấy số tọa độ trong link này. Vui lòng kiểm tra lại link hoặc dán trực tiếp dãy số tọa độ (VD: 10.51234, 106.65432).
+                        Chưa tìm thấy số tọa độ trong link này. Vui lòng kiểm tra lại link hoặc dán trực tiếp dãy số tọa độ (VD: 10.51234, 106.65432).
                       </p>
                     ) : (
                       <p className="text-[11px] text-neutral-500 font-semibold">
@@ -1190,7 +1189,7 @@ export default function MyStoresSection({
                     onClick={handlePrevCreateStep}
                     className="brutalist-btn-white py-2.5 px-5 text-xs font-black uppercase flex items-center gap-1.5"
                   >
-                    <span>⬅ Quay Lại Bước 1</span>
+                    <span>Quay Lại Bước 1</span>
                   </button>
                   <button
                     type="button"
@@ -1198,7 +1197,6 @@ export default function MyStoresSection({
                     className="brutalist-btn-red py-2.5 px-6 text-xs font-black uppercase flex items-center gap-1.5"
                   >
                     <span>Tiếp Tục: Banner & Gửi</span>
-                    <span>➔</span>
                   </button>
                 </div>
               </div>
@@ -1289,13 +1287,13 @@ export default function MyStoresSection({
                     onClick={handlePrevCreateStep}
                     className="brutalist-btn-white py-2.5 px-5 text-xs font-black uppercase flex items-center gap-1.5"
                   >
-                    <span>⬅ Quay Lại Bước 2</span>
+                    <span>Quay Lại Bước 2</span>
                   </button>
                   <button
                     type="submit"
                     className="brutalist-btn-red py-3 px-6 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
                   >
-                    🚀 Gửi Quán Ăn Chờ Duyệt
+                    Gửi Quán Ăn Chờ Duyệt
                   </button>
                 </div>
               </div>
@@ -1562,18 +1560,18 @@ export default function MyStoresSection({
                     <div className="pt-1.5 border-t border-neutral-200">
                       {st.status === 'APPROVED' ? (
                         <span className="brutalist-badge bg-[#e6fcf5] text-[#0ca678] border-[#0ca678] text-[10px]">
-                          🟢 Đã Duyệt (Live trên bản đồ)
+                          Đã Duyệt (Live trên bản đồ)
                         </span>
                       ) : st.status === 'HIDDEN' ? (
                         st.hiddenByAdmin ? (
                           <div className="space-y-1">
                             {st.recoveryRequested ? (
                               <span className="brutalist-badge bg-indigo-100 text-indigo-800 border-indigo-500 text-[10px]">
-                                ⏳ Đang Chờ Admin Xem Xét Khôi Phục
+                                Đang Chờ Admin Xem Xét Khôi Phục
                               </span>
                             ) : (
                               <span className="brutalist-badge bg-red-100 text-red-800 border-red-500 text-[10px]">
-                                ⛔ Đã Bị Admin Ẩn (Ban)
+                                Đã Bị Admin Ẩn (Ban)
                               </span>
                             )}
                             {st.hideReason && (
@@ -1585,14 +1583,14 @@ export default function MyStoresSection({
                         ) : (
                           <div>
                             <span className="brutalist-badge bg-[#fff9db] text-[#b45309] border-[#b45309] text-[10px]">
-                              🔒 Đã Ẩn (Chỉ Mình Bạn Thấy)
+                              Đã Ẩn (Chỉ Mình Bạn Thấy)
                             </span>
                           </div>
                         )
                       ) : st.status === 'REJECTED' ? (
                         <div className="space-y-1">
                           <span className="brutalist-badge bg-[#fff5f5] text-[#c92a2a] border-[#c92a2a] text-[10px]">
-                            🔴 Bị Từ Chối Phê Duyệt
+                            Bị Từ Chối Phê Duyệt
                           </span>
                           {st.rejectionReason && (
                             <p className="text-[10px] font-bold text-red-700 bg-red-50 p-1.5 border border-red-300 rounded italic">
@@ -1602,7 +1600,7 @@ export default function MyStoresSection({
                         </div>
                       ) : (
                         <span className="brutalist-badge bg-[#eef2ff] text-[#4338ca] border-[#4338ca] text-[10px]">
-                          ⏳ Đang Chờ Phê Duyệt
+                          Đang Chờ Phê Duyệt
                         </span>
                       )}
                     </div>
@@ -1617,7 +1615,7 @@ export default function MyStoresSection({
                           }}
                           className="w-full brutalist-btn-red py-2 text-xs flex items-center justify-center gap-1.5 font-black uppercase"
                         >
-                          <Utensils className="w-4 h-4" /> Quản Lý Món Ăn (Thực Đơn) ↗
+                          <Utensils className="w-4 h-4" /> Quản Lý Món Ăn (Thực Đơn)
                         </button>
                       )}
 
@@ -1902,7 +1900,7 @@ export default function MyStoresSection({
                     : 'text-neutral-600 hover:text-black'
                 }`}
               >
-                💻 Máy Tính (PC / Laptop)
+                Máy Tính (PC / Laptop)
               </button>
               <button
                 type="button"
@@ -1913,7 +1911,7 @@ export default function MyStoresSection({
                     : 'text-neutral-600 hover:text-black'
                 }`}
               >
-                📱 Điện Thoại (iOS / Android)
+                Điện Thoại (iOS / Android)
               </button>
             </div>
 
@@ -1923,7 +1921,7 @@ export default function MyStoresSection({
                 /* Tab 1: PC Guide */
                 <div className="bg-amber-50 border-2 border-amber-900 p-5 rounded-xl space-y-4 animate-fade-in">
                   <h4 className="font-black text-sm uppercase text-amber-950 flex items-center gap-2 border-b border-amber-300 pb-2">
-                    💻 Hướng dẫn cho Máy tính (PC / Laptop)
+                    Hướng dẫn cho Máy tính (PC / Laptop)
                   </h4>
                   <div className="space-y-3 text-xs font-semibold text-neutral-800 leading-relaxed">
                     <p className="flex items-start gap-2.5">
@@ -1944,7 +1942,7 @@ export default function MyStoresSection({
                 /* Tab 2: Mobile Guide */
                 <div className="bg-indigo-50 border-2 border-indigo-900 p-5 rounded-xl space-y-4 animate-fade-in">
                   <h4 className="font-black text-sm uppercase text-indigo-950 flex items-center gap-2 border-b border-indigo-300 pb-2">
-                    📱 Hướng dẫn cho Điện thoại (iOS / Android)
+                    Hướng dẫn cho Điện thoại (iOS / Android)
                   </h4>
                   <div className="space-y-3 text-xs font-semibold text-neutral-800 leading-relaxed">
                     <p className="flex items-start gap-2.5">

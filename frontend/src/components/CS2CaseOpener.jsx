@@ -232,12 +232,12 @@ export default function CS2CaseOpener({
 
     // Validation checks
     if (spinMode === 'custom' && selectedStoreIds.length < 2) {
-      alert('⚠️ Vui lòng tích chọn từ 2 quán trở lên để bắt đầu quay!')
+      alert('Vui lòng tích chọn từ 2 quán trở lên để bắt đầu quay!')
       return
     }
 
     if (eligibleStores.length === 0) {
-      alert('⚠️ Không tìm thấy quán ăn phù hợp với bộ lọc hiện tại! Vui lòng chọn lại danh mục hoặc mở rộng bộ lọc.')
+      alert('Không tìm thấy quán ăn phù hợp với bộ lọc hiện tại! Vui lòng chọn lại danh mục hoặc mở rộng bộ lọc.')
       return
     }
 
@@ -347,7 +347,7 @@ export default function CS2CaseOpener({
                 </span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black flex items-center gap-2 mt-0.5">
-                🎲 Vòng Xoay Quán Ăn
+                Vòng Xoay Quán Ăn
               </h2>
             </div>
           </div>
@@ -507,7 +507,7 @@ export default function CS2CaseOpener({
                         : 'bg-white text-black hover:bg-neutral-100'
                     }`}
                   >
-                    <span>🌐 Tất Cả Món</span>
+                    <span>Tất Cả Món</span>
                   </button>
 
                   {safeCategories.map((c) => {
@@ -547,18 +547,18 @@ export default function CS2CaseOpener({
                     disabled={isSpinning}
                     className="w-full brutalist-select bg-[#f7f6f2] text-black text-xs font-extrabold p-2.5 border-2 border-black rounded-xl focus:ring-0 focus:outline-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
                   >
-                    <option value="ALL">💸 Mới Nhận Lương (Tất Cả Mức Giá)</option>
-                    <option value="LOW">💔 Hết Tiền Rồi (&lt; 50.000đ)</option>
-                    <option value="MID">🪙 Ví Vừa Vừa (50k - 100k)</option>
-                    <option value="HIGH">🥩 Rủ Bạn Sang (100k - 150k)</option>
-                    <option value="LUXURY">👑 Đại Gia (&gt; 150.000đ)</option>
+                    <option value="ALL">Mới Nhận Lương (Tất Cả Mức Giá)</option>
+                    <option value="LOW">Hết Tiền Rồi (&lt; 50.000đ)</option>
+                    <option value="MID">Ví Vừa Vừa (50k - 100k)</option>
+                    <option value="HIGH">Rủ Bạn Sang (100k - 150k)</option>
+                    <option value="LUXURY">Đại Gia (&gt; 150.000đ)</option>
                   </select>
                 </div>
 
                 {/* Status Toggle */}
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-black flex items-center gap-1.5">
-                    🟢 Trạng Thái Hoạt Động
+                    Trạng Thái Hoạt Động
                   </label>
                   <button
                     onClick={() => setOnlyOpenStores(!onlyOpenStores)}
@@ -634,7 +634,7 @@ export default function CS2CaseOpener({
                             : 'bg-white text-black hover:bg-neutral-100'
                         }`}
                       >
-                        🌐 Tất Cả ({safeStores.length})
+                        Tất Cả ({safeStores.length})
                       </button>
 
                       {safeCategories.map((c) => {
@@ -749,7 +749,7 @@ export default function CS2CaseOpener({
               ) : (
                 <>
                   <Shuffle className="w-6 h-6 animate-spin-slow" />
-                  <span>🎲 QUAY CHỌN QUÁN NGAY ({eligibleStores.length} Quán)</span>
+                  <span>QUAY CHỌN QUÁN NGAY ({eligibleStores.length} Quán)</span>
                 </>
               )}
             </button>
@@ -785,14 +785,14 @@ export default function CS2CaseOpener({
                 }}
                 className="w-full py-3 brutalist-btn-red text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer"
               >
-                Xem Chi Tiết Quán Này ↗
+                Xem Chi Tiết Quán Này
               </button>
 
               <button
                 onClick={() => setShowWinnerModal(false)}
                 className="w-full py-2.5 brutalist-btn-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer"
               >
-                <RotateCcw className="w-4 h-4" /> Quay Lại Vòng Xoay 🎲
+                <RotateCcw className="w-4 h-4" /> Quay Lại Vòng Xoay
               </button>
             </div>
           </div>

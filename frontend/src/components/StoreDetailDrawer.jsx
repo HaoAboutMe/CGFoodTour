@@ -146,7 +146,7 @@ export default function StoreDetailDrawer({
                       rel="noreferrer"
                       className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-300 px-2.5 py-1 rounded mt-1 shadow-xs transition-colors cursor-pointer"
                     >
-                      🗺️ Xem địa chỉ chi tiết trên Google Maps ↗
+                      Xem địa chỉ chi tiết trên Google Maps
                     </a>
                   )}
                 </div>
@@ -174,7 +174,7 @@ export default function StoreDetailDrawer({
             {/* Food Items menu (Clicking anywhere on food card opens food image preview) */}
             <div className="space-y-4 pt-6 border-t-2 border-black">
               <h3 className="text-sm font-black uppercase tracking-wider text-black flex items-center gap-1.5">
-                🍽️ Thực Đơn Quán Ăn
+                Thực Đơn Quán Ăn
               </h3>
               {!activeStore.foodItems || activeStore.foodItems.length === 0 ? (
                 <p className="text-xs text-neutral-500 italic font-semibold">Chưa có món ăn nào được đăng.</p>
@@ -223,7 +223,7 @@ export default function StoreDetailDrawer({
 
             {/* Rating & Closed Reports block */}
             <div className="space-y-4 pt-6 border-t-2 border-black">
-              <h3 className="text-sm font-black uppercase tracking-wider text-black">💬 Tương Tác & Đánh Giá</h3>
+              <h3 className="text-sm font-black uppercase tracking-wider text-black">Tương Tác & Đánh Giá</h3>
 
               {/* 1-Touch rating pills */}
               <div className="space-y-3 bg-[#f7f6f2] p-4 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
@@ -263,7 +263,7 @@ export default function StoreDetailDrawer({
                     onClick={() => handleReportClosedToday(activeStore.id)}
                     className="brutalist-btn-red text-[10px] font-black uppercase shrink-0"
                   >
-                    Báo Đóng Cửa 📍
+                    Báo Đóng Cửa
                   </button>
                 </div>
 

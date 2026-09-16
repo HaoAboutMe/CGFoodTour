@@ -20,13 +20,13 @@ export default function CS2StoreCardCTA({ switchTab, viewMode = 'grid' }) {
               <span className="text-[10px] font-bold text-neutral-600">Chọn Ngẫu Nhiên</span>
             </div>
             <h3 className="text-xs sm:text-sm font-black uppercase text-black leading-snug group-hover:text-[#ff3e3e] truncate">
-              🎲 Vòng Xoay Quán Ăn - Thử Vận May!
+              Vòng Xoay Quán Ăn - Thử Vận May!
             </h3>
           </div>
         </div>
 
         <button className="py-2 px-3 brutalist-btn-red text-xs uppercase shrink-0 flex items-center gap-1">
-          Quay Ngay 🎲 <ArrowRight className="w-3.5 h-3.5" />
+          Quay Ngay <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
     )
@@ -62,7 +62,7 @@ export default function CS2StoreCardCTA({ switchTab, viewMode = 'grid' }) {
         <div className="p-4 relative flex-1 flex flex-col justify-between bg-white">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm font-black uppercase text-black leading-snug group-hover:text-[#ff3e3e] transition-colors">
-              🎲 Vòng Xoay Quán Ăn
+              Vòng Xoay Quán Ăn
             </h3>
             <span className="brutalist-badge bg-[#f7f6f2] text-black border border-black text-[9px] py-0.5 px-2 shrink-0 font-black">
               Pick Món Ngon
@@ -74,7 +74,7 @@ export default function CS2StoreCardCTA({ switchTab, viewMode = 'grid' }) {
       {/* Footer Action Button */}
       <div className="p-3 bg-[#f7f6f2] border-t-2 border-black shrink-0">
         <button className="w-full py-2.5 brutalist-btn-red text-xs uppercase flex items-center justify-center gap-2">
-          <span>Thử Vận May Quán Ăn 🎲 ↗</span>
+          <span>Thử Vận May Quán Ăn</span>
         </button>
       </div>
     </div>
