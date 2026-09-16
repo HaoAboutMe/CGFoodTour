@@ -9,6 +9,7 @@ import {
 import './App.css'
 
 import Header from './components/Header'
+import BottomNav from './components/BottomNav'
 import AuthModal from './components/AuthModal'
 import StoreDetailDrawer from './components/StoreDetailDrawer'
 import ProfileSection from './components/ProfileSection'
@@ -1559,7 +1560,7 @@ export default function App() {
       )}
 
       {/* Main Container */}
-      <main className={activeTab === 'admin' ? 'h-full w-full p-0 animate-fade-in-up' : 'max-w-7xl mx-auto px-4 md:px-8 pt-32 animate-fade-in-up'}>
+      <main className={activeTab === 'admin' ? 'h-full w-full p-0 pb-20 md:pb-0 animate-fade-in-up' : 'max-w-7xl mx-auto px-4 md:px-8 pt-24 sm:pt-28 md:pt-32 pb-24 md:pb-8 animate-fade-in-up'}>
 
         {/* LOADING INDICATOR */}
         {loading && (
@@ -1888,6 +1889,14 @@ export default function App() {
           </div>
         ))}
       </div>
+      <BottomNav
+        activeTab={activeTab}
+        switchTab={switchTab}
+        currentUser={currentUser}
+        isUserAdmin={isAdmin()}
+        setShowAuthModal={setShowAuthModal}
+        setAuthMode={setAuthMode}
+      />
     </div>
   )
 }

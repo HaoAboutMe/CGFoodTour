@@ -26,6 +26,8 @@ export default function StoreDetailDrawer({
 
       {/* Drawer content (Bottom-sheet on mobile, Right slide-in on desktop) */}
       <div className="w-full sm:max-w-lg bg-white border-t-4 sm:border-t-0 sm:border-l-4 border-black h-[90vh] sm:h-full rounded-t-3xl sm:rounded-none overflow-y-auto relative z-10 shadow-2xl flex flex-col justify-between animate-slide-in-right">
+        {/* Mobile Drag Handle Indicator */}
+        <div className="w-12 h-1.5 bg-neutral-300 rounded-full mx-auto my-2 shrink-0 sm:hidden" />
         <div>
           {/* Header Image banner (Clicking anywhere in header area opens store banner image) */}
           <div

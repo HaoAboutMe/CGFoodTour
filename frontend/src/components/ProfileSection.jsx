@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Camera, Shield, User, Eye, EyeOff } from 'lucide-react'
 
 export default function ProfileSection({
+  currentUser,
   avatarPreview,
   avatarFile,
   onAvatarFileChange,
@@ -136,6 +137,21 @@ export default function ProfileSection({
 
           {/* Update Info form */}
           <form onSubmit={handleUpdateProfile} className="space-y-5">
+            {/* Email Field (Read-Only) */}
+            <div className="space-y-1.5">
+              <label className="text-xs uppercase font-extrabold tracking-wider text-black flex items-center justify-between">
+                <span>Địa Chỉ Email Đăng Ký</span>
+                <span className="text-[10px] text-neutral-500 font-bold lowercase">🔒 không thể thay đổi</span>
+              </label>
+              <input
+                type="email"
+                readOnly
+                disabled
+                value={currentUser?.email || ''}
+                className="brutalist-input bg-[#f7f6f2] text-neutral-600 font-bold cursor-not-allowed select-all border-neutral-400"
+              />
+            </div>
+
             <div className="space-y-1.5">
               <label className="text-xs uppercase font-extrabold tracking-wider block text-black">Username</label>
               <input
