@@ -23,8 +23,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -583,53 +586,106 @@ public class StoreService {
         }
         String currentUrl = inputUrl.trim();
 
-        // 1. If short URL (maps.app.goo.gl or goo.gl/maps), expand HTTP redirect
-        if (currentUrl.contains("maps.app.goo.gl") || currentUrl.contains("goo.gl/maps")) {
-            try {
-                HttpURLConnection conn = (HttpURLConnection) new URL(currentUrl).openConnection();
-                conn.setInstanceFollowRedirects(true);
+        // Direct check: if input URL already has coordinates
+        Map<String, String> initialCoords = extractCoordinatesFromText(currentUrl);
+        if (!initialCoords.isEmpty()) {
+            return initialCoords;
+        }
+
+        // Handle short URLs (maps.app.goo.gl, goo.gl/maps, etc.) via manual HTTP redirect tracing
+        int maxRedirects = 10;
+        String expandedUrl = currentUrl;
+
+        try {
+            while (maxRedirects-- > 0) {
+                URL urlObj = new URL(expandedUrl);
+                HttpURLConnection conn = (HttpURLConnection) urlObj.openConnection();
+                conn.setInstanceFollowRedirects(false); // Manual redirect handling to catch Location headers across protocols
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
                 conn.setConnectTimeout(6000);
                 conn.setReadTimeout(6000);
-                conn.connect();
-                currentUrl = conn.getURL().toString();
-            } catch (Exception e) {
-                log.warn("Could not expand short URL {}: {}", inputUrl, e.getMessage());
+
+                int status = conn.getResponseCode();
+                String location = conn.getHeaderField("Location");
+
+                // Check coordinates in current expandedUrl
+                Map<String, String> coords = extractCoordinatesFromText(expandedUrl);
+                if (!coords.isEmpty()) {
+                    return coords;
+                }
+
+                if (location != null && !location.isBlank()) {
+                    if (location.startsWith("/")) {
+                        URL base = new URL(expandedUrl);
+                        expandedUrl = base.getProtocol() + "://" + base.getHost() + location;
+                    } else {
+                        expandedUrl = location;
+                    }
+
+                    Map<String, String> locCoords = extractCoordinatesFromText(expandedUrl);
+                    if (!locCoords.isEmpty()) {
+                        return locCoords;
+                    }
+                } else if (status == HttpURLConnection.HTTP_OK) {
+                    try (BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                        StringBuilder sb = new StringBuilder();
+                        String line;
+                        int linesRead = 0;
+                        while ((line = reader.readLine()) != null && linesRead++ < 150) {
+                            sb.append(line).append("\n");
+                        }
+                        Map<String, String> htmlCoords = extractCoordinatesFromText(sb.toString());
+                        if (!htmlCoords.isEmpty()) {
+                            return htmlCoords;
+                        }
+                    }
+                    break;
+                } else {
+                    break;
+                }
             }
+        } catch (Exception e) {
+            log.warn("Could not expand Google Maps URL {}: {}", inputUrl, e.getMessage());
         }
 
-        // 2. Extract coordinates from expanded or original URL
-        return extractCoordinatesFromText(currentUrl);
+        return extractCoordinatesFromText(expandedUrl);
     }
 
     private Map<String, String> extractCoordinatesFromText(String text) {
         if (text == null || text.isBlank()) return Collections.emptyMap();
 
-        // !3d...!4d...
-        var dMatcher = Pattern.compile("!3d(-?\\d+\\.\\d+)!4d(-?\\d+\\.\\d+)").matcher(text);
+        // 1. !3d...!4d... (can be contiguous or non-contiguous in URL params)
+        var dMatcher = Pattern.compile("!3d(-?\\d+\\.\\d+).*?!4d(-?\\d+\\.\\d+)").matcher(text);
         if (dMatcher.find()) {
             return Map.of("latitude", dMatcher.group(1), "longitude", dMatcher.group(2));
         }
 
-        // @lat,lng
+        var lat3d = Pattern.compile("!3d(-?\\d+\\.\\d+)").matcher(text);
+        var lng4d = Pattern.compile("!4d(-?\\d+\\.\\d+)").matcher(text);
+        if (lat3d.find() && lng4d.find()) {
+            return Map.of("latitude", lat3d.group(1), "longitude", lng4d.group(1));
+        }
+
+        // 2. @lat,lng
         var atMatcher = Pattern.compile("@(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)").matcher(text);
         if (atMatcher.find()) {
             return Map.of("latitude", atMatcher.group(1), "longitude", atMatcher.group(2));
         }
 
-        // q=lat,lng or query=lat,lng
+        // 3. q=lat,lng or query=lat,lng or ll=lat,lng or center=lat,lng
         var qMatcher = Pattern.compile("[?&](?:q|ll|query|destination|near|center|point)=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)").matcher(text);
         if (qMatcher.find()) {
             return Map.of("latitude", qMatcher.group(1), "longitude", qMatcher.group(2));
         }
 
-        // /place/lat,lng or /search/lat,lng
+        // 4. /place/lat,lng or /search/lat,lng or /dir/lat,lng
         var pMatcher = Pattern.compile("\\/(?:place|dir|search|maps)\\/(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)").matcher(text);
         if (pMatcher.find()) {
             return Map.of("latitude", pMatcher.group(1), "longitude", pMatcher.group(2));
         }
 
-        // Direct lat, lng pattern
+        // 5. Direct lat, lng pattern (e.g., 10.51234, 106.65432)
         var directMatcher = Pattern.compile("(-?\\d{1,2}\\.\\d+)\\s*[,;\\s]\\s*(-?\\d{1,3}\\.\\d+)").matcher(text);
         if (directMatcher.find()) {
             try {
