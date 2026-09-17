@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Sparkles,
@@ -59,28 +59,43 @@ export default function ExploreSection({
   const [categorySearch, setCategorySearch] = useState('')
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([])
 
-  // Prevent background body scroll when Category Sheet is open
+  const categorySheetScrollPos = useRef(0)
+
+  // Prevent background body scroll when Category Sheet is open while preserving scroll position
   useEffect(() => {
     if (showCategorySheet) {
+      categorySheetScrollPos.current = window.scrollY || window.pageYOffset || 0
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
+      if (categorySheetScrollPos.current) {
+        window.scrollTo(0, categorySheetScrollPos.current)
+      }
     }
     return () => {
       document.body.style.overflow = ''
     }
   }, [showCategorySheet])
 
+  // Clear all category selection helper
+  function clearCategoryFilter() {
+    setSelectedCategoryIds([])
+    setSelectedCategory(null)
+  }
+
   // Multi-category toggle helper
   function handleToggleCategory(catId) {
     if (!catId) {
-      setSelectedCategoryIds([])
-      setSelectedCategory(null)
+      clearCategoryFilter()
       return
     }
     setSelectedCategoryIds((prev) => {
-      const exists = prev.includes(catId)
-      const next = exists ? prev.filter((id) => id !== catId) : [...prev, catId]
+      let currentList = prev
+      if (currentList.length === 0 && selectedCategory && selectedCategory.id) {
+        currentList = [selectedCategory.id]
+      }
+      const exists = currentList.includes(catId)
+      const next = exists ? currentList.filter((id) => id !== catId) : [...currentList, catId]
       if (next.length === 1) {
         const found = categories.find((c) => c.id === next[0])
         setSelectedCategory(found || null)
@@ -136,11 +151,16 @@ export default function ExploreSection({
       (st.addressLine && st.addressLine.toLowerCase().includes(q)) ||
       (st.description && st.description.toLowerCase().includes(q))
 
-    const matchesCategory =
+    const activeCategoryIds =
       selectedCategoryIds.length > 0
-        ? selectedCategoryIds.includes(st.categoryId)
+        ? selectedCategoryIds
         : selectedCategory
-        ? st.categoryId === selectedCategory.id
+        ? [selectedCategory.id]
+        : []
+
+    const matchesCategory =
+      activeCategoryIds.length > 0
+        ? activeCategoryIds.includes(st.categoryId)
         : true
     const isOpenNow = checkStoreOpenStatus(st).isOpen
     const matchesOpenNow = openNowActive ? isOpenNow : true
@@ -267,35 +287,50 @@ export default function ExploreSection({
           </button>
 
           {/* 🏷️ Mở Bộ Lọc 50+ Danh Mục (Multi-Select Filter) */}
-          <button
-            onClick={(e) => {
-              e.preventDefault()
-              setShowCategorySheet(true)
-            }}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 border-2 border-black transition-all cursor-pointer select-none shrink-0 ${
-              selectedCategoryIds.length > 0
-                ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                : 'bg-[#fff9db] hover:bg-amber-100 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-            }`}
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>
-              {selectedCategoryIds.length > 0 ? `Đã Chọn (${selectedCategoryIds.length})` : `Tất Cả Danh Mục (${categories.length})`}
-            </span>
-            <span className="text-[10px] font-black ml-0.5">▾</span>
-          </button>
+          {/* 🏷️ Mở Bộ Lọc 50+ Danh Mục (Multi-Select Filter) */}
+          {(() => {
+            const hasCategoryFilter = selectedCategoryIds.length > 0 || selectedCategory !== null
+            return (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    setShowCategorySheet(true)
+                  }}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 border-2 border-black transition-all cursor-pointer select-none shrink-0 ${
+                    hasCategoryFilter
+                      ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                      : 'bg-[#fff9db] hover:bg-amber-100 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                  }`}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>
+                    {selectedCategoryIds.length > 1
+                      ? `Đã Chọn (${selectedCategoryIds.length})`
+                      : selectedCategory
+                      ? `Đã Chọn (${selectedCategory.name})`
+                      : selectedCategoryIds.length === 1
+                      ? `Đã Chọn (1)`
+                      : `Tất Cả Danh Mục (${categories.length})`}
+                  </span>
+                  <span className="text-[10px] font-black ml-0.5">▾</span>
+                </button>
 
-          {(nearMeActive || openNowActive) && (
-            <button
-              onClick={() => {
-                setNearMeActive(false)
-                setOpenNowActive(false)
-              }}
-              className="text-[10px] font-black text-[#ff3e3e] hover:underline px-2 cursor-pointer"
-            >
-              Xóa lọc ✕
-            </button>
-          )}
+                {(nearMeActive || openNowActive || hasCategoryFilter) && (
+                  <button
+                    onClick={() => {
+                      setNearMeActive(false)
+                      setOpenNowActive(false)
+                      clearCategoryFilter()
+                    }}
+                    className="text-[10px] font-black text-[#ff3e3e] hover:underline px-2 cursor-pointer"
+                  >
+                    Xóa lọc ✕
+                  </button>
+                )}
+              </>
+            )
+          })()}
         </div>
 
         {/* Complete Category Badges */}
@@ -304,10 +339,10 @@ export default function ExploreSection({
             <span className="text-[10px] uppercase font-black tracking-wider text-neutral-500">
               Tất Cả Danh Mục ({categories.length + 1}):
             </span>
-            {selectedCategory && (
+            {(selectedCategoryIds.length > 0 || selectedCategory !== null) && (
               <button
-                onClick={() => setSelectedCategory(null)}
-                className="text-[10px] uppercase font-black text-[#ff3e3e] hover:underline"
+                onClick={clearCategoryFilter}
+                className="text-[10px] uppercase font-black text-[#ff3e3e] hover:underline cursor-pointer"
               >
                 Xóa bộ lọc ✕
               </button>
@@ -316,7 +351,11 @@ export default function ExploreSection({
 
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
             <button
-              onClick={() => handleToggleCategory(null)}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                handleToggleCategory(null)
+              }}
               className={`px-3.5 py-1.5 border-2 border-black rounded-full text-xs font-black flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                 selectedCategoryIds.length === 0 && selectedCategory === null
                   ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
@@ -336,7 +375,11 @@ export default function ExploreSection({
               return (
                 <button
                   key={cat.id}
-                  onClick={() => handleToggleCategory(cat.id)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleToggleCategory(cat.id)
+                  }}
                   className={`px-3.5 py-1.5 border-2 border-black rounded-full text-xs font-black flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
@@ -371,7 +414,13 @@ export default function ExploreSection({
           <div className="space-y-0.5">
             <span className="text-[10px] uppercase font-black tracking-[0.2em] text-[#ff3e3e]">LIVE STALLS</span>
             <h2 className="text-lg sm:text-xl font-black text-black flex items-center gap-2">
-              <span>{selectedCategory ? `Danh Mục: ${selectedCategory.name}` : 'Quán Ăn Nổi Bật'}</span>
+              <span>
+                {selectedCategory
+                  ? `Danh Mục: ${selectedCategory.name}`
+                  : selectedCategoryIds.length > 0
+                  ? `Danh Mục: Đã chọn ${selectedCategoryIds.length} danh mục`
+                  : 'Quán Ăn Nổi Bật'}
+              </span>
               <span className="text-xs font-bold text-neutral-500">({displayedStores.length}/{sortedStores.length})</span>
             </h2>
           </div>
@@ -507,7 +556,11 @@ export default function ExploreSection({
               <div className="overflow-y-auto max-h-[45vh] pr-1 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
                 {/* Option: Tất Cả Món */}
                 <button
-                  onClick={() => handleToggleCategory(null)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleToggleCategory(null)
+                  }}
                   className={`p-2.5 rounded-xl border-2 border-black flex items-center justify-between gap-2 transition-all cursor-pointer text-left ${
                     selectedCategoryIds.length === 0
                       ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_#111] font-black'
@@ -529,7 +582,11 @@ export default function ExploreSection({
                     return (
                       <button
                         key={cat.id}
-                        onClick={() => handleToggleCategory(cat.id)}
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          handleToggleCategory(cat.id)
+                        }}
                         className={`p-2.5 rounded-xl border-2 border-black flex items-center justify-between gap-2 transition-all cursor-pointer text-left ${
                           isSelected
                             ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_#111] font-black'

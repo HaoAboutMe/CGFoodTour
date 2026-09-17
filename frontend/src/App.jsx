@@ -1845,16 +1845,18 @@ export default function App() {
         setGpsLng={setGpsLng}
       />
 
-      <Suspense fallback={null}>
-        <DevConsole
-          isConsoleOpen={isConsoleOpen}
-          setIsConsoleOpen={setIsConsoleOpen}
-          consoleLogs={consoleLogs}
-          clearConsole={clearConsole}
-          token={token}
-          handleRefreshToken={handleRefreshToken}
-        />
-      </Suspense>
+      {isAdmin() && (
+        <Suspense fallback={null}>
+          <DevConsole
+            isConsoleOpen={isConsoleOpen}
+            setIsConsoleOpen={setIsConsoleOpen}
+            consoleLogs={consoleLogs}
+            clearConsole={clearConsole}
+            token={token}
+            handleRefreshToken={handleRefreshToken}
+          />
+        </Suspense>
+      )}
 
       {/* Toast Notification Stack (Top-Right, below header) */}
       <div className="fixed top-24 right-6 z-[9999] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
