@@ -159,11 +159,31 @@ export default function App() {
       } else if (tab === 'explore' || tab === 'my-stores' || tab === 'about' || tab === 'cs2-spinner') {
         loadGlobalData()
       }
-    } else {
-      navigate('/explore', { replace: true })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, token])
+
+  // Dynamic Document Title based on active tab & active store
+  useEffect(() => {
+    const BRAND_SUFFIX = 'Cần Giuộc Food Tour'
+
+    if (activeStore) {
+      document.title = `${activeStore.name} | ${BRAND_SUFFIX}`
+      return
+    }
+
+    const tabTitles = {
+      'explore': 'Khám Phá Ẩm Thực',
+      'cs2-spinner': 'Vòng Xoay Quán Ăn',
+      'about': 'Về Chúng Tôi',
+      'profile': 'Tài Khoản Của Tôi',
+      'my-stores': 'Quán Ăn Của Tôi',
+      'admin': 'Bảng Quản Trị Hệ Thống'
+    }
+
+    const titlePrefix = tabTitles[activeTab] || 'Khám Phá Ẩm Thực'
+    document.title = `${titlePrefix} | ${BRAND_SUFFIX}`
+  }, [activeTab, activeStore])
 
   // Cross-tab authentication synchronization
   useEffect(() => {
@@ -1405,7 +1425,6 @@ export default function App() {
 
   // Admin View - Approve store submission
   async function handleAdminApprove(storeId) {
-    if (!window.confirm('Duyệt quán ăn này và công khai lên hệ thống?')) return
     setLoading(true)
     const res = await makeRequest('POST', `/v1/stores/${storeId}/approve`, {})
     setLoading(false)
@@ -1845,16 +1864,18 @@ export default function App() {
         setGpsLng={setGpsLng}
       />
 
-      <Suspense fallback={null}>
-        <DevConsole
-          isConsoleOpen={isConsoleOpen}
-          setIsConsoleOpen={setIsConsoleOpen}
-          consoleLogs={consoleLogs}
-          clearConsole={clearConsole}
-          token={token}
-          handleRefreshToken={handleRefreshToken}
-        />
-      </Suspense>
+      {isAdmin() && (
+        <Suspense fallback={null}>
+          <DevConsole
+            isConsoleOpen={isConsoleOpen}
+            setIsConsoleOpen={setIsConsoleOpen}
+            consoleLogs={consoleLogs}
+            clearConsole={clearConsole}
+            token={token}
+            handleRefreshToken={handleRefreshToken}
+          />
+        </Suspense>
+      )}
 
       {/* Toast Notification Stack (Top-Right, below header) */}
       <div className="fixed top-24 right-6 z-[9999] flex flex-col gap-3 max-w-sm w-full pointer-events-none">

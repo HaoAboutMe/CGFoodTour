@@ -18,6 +18,7 @@ import java.util.Objects;
 @ControllerAdvice
 public class GlobalExceptionHandler {
     private static final String MIN_ATTRIBUTE = "min";
+    private static final String MAX_ATTRIBUTE = "max";
 
     // Handle RuntimeException với ErrorCode UNCATEGORIZED_EXCEPTION nếu không phải
     // lỗi đến từ AppException
@@ -102,9 +103,14 @@ public class GlobalExceptionHandler {
     }
 
     private String mapAttribute(String message, Map<String, Object> attributes) {
-        String minValue = String.valueOf(attributes.get(MIN_ATTRIBUTE));
-
-        return message.replace("{" + MIN_ATTRIBUTE + "}", minValue);
+        String result = message;
+        if (attributes.containsKey(MIN_ATTRIBUTE)) {
+            result = result.replace("{" + MIN_ATTRIBUTE + "}", String.valueOf(attributes.get(MIN_ATTRIBUTE)));
+        }
+        if (attributes.containsKey(MAX_ATTRIBUTE)) {
+            result = result.replace("{" + MAX_ATTRIBUTE + "}", String.valueOf(attributes.get(MAX_ATTRIBUTE)));
+        }
+        return result;
     }
 
 }

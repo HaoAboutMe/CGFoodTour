@@ -11,8 +11,8 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CategoryRequest {
-    @NotBlank(message = "Category name cannot be blank")
-    @Size(max = 100, message = "Category name cannot exceed 100 characters")
+    @NotBlank(message = "CATEGORY_NAME_BLANK")
+    @Size(min = 2, max = 50, message = "CATEGORY_NAME_INVALID")
     String name;
     String iconUrl;
 }

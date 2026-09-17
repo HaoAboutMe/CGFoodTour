@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Shield, LogOut, Menu, X, User, Store, ChevronDown, Info } from 'lucide-react'
+import logo1024 from '@/assets/logo_1024.webp'
 
 export default function Header({
   switchTab,
@@ -44,9 +45,11 @@ export default function Header({
           className="flex items-center gap-2.5 cursor-pointer shrink-0"
           onClick={() => handleNavClick('explore')}
         >
-          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#ff3e3e] text-white border-2 border-black rounded-lg flex items-center justify-center font-black text-lg sm:text-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] select-none">
-            C
-          </div>
+          <img
+            src={logo1024}
+            alt="Cần Giuộc Food Tour"
+            className="w-9 h-9 sm:w-10 sm:h-10 border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] object-cover bg-white select-none shrink-0"
+          />
           <span className="font-black text-black tracking-tight text-lg sm:text-xl">
             CầnGiuộc
             <span className="text-[#ff3e3e] font-black text-[10px] sm:text-sm ml-1 px-1.5 sm:px-2 py-0.5 border-2 border-black rounded-full bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] tracking-wider uppercase">

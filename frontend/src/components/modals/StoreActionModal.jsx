@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { AlertTriangle, EyeOff, RotateCcw, Trash2, X } from 'lucide-react'
+import { AlertTriangle, EyeOff, RotateCcw, Trash2, X, CheckCircle2 } from 'lucide-react'
 
 /**
- * Modal confirm + action reason for Store Hide/Recover/Hard Delete
- * actionType: 'HIDE' | 'RECOVER' | 'HARD_DELETE'
+ * Modal confirm + action reason for Store Hide/Recover/Hard Delete/Approve
+ * actionType: 'HIDE' | 'RECOVER' | 'HARD_DELETE' | 'APPROVE'
  * isStaffOrAdmin: boolean (if true, reason is mandatory for HIDE and HARD_DELETE)
  */
 export default function StoreActionModal({
@@ -44,6 +44,15 @@ export default function StoreActionModal({
 
   const getModalConfig = () => {
     switch (actionType) {
+      case 'APPROVE':
+        return {
+          title: 'Phê Duyệt Quán Ăn',
+          icon: <CheckCircle2 className="w-6 h-6 text-emerald-600" />,
+          badgeBg: 'bg-emerald-100 text-emerald-800 border-emerald-500',
+          btnBg: 'bg-emerald-500 text-white hover:bg-emerald-600 border-2 border-black font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]',
+          btnText: 'Duyệt & Công Khai ↗',
+          description: `Phê duyệt quán "${store.name}" và công khai hiển thị trên hệ thống Cần Giuộc Food Tour.`
+        }
       case 'HIDE':
         return {
           title: 'Ẩn Quán Ăn',

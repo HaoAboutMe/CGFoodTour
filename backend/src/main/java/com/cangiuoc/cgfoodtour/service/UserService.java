@@ -55,6 +55,10 @@ public class UserService
 
     public UserResponse createUser(UserCreationRequest request)
     {
+        if(userRepository.existsByUsername(request.getUsername()))
+        {
+            throw new AppException(ErrorCode.USERNAME_EXISTED);
+        }
         if(userRepository.existsByEmail(request.getEmail()))
         {
             throw new AppException(ErrorCode.USER_EXISTED);
@@ -136,6 +140,13 @@ public class UserService
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if (request.getUsername() != null && !request.getUsername().equalsIgnoreCase(user.getUsername())) {
+            if (userRepository.existsByUsername(request.getUsername())) {
+                throw new AppException(ErrorCode.USERNAME_EXISTED);
+            }
+        }
+
         userMapper.updateMyInfo(user, request);
 
         return userMapper.toUserResponse(userRepository.save(user));

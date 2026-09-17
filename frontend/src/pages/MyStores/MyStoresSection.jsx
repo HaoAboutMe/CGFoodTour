@@ -219,6 +219,15 @@ export default function MyStoresSection({
   const [categorySearchQuery, setCategorySearchQuery] = useState('')
   const [categoryModalTarget, setCategoryModalTarget] = useState('add') // 'add' or 'edit'
 
+  const openCategoryModal = (target = 'add') => {
+    setCategoryModalTarget(target)
+    setCategorySearchQuery('')
+    if (typeof loadGlobalData === 'function') {
+      loadGlobalData()
+    }
+    setIsCategoryModalOpen(true)
+  }
+
   // Lock body scroll when Google Maps Guide or Category Picker modal is open
   useEffect(() => {
     if (isGmapsGuideOpen || isCategoryModalOpen) {
@@ -535,11 +544,7 @@ export default function MyStoresSection({
                       <label className="text-xs uppercase font-extrabold tracking-wider block">Danh Mục Ẩm Thực *</label>
                       <button
                         type="button"
-                        onClick={() => {
-                          setCategoryModalTarget('edit')
-                          setCategorySearchQuery('')
-                          setIsCategoryModalOpen(true)
-                        }}
+                        onClick={() => openCategoryModal('edit')}
                         className="w-full bg-[#f7f6f2] hover:bg-neutral-100 border-2 border-black rounded-full py-2.5 px-4 text-xs font-black flex items-center justify-between shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
                       >
                         <div className="flex items-center gap-2 min-w-0">
@@ -967,11 +972,7 @@ export default function MyStoresSection({
                     <label className="text-xs uppercase font-extrabold tracking-wider block">Danh Mục Ẩm Thực *</label>
                     <button
                       type="button"
-                      onClick={() => {
-                        setCategoryModalTarget('add')
-                        setCategorySearchQuery('')
-                        setIsCategoryModalOpen(true)
-                      }}
+                      onClick={() => openCategoryModal('add')}
                       className="w-full bg-[#f7f6f2] hover:bg-neutral-100 border-2 border-black rounded-full py-2.5 px-4 text-xs font-black flex items-center justify-between shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
                     >
                       <div className="flex items-center gap-2 min-w-0">

@@ -4,6 +4,7 @@ import com.cangiuoc.cgfoodtour.dto.request.ApiResponse;
 import com.cangiuoc.cgfoodtour.dto.request.CategoryRequest;
 import com.cangiuoc.cgfoodtour.dto.response.CategoryResponse;
 import com.cangiuoc.cgfoodtour.service.CategoryService;
+import com.cangiuoc.cgfoodtour.service.SseNotificationService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -18,11 +19,14 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CategoryController {
     CategoryService categoryService;
+    SseNotificationService sseNotificationService;
 
     @PostMapping
     public ApiResponse<CategoryResponse> createCategory(@RequestBody @Valid CategoryRequest request) {
+        CategoryResponse response = categoryService.createCategory(request);
+        sseNotificationService.broadcast("STORES_UPDATED");
         return ApiResponse.<CategoryResponse>builder()
-                .result(categoryService.createCategory(request))
+                .result(response)
                 .message("Category created successfully")
                 .build();
     }
@@ -45,8 +49,10 @@ public class CategoryController {
 
     @PutMapping("/{id}")
     public ApiResponse<CategoryResponse> updateCategory(@PathVariable Integer id, @RequestBody @Valid CategoryRequest request) {
+        CategoryResponse response = categoryService.updateCategory(id, request);
+        sseNotificationService.broadcast("STORES_UPDATED");
         return ApiResponse.<CategoryResponse>builder()
-                .result(categoryService.updateCategory(id, request))
+                .result(response)
                 .message("Category updated successfully")
                 .build();
     }
@@ -54,8 +60,10 @@ public class CategoryController {
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deleteCategory(@PathVariable Integer id) {
         categoryService.deleteCategory(id);
+        sseNotificationService.broadcast("STORES_UPDATED");
         return ApiResponse.<Void>builder()
                 .message("Category deleted successfully")
                 .build();
     }
 }
+
