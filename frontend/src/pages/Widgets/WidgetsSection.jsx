@@ -1,6 +1,6 @@
 import React from 'react'
 import { Trophy } from 'lucide-react'
-import CS2StoreCardCTA from './CS2StoreCardCTA'
+import CS2StoreCardCTA from '@/components/common/CS2StoreCardCTA'
 
 export default function WidgetsSection({
   handleRandomPick,

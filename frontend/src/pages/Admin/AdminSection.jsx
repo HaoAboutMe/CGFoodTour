@@ -30,11 +30,11 @@ import {
   Trophy,
   ZoomIn
 } from 'lucide-react'
-import StoreActionModal from './StoreActionModal'
-import CustomSelect from './CustomSelect'
-import CategoryIcon from './CategoryIcon'
-import CategoryIconPicker from './CategoryIconPicker'
-import ImageViewerModal from './ImageViewerModal'
+import StoreActionModal from '@/components/modals/StoreActionModal'
+import CustomSelect from '@/components/common/CustomSelect'
+import CategoryIcon from '@/components/common/CategoryIcon'
+import CategoryIconPicker from '@/components/common/CategoryIconPicker'
+import ImageViewerModal from '@/components/modals/ImageViewerModal'
 
 export default function AdminSection({
   isUserAdmin,

@@ -18,8 +18,8 @@ import {
   CheckCircle2,
   XCircle
 } from 'lucide-react'
-import CategoryIcon from './CategoryIcon'
-import StoreCard from './StoreCard'
+import CategoryIcon from '@/components/common/CategoryIcon'
+import StoreCard from '@/components/common/StoreCard'
 
 // Rarity level generator helper
 const getStoreRarity = (store) => {

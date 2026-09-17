@@ -1,6 +1,6 @@
 import React from 'react'
 import { Trophy, MapPin, Clock } from 'lucide-react'
-import { checkStoreOpenStatus } from '../utils/timeUtils'
+import { checkStoreOpenStatus } from '@/utils/timeUtils'
 
 function StoreCard({ store, setActiveStore, viewMode = 'grid' }) {
   if (!store) return null

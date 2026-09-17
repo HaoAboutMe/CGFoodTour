@@ -14,9 +14,9 @@ import {
   X,
   SlidersHorizontal
 } from 'lucide-react'
-import StoreCard from './StoreCard'
-import CategoryIcon from './CategoryIcon'
-import { checkStoreOpenStatus } from '../utils/timeUtils'
+import StoreCard from '@/components/common/StoreCard'
+import CategoryIcon from '@/components/common/CategoryIcon'
+import { checkStoreOpenStatus } from '@/utils/timeUtils'
 
 // Haversine formula to compute distance in km
 function getDistanceKm(lat1, lon1, lat2, lon2) {

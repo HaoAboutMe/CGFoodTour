@@ -8,19 +8,19 @@ import {
 } from 'lucide-react'
 import './App.css'
 
-import Header from './components/Header'
-import BottomNav from './components/BottomNav'
-import AuthModal from './components/AuthModal'
-import StoreDetailDrawer from './components/StoreDetailDrawer'
-import ProfileSection from './components/ProfileSection'
-import ExploreSection from './components/ExploreSection'
-import AboutSection from './components/AboutSection'
+import Header from '@/layouts/Header'
+import BottomNav from '@/layouts/BottomNav'
+import AuthModal from '@/components/modals/AuthModal'
+import StoreDetailDrawer from '@/components/drawers/StoreDetailDrawer'
+import ProfileSection from '@/pages/Profile/ProfileSection'
+import ExploreSection from '@/pages/Explore/ExploreSection'
+import AboutSection from '@/pages/About/AboutSection'
 
 // Code splitting & Dynamic imports for heavy sections per Vercel Best Practices (bundle-dynamic-imports)
-const AdminSection = lazy(() => import('./components/AdminSection'))
-const MyStoresSection = lazy(() => import('./components/MyStoresSection'))
-const CS2CaseOpener = lazy(() => import('./components/CS2CaseOpener'))
-const DevConsole = lazy(() => import('./components/DevConsole'))
+const AdminSection = lazy(() => import('@/pages/Admin/AdminSection'))
+const MyStoresSection = lazy(() => import('@/pages/MyStores/MyStoresSection'))
+const CS2CaseOpener = lazy(() => import('@/pages/CS2CaseOpener/CS2CaseOpener'))
+const DevConsole = lazy(() => import('@/components/common/DevConsole'))
 
 const API_BASE = 'http://localhost:8080/api'
 
