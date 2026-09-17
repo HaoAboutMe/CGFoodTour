@@ -1064,7 +1064,7 @@ export default function App() {
 
   // Submit Store Review
   async function handleCreateStore(e) {
-    e.preventDefault()
+    if (e && e.preventDefault) e.preventDefault()
     setLoading(true)
     const res = await makeRequest('POST', '/v1/stores', {
       name: storeName,
@@ -1081,10 +1081,10 @@ export default function App() {
       priceMax: parseFloat(storePriceMax) || 0,
       bannerImageUrl: storeBannerUrl
     })
-    setLoading(false)
 
-    if (res.success) {
-      showToast(`Store "${storeName}" submitted for Admin verification!`, 'success')
+    if (res && res.success && res.data && res.data.result) {
+      const createdStore = res.data.result
+      showToast(`Quán "${storeName}" đã được đăng ký thành công! Hãy thêm món ăn cho quán.`, 'success')
       setStoreName('')
       setStoreCategoryId('')
       setStoreDesc('')
@@ -1098,9 +1098,18 @@ export default function App() {
       setStorePriceMin(0)
       setStorePriceMax(0)
       setStoreBannerUrl('')
-      loadGlobalData()
+      
+      if (createdStore.id) {
+        setFoodStoreId(createdStore.id.toString())
+      }
+
+      await loadGlobalData()
+      setLoading(false)
+      return createdStore
     } else {
-      showToast(res.error?.message || 'Failed to submit store.', 'error')
+      setLoading(false)
+      showToast(res?.error?.message || 'Không thể đăng ký quán ăn.', 'error')
+      return null
     }
   }
 
@@ -1131,80 +1140,54 @@ export default function App() {
     setLoading(false)
 
     if (res.success) {
-      showToast('Store details saved successfully!', 'success')
+      showToast(`Quán "${editingStore.name}" đã được cập nhật!`, 'success')
       setEditingStore(null)
-      loadGlobalData()
+      await loadGlobalData()
     } else {
-      showToast(res.error?.message || 'Failed to update store.', 'error')
+      showToast(res.error?.message || 'Không thể cập nhật quán ăn.', 'error')
     }
   }
 
-  // Parse Google Maps URL via backend to handle shortened links (maps.app.goo.gl)
-  const handleParseGmapsUrl = async (url) => {
-    if (!url) return null
-    try {
-      const res = await makeRequest('GET', `/v1/stores/parse-gmaps?url=${encodeURIComponent(url)}`)
-      if (res && res.success && res.data && res.data.result && res.data.result.latitude && res.data.result.longitude) {
-        return res.data.result
-      }
-    } catch (err) {
-      console.error('Failed to parse Google Maps URL from backend:', err)
+  // Parse Google Maps URL for Store Lat/Lng
+  async function handleParseGmapsUrl(url) {
+    if (!url || !url.trim()) return null
+    const res = await makeRequest('GET', `/v1/stores/parse-gmaps?url=${encodeURIComponent(url)}`)
+    if (res.success && res.data.result) {
+      return res.data.result
     }
     return null
   }
 
-  // Delete Store
-  async function handleDeleteStore(storeId) {
-    return handleHardDeleteStore(storeId, '')
-  }
-
-  // Hide Store (Soft Delete)
-  async function handleHideStore(storeId, reason = '') {
-    setLoading(true)
+  // Hide Store
+  async function handleHideStore(storeId, reason) {
     const res = await makeRequest('POST', `/v1/stores/${storeId}/hide`, { reason })
-    setLoading(false)
-
     if (res.success) {
-      showToast('Đã ẩn quán ăn thành công.', 'success')
-      loadGlobalData()
-      if (activeTab === 'admin') loadAdminPendingStores()
-      return res.data || true
+      showToast('Đã tạm ẩn quán ăn!', 'success')
+      await loadGlobalData()
     } else {
       showToast(res.error?.message || 'Không thể ẩn quán ăn.', 'error')
-      return false
     }
   }
 
-  // Recover Store (Restore from Hidden to Approved)
-  async function handleRecoverStore(storeId, reason = '') {
-    setLoading(true)
+  // Recover Store (Admin)
+  async function handleRecoverStore(storeId, reason) {
     const res = await makeRequest('POST', `/v1/stores/${storeId}/recover`, { reason })
-    setLoading(false)
-
     if (res.success) {
-      showToast('Đã khôi phục quán ăn hoạt động công khai thành công.', 'success')
-      loadGlobalData()
-      if (activeTab === 'admin') loadAdminPendingStores()
-      return res.data || true
+      showToast('Đã khôi phục quán ăn!', 'success')
+      await loadGlobalData()
     } else {
       showToast(res.error?.message || 'Không thể khôi phục quán ăn.', 'error')
-      return false
     }
   }
 
-  // Request Store Recovery (Owner)
-  async function handleRequestStoreRecovery(storeId, reason = '') {
-    setLoading(true)
+  // Request Recovery (Owner)
+  async function handleRequestStoreRecovery(storeId, reason) {
     const res = await makeRequest('POST', `/v1/stores/${storeId}/request-recovery`, { reason })
-    setLoading(false)
-
     if (res.success) {
-      showToast('Đã gửi yêu cầu khôi phục quán ăn cho Admin xem xét.', 'success')
-      loadGlobalData()
-      return res.data || true
+      showToast('Đã gửi yêu cầu khôi phục quán ăn!', 'success')
+      await loadGlobalData()
     } else {
       showToast(res.error?.message || 'Không thể gửi yêu cầu khôi phục.', 'error')
-      return false
     }
   }
 
@@ -1215,9 +1198,9 @@ export default function App() {
     setLoading(false)
 
     if (res.success) {
-      showToast('Đã từ chối yêu cầu khôi phục quán ăn.', 'success')
-      loadGlobalData()
-      if (activeTab === 'admin') loadAdminPendingStores()
+      showToast('Đã từ chối yêu cầu khôi phục quán ăn.', 'info')
+      await loadGlobalData()
+      if (activeTab === 'admin' && typeof loadAdminPendingStores === 'function') loadAdminPendingStores()
       return res.data || true
     } else {
       showToast(res.error?.message || 'Không thể từ chối yêu cầu khôi phục.', 'error')
@@ -1225,7 +1208,20 @@ export default function App() {
     }
   }
 
-  // Hard Delete Store
+  // Delete Store
+  async function handleDeleteStore(storeId, reason = '') {
+    setLoading(true)
+    const res = await makeRequest('DELETE', `/v1/stores/${storeId}`, { reason })
+    setLoading(false)
+    if (res.success) {
+      showToast('Quán ăn đã bị từ chối/xóa.', 'info')
+      await loadGlobalData()
+    } else {
+      showToast(res.error?.message || 'Không thể xóa quán ăn.', 'error')
+    }
+  }
+
+  // Hard Delete Store (Admin / Owner)
   async function handleHardDeleteStore(storeId, reason = '') {
     setLoading(true)
     const res = await makeRequest('DELETE', `/v1/stores/${storeId}`, { reason })
@@ -1234,8 +1230,8 @@ export default function App() {
     if (res.success) {
       showToast('Đã xóa vĩnh viễn quán ăn khỏi hệ thống.', 'success')
       setEditingStore(null)
-      loadGlobalData()
-      if (activeTab === 'admin') loadAdminPendingStores()
+      await loadGlobalData()
+      if (activeTab === 'admin' && typeof loadAdminPendingStores === 'function') loadAdminPendingStores()
       return true
     } else {
       showToast(res.error?.message || 'Không thể xóa vĩnh viễn quán ăn.', 'error')
@@ -1243,11 +1239,11 @@ export default function App() {
     }
   }
 
-  // Create Food Item (Admin)
+  // Create Food Item
   async function handleCreateFoodItem(e) {
     e.preventDefault()
     if (!foodStoreId) {
-      showToast('Select a store for this food item.', 'error')
+      showToast('Vui lòng chọn quán ăn để thêm món.', 'error')
       return
     }
     setLoading(true)
@@ -1257,10 +1253,9 @@ export default function App() {
       imageUrl: foodImage,
       description: foodDesc
     })
-    setLoading(false)
 
     if (res.success) {
-      showToast(`Food "${foodName}" added to selected store!`, 'success')
+      showToast(`Món "${foodName}" đã được thêm vào thực đơn thành công!`, 'success')
       setFoodName('')
       setFoodPrice(0)
       setFoodImage('')

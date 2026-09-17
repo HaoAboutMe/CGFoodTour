@@ -336,8 +336,15 @@ export default function MyStoresSection({
   // Handle successful store creation trigger locally
   const onLocalCreateStore = async (e) => {
     e.preventDefault()
-    await handleCreateStore(e)
-    setIsAddingNew(false)
+    const createdStore = await handleCreateStore(e)
+    if (createdStore) {
+      setIsAddingNew(false)
+      setCreateStep(1)
+      if (createdStore.id && setFoodStoreId) {
+        setFoodStoreId(createdStore.id.toString())
+      }
+      setManagingDishesForStore(createdStore)
+    }
   }
 
   const onLocalSubmitFoodItem = async (e) => {
@@ -387,7 +394,7 @@ export default function MyStoresSection({
 
   // Find latest store information to reflect added/updated dishes immediately
   const currentSelectedStoreInfo = managingDishesForStore
-    ? myStores.find((st) => st.id.toString() === managingDishesForStore.id.toString())
+    ? (myStores.find((st) => st.id.toString() === managingDishesForStore.id.toString()) || managingDishesForStore)
     : null
 
   return (
@@ -1607,13 +1614,13 @@ export default function MyStoresSection({
 
                     {/* Touch Action Buttons */}
                     <div className="pt-2 border-t-2 border-black space-y-2">
-                      {st.status === 'APPROVED' && (
+                      {st.status !== 'REJECTED' && (
                         <button
                           onClick={() => {
                             setManagingDishesForStore(st)
                             setFoodStoreId(st.id)
                           }}
-                          className="w-full brutalist-btn-red py-2 text-xs flex items-center justify-center gap-1.5 font-black uppercase"
+                          className="w-full brutalist-btn-red py-2 text-xs flex items-center justify-center gap-1.5 font-black uppercase cursor-pointer"
                         >
                           <Utensils className="w-4 h-4" /> Quản Lý Món Ăn (Thực Đơn)
                         </button>
@@ -1838,13 +1845,13 @@ export default function MyStoresSection({
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      {st.status === 'APPROVED' && (
+                      {st.status !== 'REJECTED' && (
                         <button
                           onClick={() => {
                             setManagingDishesForStore(st)
                             setFoodStoreId(st.id)
                           }}
-                          className="w-full brutalist-btn-red py-1.5 text-xs flex items-center justify-center gap-1.5 font-black uppercase"
+                          className="w-full brutalist-btn-red py-1.5 text-xs flex items-center justify-center gap-1.5 font-black uppercase cursor-pointer"
                         >
                           <Utensils className="w-3.5 h-3.5" /> Quản Lý Món Ăn
                         </button>

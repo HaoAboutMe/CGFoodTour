@@ -16,11 +16,11 @@ export default function MyDishesSection({
   handleCreateFoodItem,
   loading
 }) {
-  // Only allow adding dishes to approved stores
-  const approvedStores = myStores.filter((st) => st.status === 'APPROVED')
+  // Allow managing dishes for any of user's stores (APPROVED, PENDING, HIDDEN)
+  const availableStores = myStores || []
   
   // Find currently selected store to show its menu
-  const selectedStore = approvedStores.find((st) => st.id.toString() === foodStoreId.toString())
+  const selectedStore = availableStores.find((st) => st.id.toString() === foodStoreId.toString())
 
   if (loading) {
     return (
@@ -50,17 +50,17 @@ export default function MyDishesSection({
             Quản Lý Món Ăn
           </h2>
           <p className="text-sm font-semibold max-w-xl text-white/90">
-            Create, expand, and update menus for your verified culinary spots. Select a spot below to view its live menu and add new offerings.
+            Tạo và cập nhật thực đơn cho các quán ăn của bạn. Bạn có thể thêm món ngay cả khi quán đang chờ Admin duyệt.
           </p>
         </div>
       </div>
 
-      {approvedStores.length === 0 ? (
+      {availableStores.length === 0 ? (
         <div className="brutalist-card bg-white p-12 text-center max-w-2xl mx-auto space-y-4">
           <Info className="w-12 h-12 text-[#ff3e3e] mx-auto" />
-          <h3 className="text-xl font-black uppercase">Chưa Có Quán Ăn Được Duyệt</h3>
+          <h3 className="text-xl font-black uppercase">Chưa Có Quán Ăn Nào</h3>
           <p className="text-sm font-semibold text-neutral-600">
-            Món ăn chỉ có thể được tạo sau khi quán ăn của bạn đã được Admin phê duyệt (Status: APPROVED). Hãy kiểm tra trạng thái quán ăn của bạn ở phần submissions hoặc tab Quán ăn của tôi!
+            Bạn chưa đăng ký quán ăn nào. Hãy chuyển sang tab "Quán ăn của tôi" và bấm nút Thêm Quán Mới để bắt đầu!
           </p>
         </div>
       ) : (
@@ -81,9 +81,9 @@ export default function MyDishesSection({
                   className="brutalist-input"
                 >
                   <option value="">-- Chọn quán ăn của bạn --</option>
-                  {approvedStores.map((st) => (
+                  {availableStores.map((st) => (
                     <option key={st.id} value={st.id}>
-                      {st.name}
+                      {st.name} {st.status === 'APPROVED' ? '(Đã duyệt)' : st.status === 'PENDING' ? '(Chờ duyệt)' : '(Tạm ẩn)'}
                     </option>
                   ))}
                 </select>
