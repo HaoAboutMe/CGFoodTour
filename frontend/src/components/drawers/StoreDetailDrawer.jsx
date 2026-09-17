@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Trophy, MapPin, Phone, DollarSign, ThumbsUp, Meh, ThumbsDown, ZoomIn } from 'lucide-react'
-import { checkStoreOpenStatus } from '../utils/timeUtils'
-import ImageViewerModal from './ImageViewerModal'
+import { checkStoreOpenStatus } from '@/utils/timeUtils'
+import ImageViewerModal from '@/components/modals/ImageViewerModal'
 
 export default function StoreDetailDrawer({
   activeStore,

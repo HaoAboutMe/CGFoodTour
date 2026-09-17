@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Store, Plus, Edit2, Trash2, X, ChevronLeft, MapPin, PlusCircle, Utensils, EyeOff, RotateCcw, HelpCircle, Link as LinkIcon, CheckCircle2 } from 'lucide-react'
 import MySubmissionsSection from './MySubmissionsSection'
-import MapPicker from './MapPicker'
-import StoreActionModal from './StoreActionModal'
-import CategoryIcon from './CategoryIcon'
+import MapPicker from '@/components/common/MapPicker'
+import StoreActionModal from '@/components/modals/StoreActionModal'
+import CategoryIcon from '@/components/common/CategoryIcon'
 
 // Hoisted RegExp patterns per Vercel Best Practices (js-hoist-regexp)
 const RE_3D_4D = /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/

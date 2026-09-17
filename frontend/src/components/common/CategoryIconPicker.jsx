@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Search, Check } from 'lucide-react'
-import { AVAILABLE_CATEGORY_ICONS } from './CategoryIcon'
+import { AVAILABLE_CATEGORY_ICONS } from '@/components/common/CategoryIcon'
 
 export default function CategoryIconPicker({ value, onChange, className = '' }) {
   const [searchQuery, setSearchQuery] = useState('')
