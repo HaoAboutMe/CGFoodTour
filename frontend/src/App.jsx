@@ -1405,7 +1405,6 @@ export default function App() {
 
   // Admin View - Approve store submission
   async function handleAdminApprove(storeId) {
-    if (!window.confirm('Duyệt quán ăn này và công khai lên hệ thống?')) return
     setLoading(true)
     const res = await makeRequest('POST', `/v1/stores/${storeId}/approve`, {})
     setLoading(false)

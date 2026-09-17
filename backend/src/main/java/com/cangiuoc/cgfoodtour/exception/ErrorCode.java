@@ -39,7 +39,11 @@ public enum ErrorCode {
     INVALID_STORE_STATUS_FOR_RECOVER(1037, "Only hidden stores can be recovered", HttpStatus.BAD_REQUEST),
     STORE_HIDDEN_BY_ADMIN_CANNOT_RECOVER(1038, "Quán ăn đã bị Quản trị viên ẩn, chỉ Quản trị viên mới có thể khôi phục", HttpStatus.FORBIDDEN),
     RECOVERY_REQUEST_REASON_REQUIRED(1039, "Reason is required when requesting store recovery", HttpStatus.BAD_REQUEST),
-    NO_PENDING_RECOVERY_REQUEST(1040, "No pending recovery request for this store", HttpStatus.BAD_REQUEST);
+    NO_PENDING_RECOVERY_REQUEST(1040, "No pending recovery request for this store", HttpStatus.BAD_REQUEST),
+    USERNAME_EXISTED(1041, "Tên đăng nhập (username) đã được sử dụng", HttpStatus.BAD_REQUEST),
+    CATEGORY_EXISTED(1042, "Tên danh mục đã tồn tại trong hệ thống", HttpStatus.BAD_REQUEST),
+    CATEGORY_NAME_INVALID(1043, "Tên danh mục phải từ {min} đến {max} ký tự", HttpStatus.BAD_REQUEST),
+    CATEGORY_NAME_BLANK(1044, "Tên danh mục không được để trống", HttpStatus.BAD_REQUEST);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

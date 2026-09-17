@@ -28,7 +28,12 @@ public class CategoryService {
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public CategoryResponse createCategory(CategoryRequest request) {
+        String trimmedName = request.getName() != null ? request.getName().trim() : "";
+        if (categoryRepository.existsByNameIgnoreCase(trimmedName)) {
+            throw new AppException(ErrorCode.CATEGORY_EXISTED);
+        }
         Category category = categoryMapper.toCategory(request);
+        category.setName(trimmedName);
         long count = categoryRepository.count();
         category.setDisplayOrder((int) count + 1);
         return categoryMapper.toCategoryResponse(categoryRepository.save(category));
@@ -49,7 +54,14 @@ public class CategoryService {
     public CategoryResponse updateCategory(Integer id, CategoryRequest request) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        String trimmedName = request.getName() != null ? request.getName().trim() : "";
+        if (categoryRepository.existsByNameIgnoreCaseAndIdNot(trimmedName, id)) {
+            throw new AppException(ErrorCode.CATEGORY_EXISTED);
+        }
+
         categoryMapper.updateCategory(category, request);
+        category.setName(trimmedName);
         return categoryMapper.toCategoryResponse(categoryRepository.save(category));
     }
 

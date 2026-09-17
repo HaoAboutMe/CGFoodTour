@@ -23,6 +23,9 @@ import {
   Search,
   ExternalLink,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Eye,
   Clock,
   Phone,
   DollarSign,
@@ -110,6 +113,14 @@ export default function AdminSection({
   const STORES_PER_PAGE = 12
   const USERS_PER_PAGE = 10
 
+  const [expandedUserIds, setExpandedUserIds] = useState([])
+
+  const toggleExpandUser = (userId) => {
+    setExpandedUserIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    )
+  }
+
   const [adminActionModalStore, setAdminActionModalStore] = useState(null)
   const [adminActionModalType, setAdminActionModalType] = useState(null)
 
@@ -117,7 +128,9 @@ export default function AdminSection({
     if (!adminActionModalStore || !adminActionModalType) return
     const storeId = adminActionModalStore.id
     let resData = false
-    if (adminActionModalType === 'HIDE') {
+    if (adminActionModalType === 'APPROVE') {
+      if (handleAdminApprove) resData = await handleAdminApprove(storeId)
+    } else if (adminActionModalType === 'HIDE') {
       if (handleHideStore) resData = await handleHideStore(storeId, reason)
     } else if (adminActionModalType === 'RECOVER') {
       if (handleRecoverStore) resData = await handleRecoverStore(storeId, reason)
@@ -525,16 +538,20 @@ export default function AdminSection({
                       {/* Pending stores */}
                       {adminPendingStores.map((st) => (
                         <tr key={st.id} className="hover:bg-neutral-50 transition-colors">
-                          <td className="py-3.5">
+                          <td
+                            onClick={() => setViewingStore(st)}
+                            className="py-3.5 cursor-pointer group"
+                            title="Bấm để xem chi tiết quán ăn"
+                          >
                             <div className="flex items-center gap-3">
                               <img
                                 src={st.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'}
                                 alt={st.name}
-                                className="w-10 h-10 border-2 border-black object-cover rounded shrink-0"
+                                className="w-10 h-10 border-2 border-black object-cover rounded shrink-0 group-hover:brightness-95 transition-all"
                               />
                               <div>
-                                <p className="font-extrabold text-black text-sm">{st.name}</p>
-                                <p className="text-[10px] text-neutral-500 font-semibold">{st.addressLine}</p>
+                                <p className="font-extrabold text-black text-sm group-hover:text-[#ff3e3e] transition-colors">{st.name}</p>
+                                <p className="text-[10px] text-neutral-500 font-semibold">{st.addressLine || 'Chưa có địa chỉ'}</p>
                               </div>
                             </div>
                           </td>
@@ -549,18 +566,31 @@ export default function AdminSection({
                           <td className="py-3.5 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button
-                                onClick={() => handleAdminApprove(st.id)}
-                                className="py-1 px-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] uppercase border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                                type="button"
+                                onClick={() => setViewingStore(st)}
+                                className="py-1 px-2.5 bg-white hover:bg-neutral-100 text-black font-black text-[11px] uppercase border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+                                title="Xem Chi Tiết Quán Ăn"
+                              >
+                                Chi Tiết
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAdminActionModalStore(st)
+                                  setAdminActionModalType('APPROVE')
+                                }}
+                                className="py-1 px-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] uppercase border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                               >
                                 Duyệt
                               </button>
                               <button
+                                type="button"
                                 onClick={() => {
                                   setViewingStore(st)
                                   setRejectionReason('')
                                   setTimeout(() => setRejectingStore(st), 250)
                                 }}
-                                className="py-1 px-3 bg-[#ff3e3e] hover:bg-[#e03535] text-white font-black text-[11px] uppercase border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                                className="py-1 px-3 bg-[#ff3e3e] hover:bg-[#e03535] text-white font-black text-[11px] uppercase border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                               >
                                 Từ Chối
                               </button>
@@ -572,15 +602,19 @@ export default function AdminSection({
                       {/* Recovery requested stores */}
                       {stores.filter(s => s.recoveryRequested).map((st) => (
                         <tr key={st.id} className="hover:bg-neutral-50 transition-colors">
-                          <td className="py-3.5">
+                          <td
+                            onClick={() => setViewingStore(st)}
+                            className="py-3.5 cursor-pointer group"
+                            title="Bấm để xem chi tiết quán ăn"
+                          >
                             <div className="flex items-center gap-3">
                               <img
                                 src={st.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'}
                                 alt={st.name}
-                                className="w-10 h-10 border-2 border-black object-cover rounded shrink-0"
+                                className="w-10 h-10 border-2 border-black object-cover rounded shrink-0 group-hover:brightness-95 transition-all"
                               />
                               <div>
-                                <p className="font-extrabold text-black text-sm">{st.name}</p>
+                                <p className="font-extrabold text-black text-sm group-hover:text-[#ff3e3e] transition-colors">{st.name}</p>
                                 <p className="text-[10px] text-indigo-700 italic">Lý do xin mở: “{st.recoveryRequestReason}”</p>
                               </div>
                             </div>
@@ -596,20 +630,30 @@ export default function AdminSection({
                           <td className="py-3.5 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button
+                                type="button"
+                                onClick={() => setViewingStore(st)}
+                                className="py-1 px-2.5 bg-white hover:bg-neutral-100 text-black font-black text-[11px] uppercase border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+                                title="Xem Chi Tiết Quán Ăn"
+                              >
+                                Chi Tiết
+                              </button>
+                              <button
+                                type="button"
                                 onClick={() => {
                                   setAdminActionModalStore(st)
                                   setAdminActionModalType('RECOVER')
                                 }}
-                                className="py-1 px-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] uppercase border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                                className="py-1 px-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] uppercase border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                               >
                                 Duyệt KP
                               </button>
                               <button
+                                type="button"
                                 onClick={() => {
                                   setAdminActionModalStore(st)
                                   setAdminActionModalType('REJECT_RECOVERY_REQUEST')
                                 }}
-                                className="py-1 px-3 bg-[#ff3e3e] hover:bg-[#e03535] text-white font-black text-[11px] uppercase border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                                className="py-1 px-3 bg-[#ff3e3e] hover:bg-[#e03535] text-white font-black text-[11px] uppercase border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                               >
                                 Từ Chối KP
                               </button>
@@ -780,7 +824,10 @@ export default function AdminSection({
                       {st.status === 'PENDING' && (
                         <div className="flex items-center gap-2 flex-1 justify-end">
                           <button
-                            onClick={() => handleAdminApprove(st.id)}
+                            onClick={() => {
+                              setAdminActionModalStore(st)
+                              setAdminActionModalType('APPROVE')
+                            }}
                             className="flex-1 py-1.5 px-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
                           >
                             Duyệt
@@ -960,65 +1007,206 @@ export default function AdminSection({
                         </tr>
                       </thead>
                       <tbody className="divide-y-2 divide-neutral-200">
-                        {currentPageUsers.map((u) => (
-                      <tr
-                        key={u.id}
-                        onClick={() =>
-                          setPreviewImage({
-                            src: u.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg',
-                            alt: u.username,
-                            caption: `Avatar Người Dùng: @${u.username} (${u.email || 'N/A'})`
+                        {currentPageUsers.map((u) => {
+                          const isExpanded = expandedUserIds.includes(u.id)
+                          const userStores = stores.filter((st) => {
+                            return (
+                              (st.ownerId && u.id && st.ownerId.toString() === u.id.toString()) ||
+                              (st.ownerEmail && u.email && st.ownerEmail.toLowerCase() === u.email.toLowerCase())
+                            )
                           })
-                        }
-                        className="hover:bg-red-50/40 transition-colors cursor-pointer group"
-                        title="Bấm vào thẻ tài khoản để xem ảnh đại diện"
-                      >
-                        <td className="py-3">
-                          <img
-                            src={u.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg'}
-                            alt="avatar"
-                            className="w-9 h-9 border-2 border-black object-cover rounded-full group-hover:brightness-90 transition-all"
-                          />
-                        </td>
-                        <td className="py-3">
-                          <p className="font-extrabold text-black text-sm group-hover:text-[#ff3e3e] transition-colors">@{u.username}</p>
-                          <p className="text-[10px] text-neutral-500 font-semibold">{u.email}</p>
-                        </td>
-                        <td className="py-3 font-bold text-neutral-700">
-                          {[u.firstname, u.lastname].filter(Boolean).join(' ') || 'Chưa nhập'}
-                        </td>
-                        <td className="py-3">
-                          <div className="flex flex-wrap gap-1">
-                            {(u.roles || []).map((r, idx) => (
-                              <span
-                                key={idx}
-                                className="brutalist-badge bg-[#f7f6f2] text-black border-black shadow-none py-0.5 px-2 text-[9px]"
+
+                          return (
+                            <React.Fragment key={u.id}>
+                              <tr
+                                onClick={() => toggleExpandUser(u.id)}
+                                className="hover:bg-red-50/40 transition-colors cursor-pointer group select-none"
+                                title="Bấm để mở rộng cây thư mục các quán ăn của người dùng"
                               >
-                                {typeof r === 'string' ? r : r.name}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => handleOpenAdminEditUser(u)}
-                              className="px-2.5 py-1.5 bg-white hover:bg-neutral-100 text-black font-black text-[11px] uppercase border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] flex items-center gap-1.5 cursor-pointer transition-all"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                              <span>Sửa Roles</span>
-                            </button>
-                            <button
-                              onClick={() => handleAdminDeleteUser(u.id)}
-                              className="px-2.5 py-1.5 bg-[#fff5f5] hover:bg-[#ffe0e0] text-[#ff3e3e] font-black text-[11px] uppercase border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] flex items-center gap-1.5 cursor-pointer transition-all"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Xóa User</span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                                <td className="py-3">
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        toggleExpandUser(u.id)
+                                      }}
+                                      className="p-1 hover:bg-neutral-200 rounded transition-colors text-black"
+                                    >
+                                      {isExpanded ? (
+                                        <ChevronDown className="w-4 h-4 text-[#ff3e3e]" />
+                                      ) : (
+                                        <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-black" />
+                                      )}
+                                    </button>
+                                    <img
+                                      src={u.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg'}
+                                      alt="avatar"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setPreviewImage({
+                                          src: u.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg',
+                                          alt: u.username,
+                                          caption: `Avatar Người Dùng: @${u.username} (${u.email || 'N/A'})`
+                                        })
+                                      }}
+                                      className="w-9 h-9 border-2 border-black object-cover rounded-full group-hover:brightness-90 transition-all cursor-pointer"
+                                      title="Bấm để xem ảnh avatar lớn"
+                                    />
+                                  </div>
+                                </td>
+                                <td className="py-3">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-extrabold text-black text-sm group-hover:text-[#ff3e3e] transition-colors">@{u.username}</p>
+                                    {userStores.length > 0 && (
+                                      <span className="brutalist-badge bg-[#fff9db] text-black border-black text-[9px] font-black px-1.5 py-0.2">
+                                        {userStores.length} Quán
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[10px] text-neutral-500 font-semibold">{u.email}</p>
+                                </td>
+                                <td className="py-3 font-bold text-neutral-700">
+                                  {[u.firstname, u.lastname].filter(Boolean).join(' ') || 'Chưa nhập'}
+                                </td>
+                                <td className="py-3">
+                                  <div className="flex flex-wrap gap-1">
+                                    {(u.roles || []).map((r, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="brutalist-badge bg-[#f7f6f2] text-black border-black shadow-none py-0.5 px-2 text-[9px]"
+                                      >
+                                        {typeof r === 'string' ? r : r.name}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </td>
+                                <td className="py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                                  <div className="flex items-center justify-end gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleExpandUser(u.id)}
+                                      className="w-36 py-1.5 bg-[#f7f6f2] hover:bg-neutral-200 text-black font-black text-[11px] uppercase border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-center gap-1.5 cursor-pointer transition-all shrink-0"
+                                    >
+                                      {isExpanded ? (
+                                        <>
+                                          <ChevronUp className="w-3.5 h-3.5 text-[#ff3e3e]" />
+                                          <span>Thu Gọn</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <ChevronDown className="w-3.5 h-3.5" />
+                                          <span>Xem Quán ({userStores.length})</span>
+                                        </>
+                                      )}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenAdminEditUser(u)}
+                                      className="px-2.5 py-1.5 bg-white hover:bg-neutral-100 text-black font-black text-[11px] uppercase border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] flex items-center gap-1.5 cursor-pointer transition-all"
+                                    >
+                                      <Edit2 className="w-3.5 h-3.5" />
+                                      <span>Sửa Roles</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAdminDeleteUser(u.id)}
+                                      className="px-2.5 py-1.5 bg-[#fff5f5] hover:bg-[#ffe0e0] text-[#ff3e3e] font-black text-[11px] uppercase border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] flex items-center gap-1.5 cursor-pointer transition-all"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      <span>Xóa User</span>
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+
+                              {/* Nested User Stores Tree Branch Accordion */}
+                              {isExpanded && (
+                                <tr>
+                                  <td colSpan={5} className="p-3 bg-[#f7f6f2] border-b-2 border-black">
+                                    <div className="bg-white p-4 border-2 border-black rounded-xl space-y-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] animate-fade-in-up">
+                                      <div className="flex items-center justify-between border-b-2 border-neutral-200 pb-2">
+                                        <div className="flex items-center gap-2">
+                                          <Folder className="w-4 h-4 text-[#ff3e3e]" />
+                                          <span className="font-black text-xs uppercase text-black">
+                                            Cây Thư Mục Quán Ăn Của @{u.username} ({userStores.length} quán)
+                                          </span>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleExpandUser(u.id)}
+                                          className="text-[10px] font-black text-neutral-500 hover:text-black cursor-pointer flex items-center gap-1"
+                                        >
+                                          <X className="w-3.5 h-3.5 text-neutral-500" />
+                                          <span>Đóng cây thư mục</span>
+                                        </button>
+                                      </div>
+
+                                      {userStores.length === 0 ? (
+                                        <div className="p-3 bg-[#f7f6f2] border border-black rounded-lg text-center text-xs font-bold text-neutral-500">
+                                          Tài khoản người dùng này chưa đăng ký quán ăn nào trên hệ thống.
+                                        </div>
+                                      ) : (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                          {userStores.map((st) => {
+                                            const renderStatusBadge = (status, isRecovery) => {
+                                              if (isRecovery) {
+                                                return <span className="brutalist-badge bg-[#fff9db] text-[#b45309] border-[#b45309] text-[9px] font-black">Xin Khôi Phục</span>
+                                              }
+                                              switch (status) {
+                                                case 'APPROVED':
+                                                  return <span className="brutalist-badge bg-[#e6fcf5] text-[#0ca678] border-[#0ca678] text-[9px] font-black">Đã Duyệt</span>
+                                                case 'PENDING':
+                                                  return <span className="brutalist-badge bg-[#eef2ff] text-[#4338ca] border-[#4338ca] text-[9px] font-black">Chờ Duyệt</span>
+                                                case 'REJECTED':
+                                                  return <span className="brutalist-badge bg-[#fff5f5] text-[#c92a2a] border-[#c92a2a] text-[9px] font-black">Từ Chối</span>
+                                                case 'HIDDEN':
+                                                  return <span className="brutalist-badge bg-neutral-200 text-neutral-700 border-neutral-400 text-[9px] font-black">Đã Ẩn</span>
+                                                default:
+                                                  return <span className="brutalist-badge bg-neutral-100 text-black text-[9px] font-black">{status}</span>
+                                              }
+                                            }
+
+                                            return (
+                                              <div
+                                                key={st.id}
+                                                onClick={() => setViewingStore(st)}
+                                                className="bg-[#f7f6f2] hover:bg-[#fff9db] border-2 border-black rounded-xl p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer group flex flex-col justify-between space-y-2.5"
+                                                title="Nhấp vào để xem chi tiết quán ăn"
+                                              >
+                                                <div className="flex items-start gap-2.5">
+                                                  <img
+                                                    src={st.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'}
+                                                    alt={st.name}
+                                                    className="w-12 h-12 border-2 border-black object-cover rounded-lg shrink-0 group-hover:brightness-95 transition-all"
+                                                  />
+                                                  <div className="min-w-0 flex-1 space-y-1">
+                                                    <p className="font-black text-black text-xs truncate group-hover:text-[#ff3e3e] transition-colors">{st.name}</p>
+                                                    {renderStatusBadge(st.status, st.recoveryRequested)}
+                                                  </div>
+                                                </div>
+
+                                                <div className="pt-2 border-t border-neutral-300 flex items-center justify-between text-[10px] font-semibold text-neutral-600">
+                                                  <div className="flex items-center gap-1 min-w-0 truncate">
+                                                    <MapPin className="w-3 h-3 text-[#ff3e3e] shrink-0" />
+                                                    <span className="truncate">{st.addressLine || 'Chưa cập nhật địa chỉ'}</span>
+                                                  </div>
+                                                  <span className="font-black text-[#ff3e3e] group-hover:underline flex items-center gap-0.5 shrink-0 ml-1">
+                                                    Chi tiết <ChevronRight className="w-3 h-3" />
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            )
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          )
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -1067,6 +1255,7 @@ export default function AdminSection({
                     <input
                       type="text"
                       required
+                      maxLength={50}
                       placeholder="Ví dụ: Bánh Mì"
                       value={catName}
                       onChange={(e) => setCatName(e.target.value)}
@@ -1387,6 +1576,7 @@ export default function AdminSection({
                   <input
                     type="text"
                     required
+                    maxLength={50}
                     value={editCatName}
                     onChange={(e) => setEditCatName(e.target.value)}
                     className="brutalist-input"
@@ -1664,7 +1854,10 @@ export default function AdminSection({
                 {viewingStore.status === 'PENDING' && (
                   <>
                     <button
-                      onClick={() => handleAdminApprove(viewingStore.id)}
+                      onClick={() => {
+                        setAdminActionModalStore(viewingStore)
+                        setAdminActionModalType('APPROVE')
+                      }}
                       className="flex-1 py-2 px-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                     >
                       Duyệt Quán

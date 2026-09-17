@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Integer> {
     List<Category> findAllByOrderByDisplayOrderAscNameAsc();
+    boolean existsByNameIgnoreCase(String name);
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Integer id);
 }

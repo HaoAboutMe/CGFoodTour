@@ -20,9 +20,13 @@ public class User
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
+
+    @Column(unique = true)
     String username;
     String firstname;
     String lastname;
+
+    @Column(unique = true)
     String email;
     String password;
     LocalDate dateOfBirth;

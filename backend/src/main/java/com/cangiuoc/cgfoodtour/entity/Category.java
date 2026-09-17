@@ -17,7 +17,7 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, unique = true, length = 50)
     String name;
 
     @Column(name = "icon_url")
