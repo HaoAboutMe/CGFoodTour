@@ -607,12 +607,12 @@ export default function App() {
       localStorage.setItem('jwtToken', accessToken)
       localStorage.setItem('refreshToken', refToken)
       
-      showToast('Welcome back to Cần Giuộc FoodTour!', 'success')
+      showToast('Chào mừng bạn quay trở lại Cần Giuộc FoodTour!', 'success')
       setShowAuthModal(false)
       setLoginEmail('')
       setLoginPassword('')
     } else {
-      showToast(res.error?.message || 'Login Failed. Please check your credentials.', 'error')
+      showToast(res.error?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.', 'error')
     }
   }
 
@@ -650,13 +650,12 @@ export default function App() {
     }
 
     setLoading(true)
-    const res = await makeRequest('POST', '/users', {
+    const res = await makeRequest('POST', '/auth/register', {
       username: cleanUsername,
       email: cleanEmail,
       firstname: regFirstname.trim(),
       lastname: regLastname.trim(),
-      password: regPassword,
-      dateOfBirth: regDob
+      password: regPassword
     })
     setLoading(false)
 
@@ -669,13 +668,12 @@ export default function App() {
       setRegLastname('')
       setRegPassword('')
       setRegConfirmPassword('')
-      setRegDob('')
     } else {
       showToast(res.error?.message || 'Đăng ký thất bại.', 'error')
     }
   }
 
-  // Token verify email
+  // Verify email
   async function handleVerifyEmail(e) {
     e.preventDefault()
     setLoading(true)
@@ -683,11 +681,11 @@ export default function App() {
     setLoading(false)
 
     if (res.success) {
-      showToast('Email verified successfully! You can now log in.', 'success')
+      showToast('Xác thực Email thành công! Bạn có thể đăng nhập ngay bây giờ.', 'success')
       setAuthMode('login')
       setVerifyTokenVal('')
     } else {
-      showToast(res.error?.message || 'Verification token invalid or expired.', 'error')
+      showToast(res.error?.message || 'Mã xác thực không hợp lệ hoặc đã hết hạn.', 'error')
     }
   }
 
@@ -699,10 +697,10 @@ export default function App() {
     setLoading(false)
 
     if (res.success) {
-      showToast('Verification email link sent!', 'success')
+      showToast('Đã gửi liên kết xác thực vào email của bạn!', 'success')
       setResendEmail('')
     } else {
-      showToast(res.error?.message || 'Resend request failed.', 'error')
+      showToast(res.error?.message || 'Không thể gửi lại email xác thực. Vui lòng thử lại sau.', 'error')
     }
   }
 
@@ -790,11 +788,11 @@ export default function App() {
       setRefreshTokenVal(refToken)
       localStorage.setItem('jwtToken', accessToken)
       localStorage.setItem('refreshToken', refToken)
-      showToast('Successfully logged in with Google!', 'success')
+      showToast('Đăng nhập bằng Google thành công!', 'success')
       setShowAuthModal(false)
       setSocialGoogleToken('')
     } else {
-      showToast(res.error?.message || 'Google Login Failed.', 'error')
+      showToast(res.error?.message || 'Đăng nhập Google thất bại.', 'error')
     }
   }
 
@@ -819,18 +817,18 @@ export default function App() {
       setRefreshTokenVal(refToken)
       localStorage.setItem('jwtToken', accessToken)
       localStorage.setItem('refreshToken', refToken)
-      showToast('Successfully logged in with Facebook!', 'success')
+      showToast('Đăng nhập bằng Facebook thành công!', 'success')
       setShowAuthModal(false)
       setSocialFacebookToken('')
     } else {
-      showToast(res.error?.message || 'Facebook Login Failed.', 'error')
+      showToast(res.error?.message || 'Đăng nhập Facebook thất bại.', 'error')
     }
   }
 
   // Popup Facebook SDK Login
   function handleFacebookSDKLogin() {
     if (typeof window.FB === 'undefined') {
-      showToast('Facebook SDK not loaded. Try manually pasting the token.', 'error')
+      showToast('Facebook SDK chưa sẵn sàng. Vui lòng thử dán token thủ công.', 'error')
       return
     }
     try {
@@ -853,7 +851,7 @@ export default function App() {
           facebookLoginSubmitRef.current(tokenVal)
         }
       } else {
-        showToast('Facebook Sign-in cancelled or unauthorized.', 'error')
+        showToast('Đăng nhập Facebook bị hủy hoặc không được cấp quyền.', 'error')
       }
     }, { scope: 'public_profile,email' })
   }
@@ -861,7 +859,7 @@ export default function App() {
   // Token refresh
   async function handleRefreshToken() {
     if (!refreshTokenVal) {
-      showToast('No refresh token stored. Please login.', 'error')
+      showToast('Không tìm thấy phiên đăng nhập. Vui lòng đăng nhập lại.', 'error')
       return
     }
     setLoading(true)
@@ -875,9 +873,9 @@ export default function App() {
       setRefreshTokenVal(refToken)
       localStorage.setItem('jwtToken', accessToken)
       localStorage.setItem('refreshToken', refToken)
-      showToast('Session refreshed successfully.', 'success')
+      showToast('Làm mới phiên làm việc thành công.', 'success')
     } else {
-      showToast('Session refresh expired. Logging out.', 'error')
+      showToast('Phiên làm việc đã hết hạn. Đang đăng xuất.', 'error')
       handleLogout()
     }
   }
@@ -892,7 +890,7 @@ export default function App() {
     setAvatarPreview('')
     setAvatarFile(null)
     setEditingStore(null)
-    showToast('Logged out of FoodTour platform.', 'info')
+    showToast('Đã đăng xuất khỏi Cần Giuộc FoodTour.', 'info')
     navigate('/explore')
   }
 
@@ -910,9 +908,9 @@ export default function App() {
 
     if (res.success && res.data.result) {
       setCurrentUser(res.data.result)
-      showToast('Profile information updated successfully!', 'success')
+      showToast('Cập nhật thông tin cá nhân thành công!', 'success')
     } else {
-      showToast(res.error?.message || 'Profile update failed.', 'error')
+      showToast(res.error?.message || 'Cập nhật thông tin cá nhân thất bại.', 'error')
     }
   }
 
@@ -990,14 +988,14 @@ export default function App() {
     setLoading(false)
 
     if (res.success) {
-      showToast('Password changed! Please login with your new credentials.', 'success')
+      showToast('Đổi mật khẩu thành công! Vui lòng đăng nhập lại với mật khẩu mới.', 'success')
       handleLogout()
       setShowAuthModal(true)
       setAuthMode('login')
       setPwdOld('')
       setPwdNew('')
     } else {
-      showToast(res.error?.message || 'Password update failed.', 'error')
+      showToast(res.error?.message || 'Đổi mật khẩu thất bại.', 'error')
     }
   }
 
@@ -1012,11 +1010,11 @@ export default function App() {
     setLoading(false)
 
     if (res.success) {
-      showToast(`Category "${catName}" added!`, 'success')
+      showToast(`Đã thêm danh mục "${catName}" thành công!`, 'success')
       setCatName('')
       loadGlobalData()
     } else {
-      showToast(res.error?.message || 'Failed to create category.', 'error')
+      showToast(res.error?.message || 'Tạo danh mục thất bại.', 'error')
     }
   }
 
@@ -1262,7 +1260,7 @@ export default function App() {
       setFoodDesc('')
       loadGlobalData()
     } else {
-      showToast(res.error?.message || 'Failed to add food item.', 'error')
+      showToast(res.error?.message || 'Thêm món ăn thất bại.', 'error')
     }
   }
 
@@ -1305,7 +1303,7 @@ export default function App() {
   // Submitting 1-Touch Store Rating
   async function handleSubmitRating(storeId, ratingVal) {
     if (!token) {
-      showToast('Please login to rate food spots.', 'error')
+      showToast('Vui lòng đăng nhập để đánh giá quán ăn.', 'error')
       setShowAuthModal(true)
       return
     }
@@ -1314,7 +1312,7 @@ export default function App() {
     setLoading(false)
 
     if (res.success && res.data.result) {
-      showToast(`Rated! Satisfaction rate: ${res.data.result.satisfactionRate}% (${res.data.result.totalVotes} votes)`, 'success')
+      showToast(`Đã đánh giá! Tỷ lệ hài lòng: ${res.data.result.satisfactionRate}% (${res.data.result.totalVotes} lượt đánh giá)`, 'success')
       loadGlobalData()
       // Refresh active store details
       if (activeStore && activeStore.id === storeId) {
@@ -1328,14 +1326,14 @@ export default function App() {
         }
       }
     } else {
-      showToast(res.error?.message || 'Rating submission failed.', 'error')
+      showToast(res.error?.message || 'Đánh giá thất bại.', 'error')
     }
   }
 
   // Submit Report Store Closed Today
   async function handleReportClosedToday(storeId) {
     if (!token) {
-      showToast('Please login to report closures.', 'error')
+      showToast('Vui lòng đăng nhập để báo quán đóng cửa.', 'error')
       setShowAuthModal(true)
       return
     }
@@ -1347,11 +1345,11 @@ export default function App() {
     setLoading(false)
 
     if (res.success && res.data.result) {
-      const closedState = res.data.result.isReportedClosed ? 'YES (reported closed today)' : 'NO (needs more votes)'
-      showToast(`Closed report submitted! Verified status: ${closedState}`, 'success')
+      const closedState = res.data.result.isReportedClosed ? 'CÓ (Đã báo đóng cửa hôm nay)' : 'CHƯA (Cần thêm lượt báo)'
+      showToast(`Đã gửi báo cáo đóng cửa! Trạng thái: ${closedState}`, 'success')
       loadGlobalData()
     } else {
-      showToast(res.error?.message || 'GPS coordinate boundary check failed (must be < 100m away).', 'error')
+      showToast(res.error?.message || 'Xác thực khoảng cách GPS thất bại (Bạn cần ở vị trí cách quán dưới 100m).', 'error')
     }
   }
 
@@ -1369,7 +1367,7 @@ export default function App() {
       if (res.success && res.data.result) {
         setRandomResult(res.data.result)
       } else {
-        showToast('No active spots matching the category selection.', 'error')
+        showToast('Không có quán ăn nào phù hợp với danh mục đã chọn.', 'error')
       }
     }, 1200)
   }
@@ -1382,7 +1380,7 @@ export default function App() {
     if (res.success && res.data.result) {
       setLeaderboard(res.data.result)
     } else {
-      showToast('Failed to load leaderboard.', 'error')
+      showToast('Tải bảng xếp hạng thất bại.', 'error')
     }
   }
 
@@ -1392,7 +1390,7 @@ export default function App() {
     if (res.success && res.data.result) {
       setAdminUsersList(res.data.result)
     } else {
-      showToast('Admin access denied or user table request failed.', 'error')
+      showToast('Quyền Admin bị từ chối hoặc tải danh sách người dùng thất bại.', 'error')
     }
   }
 
@@ -1407,18 +1405,18 @@ export default function App() {
 
   // Admin View - Approve store submission
   async function handleAdminApprove(storeId) {
-    if (!window.confirm('Approve this store submission and publish it to the live feed?')) return
+    if (!window.confirm('Duyệt quán ăn này và công khai lên hệ thống?')) return
     setLoading(true)
     const res = await makeRequest('POST', `/v1/stores/${storeId}/approve`, {})
     setLoading(false)
 
     if (res.success) {
-      showToast('Store approved and verified live!', 'success')
+      showToast('Quán ăn đã được duyệt và hiển thị thành công!', 'success')
       loadAdminPendingStores()
       loadGlobalData()
       return res.data || true
     } else {
-      showToast(res.error?.message || 'Approve action failed.', 'error')
+      showToast(res.error?.message || 'Duyệt quán ăn thất bại.', 'error')
       return false
     }
   }
@@ -1426,7 +1424,7 @@ export default function App() {
   // Admin View - Reject store submission with reason
   async function handleAdminReject(storeId, reason) {
     if (!reason || !reason.trim()) {
-      showToast('Rejection reason cannot be blank.', 'error')
+      showToast('Lý do từ chối không được để trống.', 'error')
       return false
     }
 
@@ -1435,28 +1433,28 @@ export default function App() {
     setLoading(false)
 
     if (res.success) {
-      showToast('Submission rejected and feedback saved.', 'info')
+      showToast('Đã từ chối yêu cầu và lưu phản hồi.', 'info')
       loadAdminPendingStores()
       loadGlobalData()
       return res.data || true
     } else {
-      showToast(res.error?.message || 'Reject action failed.', 'error')
+      showToast(res.error?.message || 'Từ chối quán ăn thất bại.', 'error')
       return false
     }
   }
 
   // Admin View - Delete user account
   async function handleAdminDeleteUser(userId) {
-    if (!window.confirm('Delete user profile completely? This will wipe their credentials and submissions.')) return
+    if (!window.confirm('Xóa tài khoản người dùng hoàn toàn? Hành động này sẽ xóa mọi thông tin và dữ liệu liên quan.')) return
     setLoading(true)
     const res = await makeRequest('DELETE', `/users/${userId}`)
     setLoading(false)
 
     if (res.success) {
-      showToast('User account successfully deleted.', 'success')
+      showToast('Xóa tài khoản người dùng thành công.', 'success')
       loadAdminUsers()
     } else {
-      showToast(res.error?.message || 'Failed to delete user.', 'error')
+      showToast(res.error?.message || 'Xóa tài khoản thất bại.', 'error')
     }
   }
 
@@ -1498,11 +1496,11 @@ export default function App() {
     setLoading(false)
 
     if (res.success) {
-      showToast('User record updated successfully by Admin.', 'success')
+      showToast('Cập nhật thông tin người dùng thành công!', 'success')
       setEditingUser(null)
       loadAdminUsers()
     } else {
-      showToast(res.error?.message || 'Update failed.', 'error')
+      showToast(res.error?.message || 'Cập nhật thất bại.', 'error')
     }
   }
 
