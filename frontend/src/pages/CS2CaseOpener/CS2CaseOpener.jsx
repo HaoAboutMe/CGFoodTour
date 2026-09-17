@@ -672,7 +672,7 @@ export default function CS2CaseOpener({
                       placeholder="Tìm kiếm tên quán..."
                       value={storeSearchQuery}
                       onChange={(e) => setStoreSearchQuery(e.target.value)}
-                      className="w-full bg-white text-black text-xs font-black pl-10 pr-4 py-2.5 border-2 border-black rounded-xl focus:outline-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                      className="w-full bg-white text-black text-xs font-black brutalist-input-has-icon pr-4 py-2.5 border-2 border-black rounded-xl focus:outline-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                     />
                   </div>
 

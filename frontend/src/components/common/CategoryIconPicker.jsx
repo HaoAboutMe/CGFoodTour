@@ -41,7 +41,7 @@ export default function CategoryIconPicker({ value, onChange, className = '' }) 
           placeholder="Tìm icon (ví dụ: bún, phở, bánh mì, trà sữa, bia, lẩu...)..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="brutalist-input pl-9 text-xs py-2 bg-white"
+          className="brutalist-input brutalist-input-has-icon text-xs py-2 bg-white"
         />
         <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
       </div>

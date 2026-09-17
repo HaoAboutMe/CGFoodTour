@@ -723,7 +723,7 @@ export default function AdminSection({
                   placeholder="Tìm theo tên quán, địa chỉ, chủ quán..."
                   value={storeSearchQuery}
                   onChange={(e) => setStoreSearchQuery(e.target.value)}
-                  className="brutalist-input pl-10 text-xs w-full"
+                  className="brutalist-input brutalist-input-has-icon text-xs w-full"
                 />
                 <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
@@ -970,7 +970,7 @@ export default function AdminSection({
                     placeholder="Tìm username, email..."
                     value={userSearchQuery}
                     onChange={(e) => setUserSearchQuery(e.target.value)}
-                    className="brutalist-input pl-10 text-xs"
+                    className="brutalist-input brutalist-input-has-icon text-xs"
                   />
                   <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>

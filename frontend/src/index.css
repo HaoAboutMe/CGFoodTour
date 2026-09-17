@@ -180,6 +180,14 @@ body {
   transition: all 0.2s ease;
 }
 
+.brutalist-input-has-icon {
+  padding-left: 2.75rem !important;
+}
+
+.brutalist-input-has-icon-sm {
+  padding-left: 2.35rem !important;
+}
+
 .brutalist-input:focus {
   outline: none;
   background-color: #fff9f9;

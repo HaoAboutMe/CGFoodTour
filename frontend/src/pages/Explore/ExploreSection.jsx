@@ -250,7 +250,7 @@ export default function ExploreSection({
             placeholder="Tìm tên món ăn, quán ăn, tên đường tại Cần Giuộc..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="brutalist-input pl-10"
+            className="brutalist-input brutalist-input-has-icon"
           />
         </div>
 
@@ -540,7 +540,7 @@ export default function ExploreSection({
                   placeholder="Gõ tìm danh mục (VD: cơm, phở, bún, chè, hải sản, trà sữa...)"
                   value={categorySearch}
                   onChange={(e) => setCategorySearch(e.target.value)}
-                  className="brutalist-input pl-9 text-xs py-2"
+                  className="brutalist-input brutalist-input-has-icon text-xs py-2"
                 />
                 {categorySearch && (
                   <button
