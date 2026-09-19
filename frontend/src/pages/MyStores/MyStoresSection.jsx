@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Store, Plus, Edit2, Trash2, X, ChevronLeft, MapPin, PlusCircle, Utensils, EyeOff, RotateCcw, HelpCircle, Link as LinkIcon, CheckCircle2 } from 'lucide-react'
+import { Store, Plus, Edit2, Trash2, X, ChevronLeft, MapPin, PlusCircle, Utensils, EyeOff, RotateCcw, HelpCircle, Link as LinkIcon, CheckCircle2, Bookmark } from 'lucide-react'
 import MySubmissionsSection from './MySubmissionsSection'
 import MapPicker from '@/components/common/MapPicker'
 import StoreActionModal from '@/components/modals/StoreActionModal'
@@ -60,6 +60,7 @@ export default function MyStoresSection({
   categories,
   editingStore,
   setEditingStore,
+  setActiveStore,
   handleParseGmapsUrl,
   handleUpdateStore,
   handleDeleteStore,
@@ -1536,8 +1537,12 @@ export default function MyStoresSection({
                     key={st.id}
                     className="brutalist-card bg-white p-3.5 space-y-3 border-3 border-black shadow-[4px_4px_0px_0px_#111]"
                   >
-                    {/* Top Row: Horizontal Image + Summary */}
-                    <div className="flex gap-3">
+                    {/* Top Row: Horizontal Image + Summary (Clickable to open store detail drawer) */}
+                    <div
+                      onClick={() => setActiveStore && setActiveStore(st)}
+                      className="flex gap-3 cursor-pointer group/card"
+                      title="Bấm để xem chi tiết quán ăn"
+                    >
                       <div className="w-24 h-24 shrink-0 border-2 border-black rounded-xl overflow-hidden bg-neutral-200 relative">
                         <img
                           src={
@@ -1545,16 +1550,20 @@ export default function MyStoresSection({
                             'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'
                           }
                           alt={st.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300"
                         />
                       </div>
                       <div className="min-w-0 flex-1 space-y-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="flex items-center justify-between gap-1.5 flex-wrap">
                           <span className="brutalist-badge bg-white text-black text-[9px] py-0.2 px-1.5">
                             {st.categoryName || 'Dishes'}
                           </span>
+                          <span className="flex items-center gap-1 bg-[#fff9db] border border-black rounded-full px-2 py-0.2 text-[9px] font-black text-black shadow-[1px_1px_0px_0px_#111]">
+                            <Bookmark className="w-2.5 h-2.5 text-[#ff3e3e] fill-[#ff3e3e]" />
+                            <span>{st.savedCount || 0}</span>
+                          </span>
                         </div>
-                        <h3 className="text-sm font-black uppercase text-black line-clamp-2 leading-snug">
+                        <h3 className="text-sm font-black uppercase text-black group-hover/card:text-[#ff3e3e] transition-colors line-clamp-2 leading-snug">
                           {st.name}
                         </h3>
                         <div className="flex items-center gap-1 text-[11px] font-bold text-neutral-600">
@@ -1692,26 +1701,45 @@ export default function MyStoresSection({
                 {myStores.map((st) => (
                   <div
                     key={st.id}
-                    className="brutalist-card bg-white overflow-hidden flex flex-col justify-between h-full"
+                    className="brutalist-card bg-white overflow-hidden flex flex-col justify-between h-full group/desktop"
                   >
                     <div>
-                      <div className="h-40 w-full border-b-3 border-black relative bg-neutral-200">
+                      {/* Banner Image (Clickable to open store detail drawer) */}
+                      <div
+                        onClick={() => setActiveStore && setActiveStore(st)}
+                        className="h-40 w-full border-b-3 border-black relative bg-neutral-200 cursor-pointer overflow-hidden"
+                        title="Bấm để xem chi tiết quán ăn"
+                      >
                         <img
                           src={
                             st.bannerImageUrl ||
                             'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'
                           }
                           alt={st.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover group-hover/desktop:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute top-3 left-3">
                           <span className="brutalist-badge bg-white text-black">
                             {st.categoryName || 'Dishes'}
                           </span>
                         </div>
+
+                        {/* Bookmark badge overlay (top-right) */}
+                        <div className="absolute top-3 right-3 flex items-center gap-1 bg-white border-2 border-black rounded-full px-2.5 py-0.5 text-xs font-black text-black shadow-[2px_2px_0px_0px_#111]">
+                          <Bookmark className="w-3.5 h-3.5 text-[#ff3e3e] fill-[#ff3e3e]" />
+                          <span>{st.savedCount || 0}</span>
+                        </div>
                       </div>
-                      <div className="p-4 space-y-3">
-                        <h3 className="text-lg font-black uppercase text-black line-clamp-1">{st.name}</h3>
+
+                      {/* Store Summary Body (Clickable to open store detail drawer) */}
+                      <div
+                        onClick={() => setActiveStore && setActiveStore(st)}
+                        className="p-4 space-y-3 cursor-pointer"
+                        title="Bấm để xem chi tiết quán ăn"
+                      >
+                        <h3 className="text-lg font-black uppercase text-black group-hover/desktop:text-[#ff3e3e] transition-colors line-clamp-1">
+                          {st.name}
+                        </h3>
                         <div className="flex items-center gap-1 text-[11px] font-bold text-neutral-600">
                           <MapPin className="w-3.5 h-3.5 text-[#ff3e3e]" />
                           <span className="truncate">{st.addressLine || 'Địa chỉ chưa cập nhật'}</span>

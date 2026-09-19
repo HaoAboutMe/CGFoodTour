@@ -92,27 +92,10 @@ export default function StoreDetailDrawer({
                 <h2 className="text-lg md:text-xl font-black text-black truncate">{activeStore.name}</h2>
               </div>
               <div className="flex flex-col items-end gap-1.5 shrink-0">
-                {handleToggleSaveStore && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleToggleSaveStore(activeStore.id)
-                    }}
-                    className={`flex items-center gap-1 border-2 border-black rounded-full px-2.5 py-0.5 text-xs font-black shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer transition-all ${
-                      activeStore.isSaved
-                        ? 'bg-[#ff3e3e] text-white'
-                        : 'bg-white text-black hover:bg-neutral-100'
-                    }`}
-                    title={activeStore.isSaved ? 'Bỏ lưu quán' : 'Lưu quán này'}
-                  >
-                    <Bookmark className={`w-3.5 h-3.5 ${activeStore.isSaved ? 'fill-white text-white' : 'text-black'}`} />
-                    <span>{activeStore.isSaved ? 'Đã Lưu' : 'Lưu Quán'}</span>
-                    <span className={`text-[9px] px-1 py-0.2 rounded-full border border-black ${activeStore.isSaved ? 'bg-white text-[#ff3e3e]' : 'bg-[#f7f6f2] text-black'}`}>
-                      {activeStore.savedCount || 0}
-                    </span>
-                  </button>
-                )}
+                <div className="flex items-center gap-1.5 bg-[#fff9db] text-black border-2 border-black rounded-full px-3 py-1 text-xs sm:text-sm font-black shrink-0 shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)]" title="Số lượng người dùng đã lưu quán này">
+                  <Bookmark className="w-4 h-4 text-[#ff3e3e] fill-[#ff3e3e]" />
+                  <span>{activeStore.savedCount || 0} người đã lưu</span>
+                </div>
                 <div className="flex items-center gap-1 bg-white border-2 border-black rounded-full px-2.5 py-0.5 text-xs font-black text-black shrink-0 shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)]">
                   <Trophy className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                   <span>{activeStore.satisfactionRate}%</span>

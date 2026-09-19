@@ -22,18 +22,18 @@ export default function SavedStoresSection({
     if (setShowAuthModal) setShowAuthModal(true)
   })
 
-  // Defensive array handling & search filtering
+  // Defensive array handling, APPROVED status filtering & search query
   const filteredStores = useMemo(() => {
     if (!Array.isArray(savedStores)) return []
-    if (!searchQuery.trim()) return savedStores
+    const approvedList = savedStores.filter((s) => s && s.status === 'APPROVED')
+    if (!searchQuery.trim()) return approvedList
 
     const q = searchQuery.toLowerCase()
-    return savedStores.filter(
+    return approvedList.filter(
       (s) =>
-        s &&
-        ((s.name && s.name.toLowerCase().includes(q)) ||
-          (s.categoryName && s.categoryName.toLowerCase().includes(q)) ||
-          (s.addressLine && s.addressLine.toLowerCase().includes(q)))
+        (s.name && s.name.toLowerCase().includes(q)) ||
+        (s.categoryName && s.categoryName.toLowerCase().includes(q)) ||
+        (s.addressLine && s.addressLine.toLowerCase().includes(q))
     )
   }, [savedStores, searchQuery])
 

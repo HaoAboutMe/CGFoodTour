@@ -1756,6 +1756,7 @@ export default function App() {
               categories={categories}
               editingStore={editingStore}
               setEditingStore={setEditingStore}
+              setActiveStore={setActiveStore}
               handleParseGmapsUrl={handleParseGmapsUrl}
               handleUpdateStore={handleUpdateStore}
               handleDeleteStore={handleDeleteStore}

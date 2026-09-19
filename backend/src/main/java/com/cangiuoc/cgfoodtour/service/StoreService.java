@@ -599,7 +599,7 @@ public class StoreService {
         List<UserSavedStore> savedStores = userSavedStoreRepository.findByUserIdOrderBySavedAtDesc(user.getId());
         List<StoreResponse> responses = new ArrayList<>();
         for (UserSavedStore uss : savedStores) {
-            if (uss.getStore() != null) {
+            if (uss.getStore() != null && uss.getStore().getStatus() == StoreStatus.APPROVED) {
                 StoreResponse resp = toStoreResponse(uss.getStore(), email);
                 resp.setIsSaved(true);
                 responses.add(resp);
