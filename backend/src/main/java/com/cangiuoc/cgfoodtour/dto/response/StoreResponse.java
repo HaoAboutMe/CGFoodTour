@@ -49,6 +49,10 @@ public class StoreResponse {
     Integer totalVotes;
     Double satisfactionRate;
 
+    // Save Bookmarks
+    Integer savedCount;
+    Boolean isSaved;
+
     // List of food items
     List<FoodItemResponse> foodItems;
 

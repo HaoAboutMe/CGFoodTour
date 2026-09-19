@@ -23,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -51,6 +53,7 @@ public class StoreService {
     StoreDailyReportRepository storeDailyReportRepository;
     FoodItemRepository foodItemRepository;
     StoreAuditLogRepository storeAuditLogRepository;
+    UserSavedStoreRepository userSavedStoreRepository;
     EmailService emailService;
 
     StoreMapper storeMapper;
@@ -413,6 +416,7 @@ public class StoreService {
         storeRatingRepository.deleteByStoreId(store.getId());
         storeDailyReportRepository.deleteByStoreId(store.getId());
         storeAuditLogRepository.deleteByStoreId(store.getId());
+        userSavedStoreRepository.deleteByStoreId(store.getId());
 
         storeRepository.delete(store);
     }
@@ -552,8 +556,60 @@ public class StoreService {
         storeDailyReportRepository.deleteAllInBatch();
     }
 
-    // Helper: Map Store Entity to StoreResponse DTO including food items & reported status
-    private StoreResponse toStoreResponse(Store store) {
+    // Save Store Toggle & Saved List Methods
+    @Transactional
+    public StoreResponse toggleSaveStore(String storeId, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+
+        Optional<UserSavedStore> existingSave = userSavedStoreRepository.findByUserIdAndStoreId(user.getId(), store.getId());
+
+        if (existingSave.isPresent()) {
+            userSavedStoreRepository.delete(existingSave.get());
+            int newCount = Math.max(0, (store.getSavedCount() != null ? store.getSavedCount() : 1) - 1);
+            store.setSavedCount(newCount);
+            storeRepository.save(store);
+            StoreResponse response = toStoreResponse(store, email);
+            response.setIsSaved(false);
+            return response;
+        } else {
+            UserSavedStore savedStore = UserSavedStore.builder()
+                    .user(user)
+                    .store(store)
+                    .build();
+            userSavedStoreRepository.save(savedStore);
+
+            int newCount = (store.getSavedCount() != null ? store.getSavedCount() : 0) + 1;
+            store.setSavedCount(newCount);
+            storeRepository.save(store);
+
+            StoreResponse response = toStoreResponse(store, email);
+            response.setIsSaved(true);
+            return response;
+        }
+    }
+
+    public List<StoreResponse> getSavedStoresForUser(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        List<UserSavedStore> savedStores = userSavedStoreRepository.findByUserIdOrderBySavedAtDesc(user.getId());
+        List<StoreResponse> responses = new ArrayList<>();
+        for (UserSavedStore uss : savedStores) {
+            if (uss.getStore() != null) {
+                StoreResponse resp = toStoreResponse(uss.getStore(), email);
+                resp.setIsSaved(true);
+                responses.add(resp);
+            }
+        }
+        return responses;
+    }
+
+    // Helper: Map Store Entity to StoreResponse DTO including food items, reported status, savedCount & isSaved
+    private StoreResponse toStoreResponse(Store store, String userEmail) {
         StoreResponse response = storeMapper.toStoreResponse(store);
         
         // Fetch and map food items
@@ -565,7 +621,29 @@ public class StoreService {
         long reportCount = storeDailyReportRepository.countByStoreIdAndReportDate(store.getId(), LocalDate.now());
         response.setIsReportedClosed(reportCount >= 3);
 
+        // Populate savedCount and isSaved
+        response.setSavedCount(store.getSavedCount() != null ? store.getSavedCount() : 0);
+        if (userEmail != null) {
+            User user = userRepository.findByEmail(userEmail).orElse(null);
+            if (user != null) {
+                response.setIsSaved(userSavedStoreRepository.existsByUserIdAndStoreId(user.getId(), store.getId()));
+            } else {
+                response.setIsSaved(false);
+            }
+        } else {
+            response.setIsSaved(false);
+        }
+
         return response;
+    }
+
+    private StoreResponse toStoreResponse(Store store) {
+        String email = null;
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+            email = auth.getName();
+        }
+        return toStoreResponse(store, email);
     }
 
     // Haversine formula to compute distance in meters
