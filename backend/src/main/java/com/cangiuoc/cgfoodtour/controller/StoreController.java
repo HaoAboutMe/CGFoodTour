@@ -208,4 +208,26 @@ public class StoreController {
                 .message("Store rejected successfully")
                 .build();
     }
+
+    @PostMapping("/{id}/save")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<StoreResponse> toggleSaveStore(@PathVariable String id) {
+        String email = getCurrentUserEmail();
+        StoreResponse response = storeService.toggleSaveStore(id, email);
+        return ApiResponse.<StoreResponse>builder()
+                .result(response)
+                .message(Boolean.TRUE.equals(response.getIsSaved()) ? "Đã lưu quán ăn" : "Đã bỏ lưu quán ăn")
+                .build();
+    }
+
+    @GetMapping("/saved")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<List<StoreResponse>> getSavedStores() {
+        String email = getCurrentUserEmail();
+        List<StoreResponse> responses = storeService.getSavedStoresForUser(email);
+        return ApiResponse.<List<StoreResponse>>builder()
+                .result(responses)
+                .message("Fetched saved stores successfully")
+                .build();
+    }
 }

@@ -15,6 +15,7 @@ import StoreDetailDrawer from '@/components/drawers/StoreDetailDrawer'
 import ProfileSection from '@/pages/Profile/ProfileSection'
 import ExploreSection from '@/pages/Explore/ExploreSection'
 import AboutSection from '@/pages/About/AboutSection'
+import SavedStoresSection from '@/components/SavedStoresSection'
 
 // Code splitting & Dynamic imports for heavy sections per Vercel Best Practices (bundle-dynamic-imports)
 const AdminSection = lazy(() => import('@/pages/Admin/AdminSection'))
@@ -45,6 +46,7 @@ export default function App() {
   // App Data
   const [categories, setCategories] = useState([])
   const [stores, setStores] = useState([])
+  const [savedStores, setSavedStores] = useState([])
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [activeStore, setActiveStore] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -146,8 +148,13 @@ export default function App() {
     const rawPath = location.pathname.substring(1)
     const tab = rawPath === '' ? 'explore' : rawPath
 
-    if (['explore', 'about', 'cs2-spinner', 'profile', 'my-stores', 'admin'].includes(tab)) {
-      if (!token && ['profile', 'my-stores', 'admin'].includes(tab)) {
+    if (['explore', 'about', 'cs2-spinner', 'saved', 'profile', 'my-stores', 'admin'].includes(tab)) {
+      if (!token && ['saved', 'profile', 'my-stores', 'admin'].includes(tab)) {
+        if (tab === 'saved') {
+          // Allowed to view saved tab even when unauthenticated (shows login prompt)
+          setActiveTab('saved')
+          return
+        }
         navigate('/explore', { replace: true })
         return
       }
@@ -156,8 +163,11 @@ export default function App() {
       if (tab === 'admin') {
         loadAdminUsers()
         loadAdminPendingStores()
-      } else if (tab === 'explore' || tab === 'my-stores' || tab === 'about' || tab === 'cs2-spinner') {
+      } else if (tab === 'explore' || tab === 'my-stores' || tab === 'about' || tab === 'cs2-spinner' || tab === 'saved') {
         loadGlobalData()
+        if (tab === 'saved') {
+          loadSavedStores()
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -175,6 +185,7 @@ export default function App() {
     const tabTitles = {
       'explore': 'Khám Phá Ẩm Thực',
       'cs2-spinner': 'Vòng Xoay Quán Ăn',
+      'saved': 'Quán Ăn Đã Lưu',
       'about': 'Về Chúng Tôi',
       'profile': 'Tài Khoản Của Tôi',
       'my-stores': 'Quán Ăn Của Tôi',
@@ -590,7 +601,62 @@ export default function App() {
     if (storeRes.success && storeRes.data.result) {
       setStores(storeRes.data.result)
     }
+
+    const activeToken = localStorage.getItem('jwtToken') || token
+    if (activeToken) {
+      loadSavedStores()
+    }
+
     setLoading(false)
+  }
+
+  // Load saved stores for current logged in user
+  async function loadSavedStores() {
+    const activeToken = localStorage.getItem('jwtToken') || token
+    if (!activeToken) {
+      setSavedStores([])
+      return
+    }
+    const res = await makeRequest('GET', '/v1/stores/saved')
+    if (res.success && res.data.result) {
+      setSavedStores(res.data.result)
+    }
+  }
+
+  // Toggle Save / Bookmark Store
+  async function handleToggleSaveStore(storeId) {
+    const activeToken = localStorage.getItem('jwtToken') || token
+    if (!activeToken) {
+      showToast('Vui lòng đăng nhập để lưu quán ăn yêu thích.', 'info')
+      setAuthMode('login')
+      setShowAuthModal(true)
+      return
+    }
+
+    const res = await makeRequest('POST', `/v1/stores/${storeId}/save`)
+    if (res.success && res.data.result) {
+      const isSaved = res.data.result.isSaved
+      const savedCount = res.data.result.savedCount
+
+      showToast(isSaved ? 'Đã lưu quán ăn vào danh sách của bạn!' : 'Đã bỏ lưu quán ăn.', 'success')
+
+      // Synchronize stores state instantly
+      setStores((prevStores) =>
+        prevStores.map((st) =>
+          st.id === storeId ? { ...st, isSaved, savedCount } : st
+        )
+      )
+
+      // Synchronize activeStore drawer state if open
+      if (activeStore && activeStore.id === storeId) {
+        setActiveStore((prev) => (prev ? { ...prev, isSaved, savedCount } : null))
+      }
+
+      // Refresh saved stores list
+      loadSavedStores()
+    } else {
+      showToast(res.error?.message || 'Không thể thực hiện thao tác lưu quán.', 'error')
+    }
   }
 
   // Profile retrieval
@@ -1604,6 +1670,22 @@ export default function App() {
             loadLeaderboard={loadLeaderboard}
             leaderboard={leaderboard}
             switchTab={switchTab}
+            handleToggleSaveStore={handleToggleSaveStore}
+          />
+        )}
+
+        {/* ========================================================================= */}
+        {/* SAVED STORES TAB */}
+        {/* ========================================================================= */}
+        {activeTab === 'saved' && (
+          <SavedStoresSection
+            savedStores={savedStores}
+            loadSavedStores={loadSavedStores}
+            handleToggleSaveStore={handleToggleSaveStore}
+            setActiveStore={setActiveStore}
+            setShowAuthModal={setShowAuthModal}
+            setAuthMode={setAuthMode}
+            currentUser={currentUser}
           />
         )}
 
@@ -1674,6 +1756,7 @@ export default function App() {
               categories={categories}
               editingStore={editingStore}
               setEditingStore={setEditingStore}
+              setActiveStore={setActiveStore}
               handleParseGmapsUrl={handleParseGmapsUrl}
               handleUpdateStore={handleUpdateStore}
               handleDeleteStore={handleDeleteStore}
@@ -1858,6 +1941,7 @@ export default function App() {
         setActiveStore={setActiveStore}
         handleSubmitRating={handleSubmitRating}
         handleReportClosedToday={handleReportClosedToday}
+        handleToggleSaveStore={handleToggleSaveStore}
         gpsLat={gpsLat}
         setGpsLat={setGpsLat}
         gpsLng={gpsLng}

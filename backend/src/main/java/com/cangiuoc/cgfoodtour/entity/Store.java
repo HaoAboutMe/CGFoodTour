@@ -117,6 +117,10 @@ public class Store {
     @Builder.Default
     Double satisfactionRate = 0.00;
 
+    @Column(name = "saved_count")
+    @Builder.Default
+    Integer savedCount = 0;
+
     @Column(name = "created_at", updatable = false)
     LocalDateTime createdAt;
 
