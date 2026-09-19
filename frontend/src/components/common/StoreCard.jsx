@@ -1,8 +1,8 @@
 import React from 'react'
-import { Trophy, MapPin, Clock } from 'lucide-react'
+import { Trophy, MapPin, Clock, Bookmark } from 'lucide-react'
 import { checkStoreOpenStatus } from '@/utils/timeUtils'
 
-function StoreCard({ store, setActiveStore, viewMode = 'grid' }) {
+function StoreCard({ store, setActiveStore, viewMode = 'grid', onToggleSave }) {
   if (!store) return null
   const statusInfo = checkStoreOpenStatus(store)
 
@@ -15,6 +15,26 @@ function StoreCard({ store, setActiveStore, viewMode = 'grid' }) {
         onClick={() => setActiveStore && setActiveStore(store)}
         className="md:hidden brutalist-card bg-white cursor-pointer p-2.5 relative flex items-center gap-3 w-full rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#111111] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_#111111] transition-all select-none group"
       >
+        {/* 📌 Mobile Top-Right Dedicated Floating Bookmark Button (Larger & Prominent) */}
+        {onToggleSave && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleSave(store.id)
+            }}
+            className={`absolute top-2 right-2 z-20 flex items-center gap-1 border-2 border-black rounded-full px-2.5 py-1 text-xs font-black transition-all shadow-[2px_2px_0px_0px_#111] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer shrink-0 ${
+              store.isSaved
+                ? 'bg-[#ff3e3e] text-white'
+                : 'bg-white text-black hover:bg-neutral-100'
+            }`}
+            title={store.isSaved ? 'Bỏ lưu quán' : 'Lưu quán này'}
+          >
+            <Bookmark className={`w-4 h-4 ${store.isSaved ? 'fill-white text-white' : 'text-black'}`} />
+            <span className="text-[11px] font-black">{store.savedCount || 0}</span>
+          </button>
+        )}
+
         {/* Left: Square Image with Badges */}
         <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 relative rounded-lg border-2 border-black overflow-hidden bg-neutral-200">
           <img
@@ -44,11 +64,11 @@ function StoreCard({ store, setActiveStore, viewMode = 'grid' }) {
           )}
         </div>
 
-        {/* Right: Comprehensive Store Details (No cramped truncated text) */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch py-0.5 gap-1">
+        {/* Right: Comprehensive Store Details */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch py-0.5 gap-1 pr-14">
           {/* Row 1: Category Tag & Distance */}
           <div className="flex items-center justify-between gap-1.5">
-            <span className="brutalist-badge bg-[#f7f6f2] text-black border border-black text-[8px] sm:text-[9px] py-0.2 px-1.5 font-black uppercase shadow-[1px_1px_0px_0px_#111111] truncate max-w-[120px]">
+            <span className="brutalist-badge bg-[#f7f6f2] text-black border border-black text-[8px] sm:text-[9px] py-0.2 px-1.5 font-black uppercase shadow-[1px_1px_0px_0px_#111111] truncate max-w-[100px]">
               {store.categoryName || 'Ẩm thực'}
             </span>
             {store.distanceKm && (
@@ -90,8 +110,26 @@ function StoreCard({ store, setActiveStore, viewMode = 'grid' }) {
           onClick={() => setActiveStore && setActiveStore(store)}
           className="hidden md:flex brutalist-card bg-white cursor-pointer p-3 relative flex-col justify-between gap-2.5 w-full rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#111111] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_#111111] transition-all select-none group h-full"
         >
-          {/* Category Badge pinned to Top-Right Corner */}
-          <div className="absolute top-2.5 right-2.5 z-10">
+          {/* Category Badge & Bookmark pinned to Top-Right Corner */}
+          <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5">
+            {onToggleSave && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onToggleSave(store.id)
+                }}
+                className={`border-2 border-black rounded-full px-2 py-0.5 text-[10px] font-black flex items-center gap-1 shadow-[1px_1px_0px_0px_#111111] cursor-pointer transition-all ${
+                  store.isSaved
+                    ? 'bg-[#ff3e3e] text-white'
+                    : 'bg-white text-black hover:bg-neutral-100'
+                }`}
+                title={store.isSaved ? 'Bỏ lưu quán' : 'Lưu quán này'}
+              >
+                <Bookmark className={`w-3 h-3 ${store.isSaved ? 'fill-white text-white' : 'text-black'}`} />
+                <span>{store.savedCount || 0}</span>
+              </button>
+            )}
             <span className="bg-white text-black border-2 border-black rounded-full px-2 py-0.5 text-[10px] font-black uppercase shadow-[1px_1px_0px_0px_#111111] whitespace-nowrap">
               {store.categoryName || 'Ẩm thực'}
             </span>
@@ -161,6 +199,26 @@ function StoreCard({ store, setActiveStore, viewMode = 'grid' }) {
                 alt={store.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
+
+              {/* Bookmark Button Overlay (Top-Left) */}
+              {onToggleSave && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onToggleSave(store.id)
+                  }}
+                  className={`absolute top-2.5 left-2.5 z-10 flex items-center gap-1 border-2 border-black rounded-full px-2.5 py-0.5 text-[10px] font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer transition-all ${
+                    store.isSaved
+                      ? 'bg-[#ff3e3e] text-white'
+                      : 'bg-white text-black hover:bg-neutral-100'
+                  }`}
+                  title={store.isSaved ? 'Bỏ lưu quán' : 'Lưu quán ăn này'}
+                >
+                  <Bookmark className={`w-3 h-3 ${store.isSaved ? 'fill-white text-white' : 'text-black'}`} />
+                  <span>{store.savedCount || 0}</span>
+                </button>
+              )}
 
               {/* Ratings Badge Overlay */}
               <div className="absolute top-2.5 right-2.5 flex items-center gap-1 bg-white border-2 border-black rounded-full px-2 py-0.5 text-[11px] font-black text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">

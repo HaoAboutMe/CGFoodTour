@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Compass, Dices, Store, Shield, Info, User, LogIn } from 'lucide-react'
+import { Compass, Dices, Store, Shield, Info, User, LogIn, Bookmark } from 'lucide-react'
 
 export default function BottomNav({
   activeTab,
@@ -80,6 +80,19 @@ export default function BottomNav({
       >
         <Dices className="w-5 h-5" />
         <span className="text-[9px] sm:text-[10px] tracking-tight mt-0.5">Vòng Xoay</span>
+      </button>
+
+      {/* 3. Saved Stores Tab */}
+      <button
+        onClick={() => handleTabClick('saved')}
+        className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all cursor-pointer ${
+          activeTab === 'saved'
+            ? 'bg-[#ff3e3e] text-white border-2 border-black shadow-[2px_2px_0px_0px_#111111] -translate-y-0.5 font-black'
+            : 'text-neutral-700 hover:bg-neutral-100 font-bold'
+        }`}
+      >
+        <Bookmark className="w-5 h-5" />
+        <span className="text-[9px] sm:text-[10px] tracking-tight mt-0.5">Đã Lưu</span>
       </button>
 
       {/* 3. My Stores Tab */}

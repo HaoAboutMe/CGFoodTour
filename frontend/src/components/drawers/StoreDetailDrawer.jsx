@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Trophy, MapPin, Phone, DollarSign, ThumbsUp, Meh, ThumbsDown, ZoomIn } from 'lucide-react'
+import { X, Trophy, MapPin, Phone, DollarSign, ThumbsUp, Meh, ThumbsDown, ZoomIn, Bookmark } from 'lucide-react'
 import { checkStoreOpenStatus } from '@/utils/timeUtils'
 import ImageViewerModal from '@/components/modals/ImageViewerModal'
 
@@ -9,6 +9,7 @@ export default function StoreDetailDrawer({
   setActiveStore,
   handleSubmitRating,
   handleReportClosedToday,
+  handleToggleSaveStore,
   gpsLat,
   setGpsLat,
   gpsLng,
@@ -84,16 +85,39 @@ export default function StoreDetailDrawer({
             </div>
 
             <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between bg-white border-2 border-black rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <div className="space-y-1 min-w-0">
+              <div className="space-y-1 min-w-0 flex-1 pr-2">
                 <span className="brutalist-badge bg-[#ff3e3e] text-white">
                   {activeStore.categoryName || 'Live Spot'}
                 </span>
                 <h2 className="text-lg md:text-xl font-black text-black truncate">{activeStore.name}</h2>
               </div>
-              <div className="flex items-center gap-1 bg-white border-2 border-black rounded-full px-2.5 py-0.5 text-xs font-black text-black shrink-0 shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)]">
-                <Trophy className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                <span>{activeStore.satisfactionRate}%</span>
-                <span className="text-[9px] text-neutral-500 font-semibold">({activeStore.totalVotes})</span>
+              <div className="flex flex-col items-end gap-1.5 shrink-0">
+                {handleToggleSaveStore && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleToggleSaveStore(activeStore.id)
+                    }}
+                    className={`flex items-center gap-1 border-2 border-black rounded-full px-2.5 py-0.5 text-xs font-black shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer transition-all ${
+                      activeStore.isSaved
+                        ? 'bg-[#ff3e3e] text-white'
+                        : 'bg-white text-black hover:bg-neutral-100'
+                    }`}
+                    title={activeStore.isSaved ? 'Bỏ lưu quán' : 'Lưu quán này'}
+                  >
+                    <Bookmark className={`w-3.5 h-3.5 ${activeStore.isSaved ? 'fill-white text-white' : 'text-black'}`} />
+                    <span>{activeStore.isSaved ? 'Đã Lưu' : 'Lưu Quán'}</span>
+                    <span className={`text-[9px] px-1 py-0.2 rounded-full border border-black ${activeStore.isSaved ? 'bg-white text-[#ff3e3e]' : 'bg-[#f7f6f2] text-black'}`}>
+                      {activeStore.savedCount || 0}
+                    </span>
+                  </button>
+                )}
+                <div className="flex items-center gap-1 bg-white border-2 border-black rounded-full px-2.5 py-0.5 text-xs font-black text-black shrink-0 shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)]">
+                  <Trophy className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                  <span>{activeStore.satisfactionRate}%</span>
+                  <span className="text-[9px] text-neutral-500 font-semibold">({activeStore.totalVotes})</span>
+                </div>
               </div>
             </div>
           </div>
@@ -293,6 +317,27 @@ export default function StoreDetailDrawer({
           </div>
         </div>
       </div>
+
+      {/* 📌 Floating Bookmark Action Button (Bottom-Right corner for mobile/desktop drawer) */}
+      {handleToggleSaveStore && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            handleToggleSaveStore(activeStore.id)
+          }}
+          className={`fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center gap-2 border-3 border-black rounded-full px-4 py-2.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer transition-all select-none ${
+            activeStore.isSaved
+              ? 'bg-[#ff3e3e] text-white'
+              : 'bg-white text-black hover:bg-neutral-100'
+          }`}
+          title={activeStore.isSaved ? 'Bỏ lưu quán này' : 'Lưu quán này'}
+        >
+          <Bookmark className={`w-5 h-5 ${activeStore.isSaved ? 'fill-white text-white' : 'text-black'}`} />
+          <span className="text-xs font-black uppercase tracking-wider">
+            {activeStore.isSaved ? 'Đã Lưu' : 'Lưu Quán'}
+          </span>
+        </button>
+      )}
 
       {/* Full-Screen Image Lightbox Preview Modal */}
       {previewImage && (

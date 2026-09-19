@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Shield, LogOut, Menu, X, User, Store, ChevronDown, Info } from 'lucide-react'
+import { Shield, LogOut, Menu, X, User, Store, ChevronDown, Info, Bookmark } from 'lucide-react'
 import logo1024 from '@/assets/logo_1024.webp'
 
 export default function Header({
@@ -81,6 +81,17 @@ export default function Header({
             Vòng Xoay Quán Ăn
           </button>
           <button
+            onClick={() => switchTab('saved')}
+            className={`brutalist-badge cursor-pointer px-5 py-1.5 text-xs font-black transition-all flex items-center gap-1.5 ${
+              activeTab === 'saved'
+                ? 'bg-[#ff3e3e] text-white border-[#ff3e3e] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] -translate-x-[1px] -translate-y-[1px]'
+                : 'bg-white text-black border-black hover:bg-neutral-50 shadow-none'
+            }`}
+          >
+            <Bookmark className="w-3.5 h-3.5" />
+            Quán Đã Lưu
+          </button>
+          <button
             onClick={() => switchTab('about')}
             className={`brutalist-badge cursor-pointer px-5 py-1.5 text-xs font-black transition-all ${
               activeTab === 'about'
@@ -143,6 +154,18 @@ export default function Header({
 
                   {/* Navigation Links inside Dropdown */}
                   <div className="space-y-1.5">
+                    <button
+                      onClick={() => handleNavClick('saved')}
+                      className={`w-full text-left px-3 py-2 border-2 border-black rounded-xl font-black text-xs flex items-center gap-2.5 transition-all cursor-pointer ${
+                        activeTab === 'saved'
+                          ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                          : 'bg-white text-black hover:bg-neutral-100'
+                      }`}
+                    >
+                      <Bookmark className="w-4 h-4 shrink-0" />
+                      <span>Quán Ăn Đã Lưu</span>
+                    </button>
+
                     <button
                       onClick={() => handleNavClick('profile')}
                       className={`w-full text-left px-3 py-2 border-2 border-black rounded-xl font-black text-xs flex items-center gap-2.5 transition-all cursor-pointer ${

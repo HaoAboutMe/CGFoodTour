@@ -48,6 +48,7 @@ export default function ExploreSection({
   switchTab,
   loadLeaderboard,
   leaderboard,
+  handleToggleSaveStore,
 }) {
   const [viewMode, setViewMode] = useState('grid') // 'grid' or 'compact'
   const [nearMeActive, setNearMeActive] = useState(false)
@@ -450,6 +451,7 @@ export default function ExploreSection({
                   key={store.id}
                   store={store}
                   setActiveStore={setActiveStore}
+                  onToggleSave={handleToggleSaveStore}
                 />
               ))}
             </div>
@@ -464,6 +466,7 @@ export default function ExploreSection({
                       store={store}
                       setActiveStore={setActiveStore}
                       viewMode="compact"
+                      onToggleSave={handleToggleSaveStore}
                     />
                   ))}
                 </div>
@@ -475,6 +478,7 @@ export default function ExploreSection({
                       store={store}
                       setActiveStore={setActiveStore}
                       viewMode="grid"
+                      onToggleSave={handleToggleSaveStore}
                     />
                   ))}
                 </div>
