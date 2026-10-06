@@ -1,0 +1,81 @@
+# Production Environment Configuration (Profile: prod)
+# Activated when SPRING_PROFILES_ACTIVE=prod or --spring.profiles.active=prod
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/cgfoodtour?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: ${SPRING_DATASOURCE_HIKARI_MAX_POOL_SIZE:10}
+      minimum-idle: ${SPRING_DATASOURCE_HIKARI_MIN_IDLE:2}
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8080/api}
+  openapi:
+    dev-url: ${APP_OPENAPI_DEV_URL:http://localhost:8080}
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:}
+  admin:
+    default-email: ${APP_ADMIN_DEFAULT_EMAIL:haoaboutme@gmail.com}
+    default-password: ${APP_ADMIN_DEFAULT_PASSWORD:}
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+  facebook:
+    app-id: ${FACEBOOK_APP_ID:}
+    app-secret: ${FACEBOOK_APP_SECRET:}
+
+jwt:
+  # JWT signer key must be a 64-character (512-bit) hex key for HS512
+  signerKey: ${JWT_SIGNER_KEY}
+  valid-duration: ${JWT_VALID_DURATION:1800} # 30 minutes in seconds
+  refreshable-duration: ${JWT_REFRESHABLE_DURATION:2592000} # 30 days in seconds
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# Cloudinary Configuration
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+  api-key: ${CLOUDINARY_API_KEY:}
+  api-secret: ${CLOUDINARY_API_SECRET:}
+  folder: ${CLOUDINARY_FOLDER:cgfoodtour/avatars}
+  default-avatar-url: ${CLOUDINARY_DEFAULT_AVATAR_URL:https://res.cloudinary.com/dmeazyjkz/image/upload/v1787030590/avatar-default_i3mwpi.svg}
+
+# Production Logging Configuration
+logging:
+  level:
+    root: WARN
+    com.cangiuoc.cgfoodtour: INFO
+    org.springframework.web: WARN
+    org.hibernate: WARN

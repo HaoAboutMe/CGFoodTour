@@ -38,6 +38,12 @@ build/
 
 # Sensitive configuration files (containing passwords, tokens, keys)
 src/main/resources/application-dev.yaml
+.env
+.env.*
+*.env
+*.env.*
+!.env*.example
 
 # Local developer testing web interface
 src/main/resources/static/index.html
+

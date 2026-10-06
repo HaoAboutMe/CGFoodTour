@@ -23,7 +23,7 @@ const MyStoresSection = lazy(() => import('@/pages/MyStores/MyStoresSection'))
 const CS2CaseOpener = lazy(() => import('@/pages/CS2CaseOpener/CS2CaseOpener'))
 const DevConsole = lazy(() => import('@/components/common/DevConsole'))
 
-const API_BASE = 'http://localhost:8080/api'
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '/api')).replace(/\/+$/, '')
 
 export default function App() {
   const navigate = useNavigate()

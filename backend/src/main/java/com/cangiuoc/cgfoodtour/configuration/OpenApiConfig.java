@@ -6,6 +6,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,11 +17,17 @@ public class OpenApiConfig {
 
         private static final String SECURITY_SCHEME_NAME = "Bearer Authentication";
 
+        @Value("${app.base-url:http://localhost:8080/api}")
+        private String baseUrl;
+
+        @Value("${app.openapi.server-description:API Server}")
+        private String serverDescription;
+
         @Bean
         public OpenAPI customOpenAPI() {
-                Server devServer = new Server();
-                devServer.setUrl("http://localhost:8080/api");
-                devServer.setDescription("Development Server");
+                Server apiServer = new Server();
+                apiServer.setUrl(baseUrl);
+                apiServer.setDescription(serverDescription);
 
                 Info info = new Info()
                                 .title("CGFoodTour Identity & Authentication Service API")
@@ -35,7 +42,7 @@ public class OpenApiConfig {
 
                 return new OpenAPI()
                                 .info(info)
-                                .servers(List.of(devServer))
+                                .servers(List.of(apiServer))
                                 .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))
                                 .components(new Components()
                                                 .addSecuritySchemes(SECURITY_SCHEME_NAME, createSecurityScheme()));

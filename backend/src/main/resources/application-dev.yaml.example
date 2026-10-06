@@ -34,8 +34,16 @@ app:
   base-url: http://localhost:8080/api
   openapi:
     dev-url: http://localhost:8080
+  cors:
+    allowed-origins: http://localhost:5173,http://127.0.0.1:5500
+  admin:
+    default-email: haoaboutme@gmail.com
+    default-password: admin
   google:
     client-id: YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
+  facebook:
+    app-id: YOUR_FACEBOOK_APP_ID
+    app-secret: YOUR_FACEBOOK_APP_SECRET
 
 jwt:
   signerKey: YOUR_64_CHARACTER_HEX_JWT_SIGNER_KEY_HERE

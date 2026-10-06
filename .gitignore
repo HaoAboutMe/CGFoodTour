@@ -30,9 +30,13 @@ build/
 # Environment files
 .env
 .env.*
+*.env
+*.env.*
 /frontend/.env
 /frontend/.env.*
 !.env.example
+!*.env.example
+!**/.env.example
 
 # Agent skills
 .agents/

@@ -8,7 +8,9 @@ import com.cangiuoc.cgfoodtour.repository.RoleRepository;
 import com.cangiuoc.cgfoodtour.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +26,18 @@ import java.util.HashSet;
 public class ApplicationInitConfig
 {
     PasswordEncoder passwordEncoder;
+
+    @NonFinal
+    @Value("${app.admin.default-email:haoaboutme@gmail.com}")
+    String adminEmail;
+
+    @NonFinal
+    @Value("${app.admin.default-password:}")
+    String adminPassword;
+
+    @NonFinal
+    @Value("${spring.profiles.active:dev}")
+    String activeProfile;
 
     @Bean
     ApplicationRunner applicationRunner(UserRepository userRepository,
@@ -97,8 +111,21 @@ public class ApplicationInitConfig
             }
 
             // Create admin user if it doesn't exist
-            if(userRepository.findByEmail("haoaboutme@gmail.com").isEmpty())
+            if(userRepository.findByEmail(adminEmail).isEmpty())
             {
+                String resolvedPassword;
+                boolean isProdProfile = activeProfile != null && activeProfile.toLowerCase().contains("prod");
+
+                if (adminPassword != null && !adminPassword.trim().isEmpty()) {
+                    resolvedPassword = adminPassword.trim();
+                } else if (!isProdProfile) {
+                    resolvedPassword = "admin";
+                    log.warn("Admin User created with default DEV password: 'admin'. Set APP_ADMIN_DEFAULT_PASSWORD before running in production!");
+                } else {
+                    log.warn("Production profile active but APP_ADMIN_DEFAULT_PASSWORD is not provided. Skipping automatic admin user creation for security.");
+                    return;
+                }
+
                 var roles = new HashSet<Role>();
                 roles.add(roleRepository.findById("ADMIN").orElseThrow());
 
@@ -106,8 +133,8 @@ public class ApplicationInitConfig
                         .username("Admin Hảo")
                         .firstname("Admin")
                         .lastname("Hảo About Me")
-                        .password(passwordEncoder.encode("admin"))
-                        .email("haoaboutme@gmail.com")
+                        .password(passwordEncoder.encode(resolvedPassword))
+                        .email(adminEmail)
                         .dateOfBirth(LocalDate.parse("2026-01-01"))
                         .roles(roles)
                         .enabled(true)  // Admin được kích hoạt ngay
@@ -115,7 +142,7 @@ public class ApplicationInitConfig
                         .build();
 
                 userRepository.save(adminUser);
-                log.warn("Admin User created with default password: admin, please change it after first login!");
+                log.info("Admin User [{}] successfully initialized", adminEmail);
             }
         };
     }
