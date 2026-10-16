@@ -155,10 +155,14 @@ public class AuthenticationService
         return buildAuthenticationResponse(user);
     }
 
-    public void logout(LogOutRequest request) throws ParseException, JOSEException
-    {
+    public void logout(LogOutRequest request) {
+        invalidateToken(request.getAccessToken(), ACCESS_TOKEN_TYPE);
+        invalidateToken(request.getRefreshToken(), REFRESH_TOKEN_TYPE);
+    }
+
+    private void invalidateToken(String token, String expectedType) {
         try {
-            var signedToken = verifyToken(request.getToken(), ACCESS_TOKEN_TYPE);
+            var signedToken = verifyToken(token, expectedType);
 
             String jti = signedToken.getJWTClaimsSet().getJWTID();
             Date expiryTime = signedToken.getJWTClaimsSet().getExpirationTime();
@@ -169,8 +173,10 @@ public class AuthenticationService
                     .build();
 
             invalidatedTokenRepository.save(invalidatedToken);
-        } catch (AppException exception) {
-            log.info("Token already invalidated");
+        } catch (AppException | ParseException | JOSEException exception) {
+            // Logout is intentionally idempotent. An expired, malformed or already revoked
+            // token must not prevent the other token in the pair from being revoked.
+            log.debug("Skipping invalid or already revoked {} token during logout", expectedType);
         }
     }
 
