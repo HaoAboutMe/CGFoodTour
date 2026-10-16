@@ -2,6 +2,7 @@ package com.cangiuoc.cgfoodtour.constant;
 
 public class SuccessMessage {
     public static final String REGISTER_SUCCESS = "Registration successful. Please check your email to activate your account.";
+    public static final String VERIFY_EMAIL_SUCCESS = "Email verified successfully.";
     public static final String LOGIN_SUCCESS = "Login successful.";
     public static final String GOOGLE_LOGIN_SUCCESS = "Google login successful.";
     public static final String FACEBOOK_LOGIN_SUCCESS = "Facebook login successful.";

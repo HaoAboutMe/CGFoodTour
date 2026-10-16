@@ -24,11 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.security.core.context.SecurityContextHolder;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -55,6 +50,7 @@ public class StoreService {
     StoreAuditLogRepository storeAuditLogRepository;
     UserSavedStoreRepository userSavedStoreRepository;
     EmailService emailService;
+    GoogleMapsUrlResolver googleMapsUrlResolver;
 
     StoreMapper storeMapper;
     FoodItemMapper foodItemMapper;
@@ -662,72 +658,23 @@ public class StoreService {
         if (inputUrl == null || inputUrl.isBlank()) {
             return Collections.emptyMap();
         }
-        String currentUrl = inputUrl.trim();
-
-        // Direct check: if input URL already has coordinates
-        Map<String, String> initialCoords = extractCoordinatesFromText(currentUrl);
-        if (!initialCoords.isEmpty()) {
-            return initialCoords;
+        String value = inputUrl.trim();
+        if (value.length() > 2048 || value.chars().anyMatch(Character::isISOControl)) {
+            return Collections.emptyMap();
         }
 
-        // Handle short URLs (maps.app.goo.gl, goo.gl/maps, etc.) via manual HTTP redirect tracing
-        int maxRedirects = 10;
-        String expandedUrl = currentUrl;
+        Map<String, String> directCoordinates = extractCoordinatesFromText(value);
+        if (!directCoordinates.isEmpty()) {
+            return directCoordinates;
+        }
 
-        try {
-            while (maxRedirects-- > 0) {
-                URL urlObj = new URL(expandedUrl);
-                HttpURLConnection conn = (HttpURLConnection) urlObj.openConnection();
-                conn.setInstanceFollowRedirects(false); // Manual redirect handling to catch Location headers across protocols
-                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-                conn.setConnectTimeout(6000);
-                conn.setReadTimeout(6000);
-
-                int status = conn.getResponseCode();
-                String location = conn.getHeaderField("Location");
-
-                // Check coordinates in current expandedUrl
-                Map<String, String> coords = extractCoordinatesFromText(expandedUrl);
-                if (!coords.isEmpty()) {
-                    return coords;
-                }
-
-                if (location != null && !location.isBlank()) {
-                    if (location.startsWith("/")) {
-                        URL base = new URL(expandedUrl);
-                        expandedUrl = base.getProtocol() + "://" + base.getHost() + location;
-                    } else {
-                        expandedUrl = location;
-                    }
-
-                    Map<String, String> locCoords = extractCoordinatesFromText(expandedUrl);
-                    if (!locCoords.isEmpty()) {
-                        return locCoords;
-                    }
-                } else if (status == HttpURLConnection.HTTP_OK) {
-                    try (BufferedReader reader = new BufferedReader(
-                            new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-                        StringBuilder sb = new StringBuilder();
-                        String line;
-                        int linesRead = 0;
-                        while ((line = reader.readLine()) != null && linesRead++ < 150) {
-                            sb.append(line).append("\n");
-                        }
-                        Map<String, String> htmlCoords = extractCoordinatesFromText(sb.toString());
-                        if (!htmlCoords.isEmpty()) {
-                            return htmlCoords;
-                        }
-                    }
-                    break;
-                } else {
-                    break;
-                }
+        for (String candidate : googleMapsUrlResolver.resolve(value)) {
+            Map<String, String> coordinates = extractCoordinatesFromText(candidate);
+            if (!coordinates.isEmpty()) {
+                return coordinates;
             }
-        } catch (Exception e) {
-            log.warn("Could not expand Google Maps URL {}: {}", inputUrl, e.getMessage());
         }
-
-        return extractCoordinatesFromText(expandedUrl);
+        return Collections.emptyMap();
     }
 
     private Map<String, String> extractCoordinatesFromText(String text) {

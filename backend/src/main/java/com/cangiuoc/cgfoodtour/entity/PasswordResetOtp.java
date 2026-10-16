@@ -23,8 +23,8 @@ public class PasswordResetOtp {
     @Column(nullable = false)
     String email;
 
-    @Column(nullable = false, length = 6)
-    String otp;
+    @Column(name = "otp", nullable = false, length = 64)
+    String otpHash;
 
     @Column(name = "expiry_date", nullable = false)
     LocalDateTime expiryDate;
@@ -32,6 +32,10 @@ public class PasswordResetOtp {
     @Builder.Default
     @Column(name = "is_used", nullable = false)
     Boolean isUsed = false;
+
+    @Builder.Default
+    @Column(name = "failed_attempts", nullable = false)
+    Integer failedAttempts = 0;
 
     @Column(name = "created_at")
     LocalDateTime createdAt;
@@ -41,5 +45,6 @@ public class PasswordResetOtp {
         createdAt = LocalDateTime.now();
         expiryDate = LocalDateTime.now().plusMinutes(5); // OTP hết hạn sau 5 phút
         if (isUsed == null) isUsed = false;
+        if (failedAttempts == null) failedAttempts = 0;
     }
 }

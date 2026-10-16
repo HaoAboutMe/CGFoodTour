@@ -23,7 +23,16 @@ const MyStoresSection = lazy(() => import('@/pages/MyStores/MyStoresSection'))
 const CS2CaseOpener = lazy(() => import('@/pages/CS2CaseOpener/CS2CaseOpener'))
 const DevConsole = lazy(() => import('@/components/common/DevConsole'))
 
-const API_BASE = 'http://localhost:8080/api'
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '/api')).replace(/\/+$/, '')
+
+function getRefreshDelay(accessToken) {
+  try {
+    const payload = JSON.parse(atob(accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return Math.max(30_000, payload.exp * 1000 - Date.now() - 60_000)
+  } catch {
+    return 4 * 60 * 1000
+  }
+}
 
 export default function App() {
   const navigate = useNavigate()
@@ -32,6 +41,9 @@ export default function App() {
   // Navigation & Authentication - Lazy State Initialization (rerender-lazy-state-init)
   const [token, setToken] = useState(() => localStorage.getItem('jwtToken') || '')
   const [refreshTokenVal, setRefreshTokenVal] = useState(() => localStorage.getItem('refreshToken') || '')
+  const refreshPromiseRef = useRef(null)
+  const refreshSessionRef = useRef(null)
+  const handleLogoutRef = useRef(null)
   const [currentUser, setCurrentUser] = useState(null)
   const [activeTab, setActiveTab] = useState('explore')
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -215,43 +227,13 @@ export default function App() {
     return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
-  // Proactive background session refresh (runs every 10 minutes if logged in)
+  // Refresh shortly before the current access token expires.
   useEffect(() => {
-    const activeRefToken = refreshTokenVal || token || localStorage.getItem('refreshToken') || localStorage.getItem('jwtToken')
-    if (!activeRefToken) return
-
-    const interval = setInterval(() => {
-      const currentRefToken = localStorage.getItem('refreshToken') || localStorage.getItem('jwtToken') || activeRefToken
-      if (!currentRefToken) return
-
-      console.log('Proactive background session refresh...')
-      fetch(API_BASE + '/auth/refresh', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ token: currentRefToken })
-      })
-      .then((res) => {
-        if (res.ok) return res.json()
-        throw new Error('Refresh failed')
-      })
-      .then((data) => {
-        if (data && data.result && data.result.token) {
-          const accessToken = data.result.token
-          const refToken = data.result.refreshToken || accessToken
-          setToken(accessToken)
-          setRefreshTokenVal(refToken)
-          localStorage.setItem('jwtToken', accessToken)
-          localStorage.setItem('refreshToken', refToken)
-        }
-      })
-      .catch((err) => {
-        console.warn('Proactive background refresh failed:', err)
-      })
-    }, 10 * 60 * 1000) // 10 minutes proactive silent refresh
-
-    return () => clearInterval(interval)
+    if (!token || !refreshTokenVal) return
+    const timeout = setTimeout(() => {
+      refreshSessionRef.current().catch(() => handleLogoutRef.current())
+    }, getRefreshDelay(token))
+    return () => clearTimeout(timeout)
   }, [token, refreshTokenVal])
 
   // Server-Sent Events (SSE) for Real-time Store Updates
@@ -419,13 +401,47 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }
 
+  function persistSession(authResult) {
+    if (!authResult?.accessToken || !authResult?.refreshToken) {
+      throw new Error('Invalid authentication response')
+    }
+    setToken(authResult.accessToken)
+    setRefreshTokenVal(authResult.refreshToken)
+    localStorage.setItem('jwtToken', authResult.accessToken)
+    localStorage.setItem('refreshToken', authResult.refreshToken)
+    return authResult.accessToken
+  }
+
+  async function refreshSession() {
+    if (refreshPromiseRef.current) return refreshPromiseRef.current
+
+    refreshPromiseRef.current = (async () => {
+      const storedRefreshToken = localStorage.getItem('refreshToken') || refreshTokenVal
+      if (!storedRefreshToken) throw new Error('Missing refresh token')
+      const response = await fetch(API_BASE + '/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: storedRefreshToken })
+      })
+      if (!response.ok) throw new Error('Refresh failed')
+      const data = await response.json()
+      return persistSession(data?.result)
+    })()
+
+    try {
+      return await refreshPromiseRef.current
+    } finally {
+      refreshPromiseRef.current = null
+    }
+  }
+
   // Core Request Wrapper
   async function makeRequest(method, endpoint, body = null, isMultipart = false) {
     const url = API_BASE + endpoint
     const headers = {}
 
     const currentToken = localStorage.getItem('jwtToken') || token
-    if (currentToken) {
+    if (currentToken && !endpoint.startsWith('/auth/')) {
       headers['Authorization'] = `Bearer ${currentToken}`
     }
 
@@ -467,30 +483,10 @@ export default function App() {
             endpoint !== '/auth/google-login' && 
             endpoint !== '/auth/facebook-login') {
           
-          const storedRefreshToken = localStorage.getItem('refreshToken') || refreshTokenVal
-          if (storedRefreshToken) {
+          if (localStorage.getItem('refreshToken') || refreshTokenVal) {
             console.log('Attempting automatic token refresh...')
             try {
-              const refreshRes = await fetch(API_BASE + '/auth/refresh', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ token: storedRefreshToken })
-              })
-
-              if (refreshRes.ok) {
-                const refreshData = await refreshRes.json()
-                if (refreshData && refreshData.result) {
-                  const newAccessToken = refreshData.result.token
-                  const newRefreshToken = refreshData.result.refreshToken || storedRefreshToken
-                  
-                  // Update state and storage
-                  setToken(newAccessToken)
-                  setRefreshTokenVal(newRefreshToken)
-                  localStorage.setItem('jwtToken', newAccessToken)
-                  localStorage.setItem('refreshToken', newRefreshToken)
-                  
+              const newAccessToken = await refreshSession()
                   console.log('Auto refresh successful, retrying request...')
 
                   // Re-try the original request with the new access token
@@ -521,8 +517,6 @@ export default function App() {
                     }
                     return { success: false, error: retryData }
                   }
-                }
-              }
             } catch (refreshErr) {
               console.error('Error during auto-refresh:', refreshErr)
             }
@@ -686,12 +680,7 @@ export default function App() {
     setLoading(false)
 
     if (res.success && res.data.result) {
-      const accessToken = res.data.result.token
-      const refToken = res.data.result.refreshToken || ''
-      setToken(accessToken)
-      setRefreshTokenVal(refToken)
-      localStorage.setItem('jwtToken', accessToken)
-      localStorage.setItem('refreshToken', refToken)
+      persistSession(res.data.result)
       
       showToast('Chào mừng bạn quay trở lại Cần Giuộc FoodTour!', 'success')
       setShowAuthModal(false)
@@ -725,8 +714,8 @@ export default function App() {
       return
     }
 
-    if (regPassword.length < 6) {
-      showToast('Mật khẩu phải có ít nhất 6 ký tự', 'error')
+    if (regPassword.length < 8 || regPassword.length > 72) {
+      showToast('Mật khẩu phải có từ 8 đến 72 ký tự', 'error')
       return
     }
 
@@ -741,7 +730,8 @@ export default function App() {
       email: cleanEmail,
       firstname: regFirstname.trim(),
       lastname: regLastname.trim(),
-      password: regPassword
+      password: regPassword,
+      dateOfBirth: regDob
     })
     setLoading(false)
 
@@ -754,6 +744,7 @@ export default function App() {
       setRegLastname('')
       setRegPassword('')
       setRegConfirmPassword('')
+      setRegDob('')
     } else {
       showToast(res.error?.message || 'Đăng ký thất bại.', 'error')
     }
@@ -763,7 +754,7 @@ export default function App() {
   async function handleVerifyEmail(e) {
     e.preventDefault()
     setLoading(true)
-    const res = await makeRequest('GET', `/auth/verify-email?token=${encodeURIComponent(verifyTokenVal)}`)
+    const res = await makeRequest('POST', '/auth/verify-email', { token: verifyTokenVal.trim() })
     setLoading(false)
 
     if (res.success) {
@@ -868,12 +859,7 @@ export default function App() {
     setLoading(false)
 
     if (res.success && res.data.result) {
-      const accessToken = res.data.result.token
-      const refToken = res.data.result.refreshToken || ''
-      setToken(accessToken)
-      setRefreshTokenVal(refToken)
-      localStorage.setItem('jwtToken', accessToken)
-      localStorage.setItem('refreshToken', refToken)
+      persistSession(res.data.result)
       showToast('Đăng nhập bằng Google thành công!', 'success')
       setShowAuthModal(false)
       setSocialGoogleToken('')
@@ -897,12 +883,7 @@ export default function App() {
     setLoading(false)
 
     if (res.success && res.data.result) {
-      const accessToken = res.data.result.token
-      const refToken = res.data.result.refreshToken || ''
-      setToken(accessToken)
-      setRefreshTokenVal(refToken)
-      localStorage.setItem('jwtToken', accessToken)
-      localStorage.setItem('refreshToken', refToken)
+      persistSession(res.data.result)
       showToast('Đăng nhập bằng Facebook thành công!', 'success')
       setShowAuthModal(false)
       setSocialFacebookToken('')
@@ -949,20 +930,14 @@ export default function App() {
       return
     }
     setLoading(true)
-    const res = await makeRequest('POST', '/auth/refresh', { token: refreshTokenVal })
-    setLoading(false)
-
-    if (res.success && res.data.result) {
-      const accessToken = res.data.result.token
-      const refToken = res.data.result.refreshToken || refreshTokenVal
-      setToken(accessToken)
-      setRefreshTokenVal(refToken)
-      localStorage.setItem('jwtToken', accessToken)
-      localStorage.setItem('refreshToken', refToken)
+    try {
+      await refreshSession()
       showToast('Làm mới phiên làm việc thành công.', 'success')
-    } else {
+    } catch {
       showToast('Phiên làm việc đã hết hạn. Đang đăng xuất.', 'error')
       handleLogout()
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -979,6 +954,9 @@ export default function App() {
     showToast('Đã đăng xuất khỏi Cần Giuộc FoodTour.', 'info')
     navigate('/explore')
   }
+
+  refreshSessionRef.current = refreshSession
+  handleLogoutRef.current = handleLogout
 
   // Update profile basic info
   async function handleUpdateProfile(e) {

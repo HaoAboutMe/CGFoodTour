@@ -23,15 +23,6 @@ public class UserController
 {
     UserService userService;
 
-    @PostMapping("/users")
-    public ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request)
-    {
-        ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
-        apiResponse.setResult(userService.createUser(request));
-        apiResponse.setMessage(SuccessMessage.REGISTER_SUCCESS);
-        return apiResponse;
-    }
-
     @GetMapping("/users")
     public ApiResponse<List<UserResponse>> getUsers()
     {

@@ -2,6 +2,7 @@ package com.cangiuoc.cgfoodtour.dto.request;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import jakarta.validation.constraints.NotBlank;
 
 @Data
 @NoArgsConstructor
@@ -10,5 +11,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RefreshRequest
 {
-    String token;
+    @NotBlank(message = "UNAUTHENTICATED")
+    String refreshToken;
 }

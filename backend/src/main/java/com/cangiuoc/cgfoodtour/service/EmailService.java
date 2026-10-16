@@ -36,15 +36,15 @@ public class EmailService {
             helper.setTo(toEmail);
             helper.setSubject("Xác thực tài khoản - CGFoodTour");
 
-            String verificationLink = baseUrl + "/auth/verify-email?token=" + token;
+            String verificationLink = baseUrl + "/auth/verify-email/complete?token=" + token;
 
             String htmlContent = buildEmailTemplate(verificationLink);
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
-            log.info("Verification email sent to: {}", toEmail);
+            log.info("Verification email dispatched successfully");
         } catch (Exception e) {
-            log.error("Failed to send verification email to: {} - Error: {}", toEmail, e.getMessage());
+            log.error("Failed to send verification email", e);
             throw new AppException(ErrorCode.EMAIL_SEND_FAILED);
         }
     }
@@ -63,9 +63,9 @@ public class EmailService {
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
-            log.info("OTP email sent to: {}", toEmail);
+            log.info("OTP email dispatched successfully");
         } catch (Exception e) {
-            log.error("Failed to send OTP email to: {} - Error: {}", toEmail, e.getMessage());
+            log.error("Failed to send OTP email", e);
             throw new AppException(ErrorCode.EMAIL_SEND_FAILED);
         }
     }
