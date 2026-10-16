@@ -3,7 +3,7 @@
 > Ngày cập nhật: 16/10/2026  
 > Trạng thái: Đã chỉnh sửa source và có test tự động  
 > Phạm vi chính: H-02, H-01, H-03, M-16  
-> Thay đổi đi kèm: M-17 được xử lý trong luồng xác minh email
+> Thay đổi đi kèm: M-17 được xử lý trong luồng xác minh email; M-09 được hoàn thành ở đợt follow-up
 
 ## 1. Mục đích tài liệu
 
@@ -25,6 +25,7 @@ Tài liệu này mô tả trạng thái thực tế sau khi triển khai bốn c
 | H-01 — Registration contract | Frontend gọi sai endpoint, thiếu `dateOfBirth`, rule password không đồng nhất | Có endpoint canonical `POST /auth/register`, validation thống nhất | Gửi đúng payload, bao gồm ngày sinh; kiểm tra password 8–72 ký tự |
 | M-17 — Verify email báo sai thành công | API và browser landing dùng chung GET endpoint, lỗi vẫn có thể trả HTTP 200 | Tách JSON action và HTML landing; token lỗi trả HTTP 400 | SPA gọi JSON endpoint bằng POST và chỉ báo thành công khi backend thành công thật |
 | M-16 — Refresh token contract | Access token bị dùng như refresh token; response chỉ có `token` | Phát cặp access/refresh riêng, phân loại bằng claim `typ`, rotate refresh token | Lưu đúng hai token, refresh single-flight, cập nhật cả cặp token sau rotation |
+| M-09 — Logout chỉ ở frontend | Backend logout không được gọi và chỉ nhận một access token | Logout nhận và thu hồi độc lập cả access/refresh token | Gọi backend logout trước khi xóa cặp token local; local logout không phụ thuộc network |
 | H-03 — OTP/resend abuse | OTP plaintext, không attempt cap/rate limit/cooldown, response làm lộ account | OTP HMAC, giới hạn theo IP/email, cooldown, attempt cap, response generic | Tiếp tục dùng flow hiện tại nhưng nhận response generic và các lỗi rate-limit/OTP hợp lệ |
 
 ## 3. H-02 — Loại bỏ SSRF khỏi Google Maps parser
@@ -235,9 +236,25 @@ Frontend hiện:
 
 Token được tạo bởi phiên bản cũ không có claim `typ`, vì vậy chúng sẽ không vượt qua validation mới. Người dùng đang đăng nhập sẽ cần đăng nhập lại một lần sau khi deploy.
 
-M-09 chưa được triển khai trong đợt này: thao tác logout trên frontend vẫn là local logout và chưa gọi backend logout endpoint.
+### 5.6. Logout lifecycle
 
-### 5.6. File chính
+Frontend gửi cặp token hiện tại đến backend:
+
+```http
+POST /api/auth/logout
+Content-Type: application/json
+
+{
+  "accessToken": "current-access-jwt",
+  "refreshToken": "current-refresh-jwt"
+}
+```
+
+Backend kiểm tra đúng `typ` của từng token và thêm cả hai `jti` vào bảng invalidated token. Việc thu hồi được xử lý độc lập và idempotent: access token hết hạn, malformed hoặc đã bị thu hồi không ngăn backend tiếp tục thu hồi refresh token.
+
+Frontend bắt đầu request thu hồi trước khi xóa token local, nhưng dọn state/local storage ngay để thao tác logout không bị treo theo network. Request có timeout 3 giây; backend không phản hồi vẫn không ngăn người dùng thoát khỏi phiên local. Các lời gọi logout đồng thời dùng chung một promise để tránh gửi nhiều request revoke trùng nhau.
+
+### 5.7. File chính
 
 - `backend/src/main/java/com/cangiuoc/cgfoodtour/dto/request/RefreshRequest.java`
 - `backend/src/main/java/com/cangiuoc/cgfoodtour/dto/response/AuthenticationResponse.java`
@@ -406,15 +423,15 @@ Verify/reset
 
 | Test | Nội dung chính |
 |---|---|
-| `AuthenticationControllerTest` | Registration contract, DOB validation, JSON verify-email và HTTP status của landing page |
-| `AuthenticationServiceTest` | Cặp token có type đúng, refresh rotation, OTP chỉ lưu hash, challenge bị khóa sau 5 lần sai |
+| `AuthenticationControllerTest` | Registration contract, DOB validation, JSON verify-email, HTTP status của landing page và logout token-pair contract |
+| `AuthenticationServiceTest` | Cặp token có type đúng, refresh rotation, thu hồi cả access/refresh khi logout, OTP chỉ lưu hash, challenge bị khóa sau 5 lần sai |
 | `AuthAbuseProtectionServiceTest` | Request phát challenge vượt giới hạn theo email bị chặn |
 | `StoreServiceUrlParserTest` | Parse tọa độ trực tiếp, nhận tọa độ từ short-link resolver, ưu tiên tọa độ pin, từ chối input oversized/control-character |
 | `GoogleMapsUrlResolverTest` | Chỉ theo redirect allowlisted, từ chối HTTP/unknown host/private DNS/unsafe redirect và phân loại địa chỉ public/private |
 
 Kết quả kiểm chứng tại thời điểm cập nhật tài liệu:
 
-- Backend: 13 test, 0 failure, Maven `BUILD SUCCESS`.
+- Backend: 16 test, 0 failure, Maven `BUILD SUCCESS`.
 - Frontend: `npm run build` thành công.
 - Frontend: `npm run lint` trả exit code 0; repository vẫn có các warning cũ ngoài phạm vi thay đổi.
 - `git diff --check`: không có whitespace error; chỉ có cảnh báo chuyển line ending LF/CRLF trên Windows.
@@ -432,13 +449,13 @@ Chưa thực hiện E2E với SMTP, OAuth provider, reverse proxy và database p
 - [ ] Xác nhận hệ thống đang chạy một backend instance; nếu không, chuyển rate limiter sang shared store.
 - [ ] Smoke test URL Google Maps đầy đủ và short link `maps.app.goo.gl` từ môi trường production.
 - [ ] Chạy E2E: register → nhận email → verify → login → refresh → protected API.
+- [ ] Chạy E2E: login → logout → access token và refresh token cũ đều không thể tái sử dụng.
 - [ ] Chạy E2E: forgot password → OTP sai 5 lần → challenge bị vô hiệu hóa.
 - [ ] Chạy E2E: forgot password → OTP đúng → reset → login bằng password mới.
 
 ## 10. Những issue chưa nằm trong đợt sửa này
 
-- M-09: logout frontend chưa gọi backend logout/revocation.
 - M-10: đổi/reset password chưa revoke toàn bộ access JWT cũ.
 - M-19: social login vẫn cần audit riêng để bảo đảm account disabled không bị bật lại.
 
-Ba issue trên vẫn cần hoàn thành trước khi xem auth/session lifecycle là hoàn chỉnh cho production.
+Hai issue trên vẫn cần hoàn thành trước khi xem auth/session lifecycle là hoàn chỉnh cho production.

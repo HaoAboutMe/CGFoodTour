@@ -42,6 +42,7 @@ export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem('jwtToken') || '')
   const [refreshTokenVal, setRefreshTokenVal] = useState(() => localStorage.getItem('refreshToken') || '')
   const refreshPromiseRef = useRef(null)
+  const logoutPromiseRef = useRef(null)
   const refreshSessionRef = useRef(null)
   const handleLogoutRef = useRef(null)
   const [currentUser, setCurrentUser] = useState(null)
@@ -942,17 +943,56 @@ export default function App() {
   }
 
   // Logout
-  function handleLogout() {
-    setToken('')
-    setRefreshTokenVal('')
-    setCurrentUser(null)
-    localStorage.removeItem('jwtToken')
-    localStorage.removeItem('refreshToken')
-    setAvatarPreview('')
-    setAvatarFile(null)
-    setEditingStore(null)
-    showToast('Đã đăng xuất khỏi Cần Giuộc FoodTour.', 'info')
-    navigate('/explore')
+  async function handleLogout() {
+    if (logoutPromiseRef.current) return logoutPromiseRef.current
+
+    logoutPromiseRef.current = (async () => {
+      const accessToken = localStorage.getItem('jwtToken') || token
+      const refreshToken = localStorage.getItem('refreshToken') || refreshTokenVal
+      const abortController = new AbortController()
+      const timeout = setTimeout(() => abortController.abort(), 3000)
+
+      // Start server-side revocation before clearing the local token pair. Local cleanup is
+      // immediate and is never blocked by network/backend availability.
+      const revokeRequest = accessToken && refreshToken
+        ? fetch(API_BASE + '/auth/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accessToken, refreshToken }),
+            signal: abortController.signal
+          })
+        : Promise.resolve(null)
+
+      setToken('')
+      setRefreshTokenVal('')
+      setCurrentUser(null)
+      localStorage.removeItem('jwtToken')
+      localStorage.removeItem('refreshToken')
+      setAvatarPreview('')
+      setAvatarFile(null)
+      setEditingStore(null)
+      showToast('Đã đăng xuất khỏi Cần Giuộc FoodTour.', 'info')
+      navigate('/explore')
+
+      try {
+        const response = await revokeRequest
+        if (response && !response.ok) {
+          console.warn('Server-side logout was not acknowledged')
+        }
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.warn('Server-side logout failed', error)
+        }
+      } finally {
+        clearTimeout(timeout)
+      }
+    })()
+
+    try {
+      return await logoutPromiseRef.current
+    } finally {
+      logoutPromiseRef.current = null
+    }
   }
 
   refreshSessionRef.current = refreshSession

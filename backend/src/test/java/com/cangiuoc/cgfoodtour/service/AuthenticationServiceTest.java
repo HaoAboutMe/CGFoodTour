@@ -2,6 +2,7 @@ package com.cangiuoc.cgfoodtour.service;
 
 import com.cangiuoc.cgfoodtour.dto.request.AuthenticationRequest;
 import com.cangiuoc.cgfoodtour.dto.request.ForgotPasswordRequest;
+import com.cangiuoc.cgfoodtour.dto.request.LogOutRequest;
 import com.cangiuoc.cgfoodtour.dto.request.RefreshRequest;
 import com.cangiuoc.cgfoodtour.dto.request.VerifyOtpRequest;
 import com.cangiuoc.cgfoodtour.entity.InvalidatedToken;
@@ -84,6 +85,53 @@ class AuthenticationServiceTest {
 
         assertThat(rotated.getRefreshToken()).isNotEqualTo(pair.getRefreshToken());
         verify(invalidatedTokenRepository).save(any(InvalidatedToken.class));
+    }
+
+    @Test
+    void logoutRevokesBothAccessAndRefreshTokens() throws Exception {
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password123", "encoded")).thenReturn(true);
+        when(invalidatedTokenRepository.existsById(any())).thenReturn(false);
+
+        AuthenticationRequest login = new AuthenticationRequest();
+        login.setEmail(user.getEmail());
+        login.setPassword("password123");
+        var pair = authenticationService.authenticate(login);
+
+        authenticationService.logout(LogOutRequest.builder()
+                .accessToken(pair.getAccessToken())
+                .refreshToken(pair.getRefreshToken())
+                .build());
+
+        ArgumentCaptor<InvalidatedToken> revokedTokens = ArgumentCaptor.forClass(InvalidatedToken.class);
+        verify(invalidatedTokenRepository, times(2)).save(revokedTokens.capture());
+        assertThat(revokedTokens.getAllValues())
+                .extracting(InvalidatedToken::getId)
+                .containsExactlyInAnyOrder(
+                        SignedJWT.parse(pair.getAccessToken()).getJWTClaimsSet().getJWTID(),
+                        SignedJWT.parse(pair.getRefreshToken()).getJWTClaimsSet().getJWTID());
+    }
+
+    @Test
+    void invalidAccessTokenDoesNotPreventRefreshTokenRevocation() throws Exception {
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password123", "encoded")).thenReturn(true);
+        when(invalidatedTokenRepository.existsById(any())).thenReturn(false);
+
+        AuthenticationRequest login = new AuthenticationRequest();
+        login.setEmail(user.getEmail());
+        login.setPassword("password123");
+        var pair = authenticationService.authenticate(login);
+
+        authenticationService.logout(LogOutRequest.builder()
+                .accessToken("malformed-access-token")
+                .refreshToken(pair.getRefreshToken())
+                .build());
+
+        ArgumentCaptor<InvalidatedToken> revokedToken = ArgumentCaptor.forClass(InvalidatedToken.class);
+        verify(invalidatedTokenRepository).save(revokedToken.capture());
+        assertThat(revokedToken.getValue().getId())
+                .isEqualTo(SignedJWT.parse(pair.getRefreshToken()).getJWTClaimsSet().getJWTID());
     }
 
     @Test
