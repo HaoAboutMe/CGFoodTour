@@ -20,9 +20,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @EnableMethodSecurity
 public class SecurityConfig {
         private final String[] PUBLIC_ENDPOINTS = {
-                        "/users",
-                        "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh",
-                        "/auth/verify-email", "/auth/resend-verification",
+                        "/auth/register", "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh",
+                        "/auth/verify-email", "/auth/verify-email/complete", "/auth/resend-verification",
                         "/auth/forgot-password", "/auth/verify-otp", "/auth/reset-password",
                         "/auth/google-login", "/auth/facebook-login"
         };

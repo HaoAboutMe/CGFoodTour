@@ -29,6 +29,7 @@ public enum ErrorCode {
     UNSUPPORTED_MEDIA_TYPE(1020, "Unsupported media type", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
     UPLOAD_FAILED(1021, "Upload failed", HttpStatus.INTERNAL_SERVER_ERROR),
     FACEBOOK_TOKEN_INVALID(1022, "Facebook access token is invalid or expired", HttpStatus.BAD_REQUEST),
+    AUTH_RATE_LIMITED(1023, "Too many authentication attempts. Please try again later.", HttpStatus.TOO_MANY_REQUESTS),
     CATEGORY_NOT_FOUND(1030, "Category not found", HttpStatus.NOT_FOUND),
     STORE_NOT_FOUND(1031, "Store not found", HttpStatus.NOT_FOUND),
     FOOD_ITEM_NOT_FOUND(1032, "Food item not found", HttpStatus.NOT_FOUND),

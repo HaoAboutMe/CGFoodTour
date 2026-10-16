@@ -55,6 +55,8 @@ public class UserService
 
     public UserResponse createUser(UserCreationRequest request)
     {
+        request.setUsername(request.getUsername().trim());
+        request.setEmail(request.getEmail().trim().toLowerCase(java.util.Locale.ROOT));
         if(userRepository.existsByUsername(request.getUsername()))
         {
             throw new AppException(ErrorCode.USERNAME_EXISTED);
@@ -81,14 +83,9 @@ public class UserService
         String token = createVerificationToken(savedUser);
         try {
             emailService.sendVerificationEmail(savedUser.getEmail(), token);
-            log.info("User created with email: {}, verification email sent", savedUser.getEmail());
+            log.info("Verification email queued for new user id {}", savedUser.getId());
         } catch (Exception e) {
-            log.error("==========================================================================");
-            log.error("FAILED TO SEND VERIFICATION EMAIL TO: {}", savedUser.getEmail());
-            log.error("VERIFICATION TOKEN: {}", token);
-            log.error("You can manually activate this account by calling the API:");
-            log.error("GET http://localhost:8080/api/auth/verify-email?token={}", token);
-            log.error("==========================================================================");
+            log.error("Failed to dispatch verification email for user id {}", savedUser.getId());
         }
 
         return userMapper.toUserResponse(savedUser);
@@ -235,29 +232,32 @@ public class UserService
     @Transactional
     public void resendVerificationEmail(String email)
     {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        var userResult = userRepository.findByEmail(email);
+        if (userResult.isEmpty()) {
+            return;
+        }
+        User user = userResult.get();
 
         if (user.getEmailVerified()) {
-            throw new AppException(ErrorCode.EMAIL_ALREADY_VERIFIED);
+            return;
+        }
+
+        var existingToken = verificationTokenRepository.findByUserId(user.getId());
+        if (existingToken.isPresent()
+                && existingToken.get().getCreatedAt().plusMinutes(1).isAfter(LocalDateTime.now())) {
+            return;
         }
 
         // Xóa token cũ nếu có
-        verificationTokenRepository.findByUserId(user.getId())
-                .ifPresent(verificationTokenRepository::delete);
+        existingToken.ifPresent(verificationTokenRepository::delete);
 
         // Tạo token mới và gửi email
         String token = createVerificationToken(user);
         try {
             emailService.sendVerificationEmail(user.getEmail(), token);
-            log.info("Verification email resent to: {}", email);
+            log.info("Verification email re-queued for user id {}", user.getId());
         } catch (Exception e) {
-            log.error("==========================================================================");
-            log.error("FAILED TO RESEND VERIFICATION EMAIL TO: {}", email);
-            log.error("VERIFICATION TOKEN: {}", token);
-            log.error("You can manually activate this account by calling the API:");
-            log.error("GET http://localhost:8080/api/auth/verify-email?token={}", token);
-            log.error("==========================================================================");
+            log.error("Failed to dispatch verification email for user id {}", user.getId());
         }
     }
 

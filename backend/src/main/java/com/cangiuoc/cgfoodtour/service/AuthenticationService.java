@@ -31,7 +31,6 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
@@ -48,21 +47,43 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.security.SecureRandom;
+import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.StringJoiner;
 import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationService
 {
+    private static final String ACCESS_TOKEN_TYPE = "access";
+    private static final String REFRESH_TOKEN_TYPE = "refresh";
+
     UserRepository userRepository;
     RoleRepository roleRepository;
     InvalidatedTokenRepository invalidatedTokenRepository;
     PasswordResetOtpRepository passwordResetOtpRepository;
+    AuthAbuseProtectionService authAbuseProtectionService;
     EmailService emailService;
     PasswordEncoder passwordEncoder;
+
+    public AuthenticationService(UserRepository userRepository,
+                                 RoleRepository roleRepository,
+                                 InvalidatedTokenRepository invalidatedTokenRepository,
+                                 PasswordResetOtpRepository passwordResetOtpRepository,
+                                 AuthAbuseProtectionService authAbuseProtectionService,
+                                 EmailService emailService,
+                                 PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.invalidatedTokenRepository = invalidatedTokenRepository;
+        this.passwordResetOtpRepository = passwordResetOtpRepository;
+        this.authAbuseProtectionService = authAbuseProtectionService;
+        this.emailService = emailService;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -84,13 +105,17 @@ public class AuthenticationService
     @Value("${app.facebook.app-secret}")
     protected String FACEBOOK_APP_SECRET;
 
+    @NonFinal
+    @Value("${security.otp.pepper:${jwt.signerKey}}")
+    protected String OTP_PEPPER;
+
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException
     {
         var token = request.getToken();
         boolean isValid = true;
 
         try {
-            verifyToken(token, false);
+            verifyToken(token, ACCESS_TOKEN_TYPE);
         }
         catch (AppException ex)
         {
@@ -127,17 +152,13 @@ public class AuthenticationService
             throw new AppException(ErrorCode.ACCOUNT_DISABLED);
         }
 
-        var token = generateToken(user);
-        return AuthenticationResponse.builder()
-                .isAuthenticated(true)
-                .token(token)
-                .build();
+        return buildAuthenticationResponse(user);
     }
 
     public void logout(LogOutRequest request) throws ParseException, JOSEException
     {
         try {
-            var signedToken = verifyToken(request.getToken(), true);
+            var signedToken = verifyToken(request.getToken(), ACCESS_TOKEN_TYPE);
 
             String jti = signedToken.getJWTClaimsSet().getJWTID();
             Date expiryTime = signedToken.getJWTClaimsSet().getExpirationTime();
@@ -153,9 +174,10 @@ public class AuthenticationService
         }
     }
 
+    @Transactional
     public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException
     {
-        var signedToken = verifyToken(request.getToken(), true);
+        var signedToken = verifyToken(request.getRefreshToken(), REFRESH_TOKEN_TYPE);
 
         var jti = signedToken.getJWTClaimsSet().getJWTID();
         var expiryTime = signedToken.getJWTClaimsSet().getExpirationTime();
@@ -172,27 +194,24 @@ public class AuthenticationService
                 () -> new AppException(ErrorCode.UNAUTHENTICATED)
         );
 
-        var token = generateToken(user);
-        return AuthenticationResponse.builder()
-                .token(token)
-                .isAuthenticated(true)
-                .build();
+        if (!Boolean.TRUE.equals(user.getEnabled())) {
+            throw new AppException(ErrorCode.ACCOUNT_DISABLED);
+        }
+
+        return buildAuthenticationResponse(user);
     }
 
-    private SignedJWT verifyToken(String token, boolean isRefresh) throws ParseException, JOSEException
+    private SignedJWT verifyToken(String token, String expectedType) throws ParseException, JOSEException
     {
         JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
 
         SignedJWT signedJWT = SignedJWT.parse(token);
-
-        Date expirationTime = (isRefresh)
-                ? new Date(signedJWT.getJWTClaimsSet().getIssueTime()
-                        .toInstant().plus(REFRESHABLE_DURATION, ChronoUnit.SECONDS).toEpochMilli())
-                : signedJWT.getJWTClaimsSet().getExpirationTime();
-
         var verified = signedJWT.verify(verifier);
+        Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        String tokenType = signedJWT.getJWTClaimsSet().getStringClaim("typ");
 
-        if(!(verified && expirationTime.after(new Date())))
+        if (!(verified && expirationTime != null && expirationTime.after(new Date())
+                && expectedType.equals(tokenType)))
         {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
@@ -205,7 +224,17 @@ public class AuthenticationService
         return signedJWT;
     }
 
-    private String generateToken(User user)
+    private AuthenticationResponse buildAuthenticationResponse(User user) {
+        return AuthenticationResponse.builder()
+                .isAuthenticated(true)
+                .accessToken(generateToken(user, ACCESS_TOKEN_TYPE, VALID_DURATION))
+                .refreshToken(generateToken(user, REFRESH_TOKEN_TYPE, REFRESHABLE_DURATION))
+                .expiresIn(VALID_DURATION)
+                .refreshExpiresIn(REFRESHABLE_DURATION)
+                .build();
+    }
+
+    private String generateToken(User user, String tokenType, long durationSeconds)
     {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
@@ -213,10 +242,11 @@ public class AuthenticationService
                 .issuer("haoaboutme.com")
                 .issueTime(new Date())
                 .expirationTime(new Date(
-                        Instant.now().plus(VALID_DURATION, ChronoUnit.SECONDS).toEpochMilli()
+                        Instant.now().plus(durationSeconds, ChronoUnit.SECONDS).toEpochMilli()
                 ))
                 .jwtID(UUID.randomUUID().toString())
-                .claim("scope", buildScope(user))
+                .claim("typ", tokenType)
+                .claim("scope", ACCESS_TOKEN_TYPE.equals(tokenType) ? buildScope(user) : "")
                 .build();
 
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
@@ -252,77 +282,102 @@ public class AuthenticationService
     }
 
     @Transactional
-    public void forgotPassword(ForgotPasswordRequest request) {
-        // 1. Kiểm tra email tồn tại
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+    public void forgotPassword(ForgotPasswordRequest request, String clientIp) {
+        String email = normalizeEmail(request.getEmail());
+        authAbuseProtectionService.checkIssue(email, clientIp);
 
-        // 2. Tài khoản phải đã verify email
-        if (!user.getEmailVerified()) {
-            throw new AppException(ErrorCode.EMAIL_NOT_VERIFIED);
+        Optional<User> user = userRepository.findByEmail(email);
+        // Keep the public response identical for unknown, disabled and unverified accounts.
+        if (user.isEmpty() || !Boolean.TRUE.equals(user.get().getEnabled())
+                || !Boolean.TRUE.equals(user.get().getEmailVerified())) {
+            return;
         }
 
-        // 3. Xóa OTP cũ của email này (tránh nhiễu, chỉ 1 OTP active tại 1 thời điểm)
-        passwordResetOtpRepository.deleteAllByEmail(request.getEmail());
+        Optional<PasswordResetOtp> current = passwordResetOtpRepository
+                .findFirstByEmailAndIsUsedFalseOrderByCreatedAtDesc(email);
+        if (current.isPresent() && current.get().getCreatedAt() != null
+                && current.get().getCreatedAt().plusMinutes(1).isAfter(LocalDateTime.now())) {
+            return;
+        }
+        if (passwordResetOtpRepository.countByEmailAndCreatedAtAfter(email, LocalDateTime.now().minusHours(1)) >= 5) {
+            throw new AppException(ErrorCode.AUTH_RATE_LIMITED);
+        }
 
-        // 4. Tạo OTP 6 chữ số ngẫu nhiên an toàn
+        current.ifPresent(otp -> otp.setIsUsed(true));
+
         String otp = String.format("%06d", new SecureRandom().nextInt(1000000));
-
-        // 5. Lưu OTP vào database
         PasswordResetOtp resetOtp = PasswordResetOtp.builder()
-                .email(request.getEmail())
-                .otp(otp)
+                .email(email)
+                .otpHash(hashOtp(email, otp))
                 .build();
         passwordResetOtpRepository.save(resetOtp);
 
-        // 6. Gửi OTP qua email
         try {
-            emailService.sendOtpEmail(request.getEmail(), otp);
-            log.info("OTP sent to email: {}", request.getEmail());
+            emailService.sendOtpEmail(email, otp);
+            log.info("Password reset challenge dispatched for user id {}", user.get().getId());
         } catch (Exception e) {
-            log.error("==========================================================================");
-            log.error("FAILED TO SEND PASSWORD RESET OTP TO: {}", request.getEmail());
-            log.error("PASSWORD RESET OTP: {}", otp);
-            log.error("You can manually reset password using this OTP via POST /api/auth/reset-password");
-            log.error("==========================================================================");
+            log.error("Failed to dispatch password reset challenge for user id {}", user.get().getId());
         }
     }
 
-    @Transactional(readOnly = true)
-    public void verifyOtp(VerifyOtpRequest request) {
-        passwordResetOtpRepository
-                .findByEmailAndOtpAndIsUsedFalseAndExpiryDateAfter(
-                        request.getEmail(),
-                        request.getOtp(),
-                        LocalDateTime.now()
-                )
-                .orElseThrow(() -> new AppException(ErrorCode.INVALID_OTP));
+    @Transactional(noRollbackFor = AppException.class)
+    public void verifyOtp(VerifyOtpRequest request, String clientIp) {
+        String email = normalizeEmail(request.getEmail());
+        authAbuseProtectionService.checkVerificationAttempt(email, clientIp);
+        requireValidOtp(email, request.getOtp());
     }
 
-    @Transactional
-    public void resetPassword(ResetPasswordRequest request) {
-        // 1. Tìm OTP hợp lệ: đúng email + đúng mã + chưa dùng + chưa hết hạn
-        PasswordResetOtp resetOtp = passwordResetOtpRepository
-                .findByEmailAndOtpAndIsUsedFalseAndExpiryDateAfter(
-                        request.getEmail(),
-                        request.getOtp(),
-                        LocalDateTime.now()
-                )
-                .orElseThrow(() -> new AppException(ErrorCode.INVALID_OTP));
+    @Transactional(noRollbackFor = AppException.class)
+    public void resetPassword(ResetPasswordRequest request, String clientIp) {
+        String email = normalizeEmail(request.getEmail());
+        authAbuseProtectionService.checkVerificationAttempt(email, clientIp);
+        PasswordResetOtp resetOtp = requireValidOtp(email, request.getOtp());
 
-        // 2. Tìm user theo email
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        // 3. Cập nhật password mới (hash bcrypt)
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
-
-        // 4. Đánh dấu OTP đã dùng (không cho dùng lại)
         resetOtp.setIsUsed(true);
         passwordResetOtpRepository.save(resetOtp);
 
-        log.info("Password reset successfully for email: {}", request.getEmail());
+        log.info("Password reset successfully for user id {}", user.getId());
+    }
+
+    private PasswordResetOtp requireValidOtp(String email, String otp) {
+        PasswordResetOtp challenge = passwordResetOtpRepository
+                .findFirstByEmailAndIsUsedFalseOrderByCreatedAtDesc(email)
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_OTP));
+
+        if (challenge.getExpiryDate().isBefore(LocalDateTime.now()) || challenge.getFailedAttempts() >= 5) {
+            challenge.setIsUsed(true);
+            passwordResetOtpRepository.save(challenge);
+            throw new AppException(ErrorCode.INVALID_OTP);
+        }
+
+        byte[] expected = challenge.getOtpHash().getBytes(StandardCharsets.US_ASCII);
+        byte[] actual = hashOtp(email, otp).getBytes(StandardCharsets.US_ASCII);
+        if (!MessageDigest.isEqual(expected, actual)) {
+            challenge.setFailedAttempts(challenge.getFailedAttempts() + 1);
+            if (challenge.getFailedAttempts() >= 5) challenge.setIsUsed(true);
+            passwordResetOtpRepository.save(challenge);
+            throw new AppException(ErrorCode.INVALID_OTP);
+        }
+        return challenge;
+    }
+
+    private String hashOtp(String email, String otp) {
+        try {
+            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+            mac.init(new javax.crypto.spec.SecretKeySpec(OTP_PEPPER.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] hash = mac.doFinal((email + ":" + otp).getBytes(StandardCharsets.UTF_8));
+            return java.util.HexFormat.of().formatHex(hash);
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to hash OTP", e);
+        }
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     @Transactional
@@ -400,11 +455,7 @@ public class AuthenticationService
         }
 
         // 7. Generate application JWT token
-        var token = generateToken(user);
-        return AuthenticationResponse.builder()
-                .isAuthenticated(true)
-                .token(token)
-                .build();
+        return buildAuthenticationResponse(user);
     }
 
     @Transactional
@@ -531,11 +582,7 @@ public class AuthenticationService
         }
 
         // 6. Generate application JWT token
-        var token = generateToken(user);
-        return AuthenticationResponse.builder()
-                .isAuthenticated(true)
-                .token(token)
-                .build();
+        return buildAuthenticationResponse(user);
     }
 
     private String generateAppSecretProof(String accessToken, String appSecret) {

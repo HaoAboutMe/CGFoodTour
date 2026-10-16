@@ -58,6 +58,11 @@ jwt:
   valid-duration: ${JWT_VALID_DURATION:1800} # 30 minutes in seconds
   refreshable-duration: ${JWT_REFRESHABLE_DURATION:2592000} # 30 days in seconds
 
+security:
+  otp:
+    # Use a dedicated high-entropy secret in production; do not reuse or commit real values.
+    pepper: ${OTP_PEPPER:${JWT_SIGNER_KEY}}
+
 springdoc:
   api-docs:
     enabled: false

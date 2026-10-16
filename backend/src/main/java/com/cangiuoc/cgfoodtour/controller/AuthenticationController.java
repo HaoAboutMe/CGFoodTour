@@ -2,27 +2,49 @@ package com.cangiuoc.cgfoodtour.controller;
 
 import com.cangiuoc.cgfoodtour.constant.SuccessMessage;
 import com.cangiuoc.cgfoodtour.dto.request.*;
-import com.cangiuoc.cgfoodtour.dto.request.*;
 import com.cangiuoc.cgfoodtour.dto.response.AuthenticationResponse;
 import com.cangiuoc.cgfoodtour.dto.response.IntrospectResponse;
+import com.cangiuoc.cgfoodtour.dto.response.UserResponse;
+import com.cangiuoc.cgfoodtour.exception.AppException;
 import com.cangiuoc.cgfoodtour.service.AuthenticationService;
+import com.cangiuoc.cgfoodtour.service.AuthAbuseProtectionService;
 import com.cangiuoc.cgfoodtour.service.UserService;
 import com.nimbusds.jose.JOSEException;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.HtmlUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
 
 @RestController
 @RequestMapping("/auth")
-@RequiredArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationController {
     AuthenticationService authenticationService;
+    AuthAbuseProtectionService authAbuseProtectionService;
     UserService userService;
+
+    public AuthenticationController(AuthenticationService authenticationService,
+                                    AuthAbuseProtectionService authAbuseProtectionService,
+                                    UserService userService) {
+        this.authenticationService = authenticationService;
+        this.authAbuseProtectionService = authAbuseProtectionService;
+        this.userService = userService;
+    }
+
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    ApiResponse<UserResponse> register(@RequestBody @Valid UserCreationRequest request) {
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.createUser(request))
+                .message(SuccessMessage.REGISTER_SUCCESS)
+                .build();
+    }
 
     @PostMapping("/token")
     ApiResponse<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
@@ -70,7 +92,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/refresh")
-    ApiResponse<AuthenticationResponse> refresh(@RequestBody RefreshRequest request)
+    ApiResponse<AuthenticationResponse> refresh(@RequestBody @Valid RefreshRequest request)
             throws ParseException, JOSEException {
         var result = authenticationService.refreshToken(request);
         return ApiResponse.<AuthenticationResponse>builder()
@@ -79,15 +101,22 @@ public class AuthenticationController {
                 .build();
     }
 
-    @GetMapping(value = "/verify-email", produces = MediaType.TEXT_HTML_VALUE)
-    String verifyEmail(@RequestParam String token) {
+    @PostMapping("/verify-email")
+    ApiResponse<UserResponse> verifyEmail(@RequestBody @Valid VerifyEmailRequest request) {
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.verifyEmail(request.getToken()))
+                .message(SuccessMessage.VERIFY_EMAIL_SUCCESS)
+                .build();
+    }
+
+    @GetMapping(value = "/verify-email/complete", produces = MediaType.TEXT_HTML_VALUE)
+    ResponseEntity<String> completeEmailVerification(@RequestParam String token) {
         try {
             var result = userService.verifyEmail(token);
-            // Trả về HTML page với thông báo thành công
-            return buildSuccessPage(result.getEmail());
-        } catch (Exception e) {
-            // Trả về HTML page với thông báo lỗi
-            return buildErrorPage(e.getMessage());
+            return ResponseEntity.ok(buildSuccessPage(HtmlUtils.htmlEscape(result.getEmail())));
+        } catch (AppException e) {
+            return ResponseEntity.badRequest().body(buildErrorPage(
+                    HtmlUtils.htmlEscape(e.getErrorCode().getMessage())));
         }
     }
 
@@ -366,10 +395,14 @@ public class AuthenticationController {
     }
 
     @PostMapping("/resend-verification")
-    ApiResponse<String> resendVerificationEmail(@RequestParam String email) {
-        userService.resendVerificationEmail(email);
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    ApiResponse<String> resendVerificationEmail(@RequestParam String email,
+                                                HttpServletRequest httpRequest) {
+        String normalizedEmail = email.trim().toLowerCase(java.util.Locale.ROOT);
+        authAbuseProtectionService.checkIssue(normalizedEmail, httpRequest.getRemoteAddr());
+        userService.resendVerificationEmail(normalizedEmail);
         return ApiResponse.<String>builder()
-                .result("Verification email has been sent to: " + email)
+                .result("If the account is eligible, a verification email will be sent.")
                 .message(SuccessMessage.SEND_VERIFICATION_SUCCESS)
                 .build();
     }
@@ -377,17 +410,20 @@ public class AuthenticationController {
     // ========== FORGOT PASSWORD ==========
 
     @PostMapping("/forgot-password")
-    ApiResponse<String> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
-        authenticationService.forgotPassword(request);
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    ApiResponse<String> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request,
+                                       HttpServletRequest httpRequest) {
+        authenticationService.forgotPassword(request, httpRequest.getRemoteAddr());
         return ApiResponse.<String>builder()
-                .result("OTP has been sent to: " + request.getEmail())
+                .result("If the account is eligible, password reset instructions will be sent.")
                 .message(SuccessMessage.FORGOT_PASSWORD_SUCCESS)
                 .build();
     }
 
     @PostMapping("/verify-otp")
-    ApiResponse<String> verifyOtp(@RequestBody @Valid VerifyOtpRequest request) {
-        authenticationService.verifyOtp(request);
+    ApiResponse<String> verifyOtp(@RequestBody @Valid VerifyOtpRequest request,
+                                  HttpServletRequest httpRequest) {
+        authenticationService.verifyOtp(request, httpRequest.getRemoteAddr());
         return ApiResponse.<String>builder()
                 .result("OTP is valid")
                 .message("OTP_VALID")
@@ -395,8 +431,9 @@ public class AuthenticationController {
     }
 
     @PostMapping("/reset-password")
-    ApiResponse<String> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
-        authenticationService.resetPassword(request);
+    ApiResponse<String> resetPassword(@RequestBody @Valid ResetPasswordRequest request,
+                                      HttpServletRequest httpRequest) {
+        authenticationService.resetPassword(request, httpRequest.getRemoteAddr());
         return ApiResponse.<String>builder()
                 .result("Password reset successfully")
                 .message(SuccessMessage.RESET_PASSWORD_SUCCESS)

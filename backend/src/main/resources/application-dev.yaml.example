@@ -50,6 +50,10 @@ jwt:
   valid-duration: 300 # in seconds
   refreshable-duration: 1200 # seconds
 
+security:
+  otp:
+    pepper: YOUR_DEVELOPMENT_OTP_PEPPER
+
 springdoc:
   api-docs:
     path: /api-docs

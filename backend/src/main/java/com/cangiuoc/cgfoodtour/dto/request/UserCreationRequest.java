@@ -3,6 +3,7 @@ package com.cangiuoc.cgfoodtour.dto.request;
 import com.cangiuoc.cgfoodtour.validator.DateOfBirthConstraint;
 import com.cangiuoc.cgfoodtour.validator.EmailNullConstraint;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -17,7 +18,8 @@ import java.time.LocalDate;
 public class UserCreationRequest
 {
     //Message truyền theo key nằm trong ErrorCode enum
-    @Size(min = 3, message = "USERNAME_INVALID")
+    @NotBlank(message = "USERNAME_INVALID")
+    @Size(min = 3, max = 20, message = "USERNAME_INVALID")
     String username;
     String firstname;
     String lastname;
@@ -26,7 +28,8 @@ public class UserCreationRequest
     @EmailNullConstraint(message = "EMAIL_INVALID")
     String email;
 
-    @Size(min = 8, message = "PASSWORD_INVALID")
+    @NotBlank(message = "PASSWORD_INVALID")
+    @Size(min = 8, max = 72, message = "PASSWORD_INVALID")
     String password;
 
     @DateOfBirthConstraint(min = 5, message = "INVALID_DATE_OF_BIRTH")
