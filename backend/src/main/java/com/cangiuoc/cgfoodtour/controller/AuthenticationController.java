@@ -9,6 +9,7 @@ import com.cangiuoc.cgfoodtour.exception.AppException;
 import com.cangiuoc.cgfoodtour.service.AuthenticationService;
 import com.cangiuoc.cgfoodtour.service.AuthAbuseProtectionService;
 import com.cangiuoc.cgfoodtour.service.UserService;
+import com.cangiuoc.cgfoodtour.service.ClientIpResolver;
 import com.nimbusds.jose.JOSEException;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,20 +29,24 @@ public class AuthenticationController {
     AuthenticationService authenticationService;
     AuthAbuseProtectionService authAbuseProtectionService;
     UserService userService;
+    ClientIpResolver clientIpResolver;
 
     public AuthenticationController(AuthenticationService authenticationService,
                                     AuthAbuseProtectionService authAbuseProtectionService,
-                                    UserService userService) {
+                                    UserService userService,
+                                    ClientIpResolver clientIpResolver) {
         this.authenticationService = authenticationService;
         this.authAbuseProtectionService = authAbuseProtectionService;
         this.userService = userService;
+        this.clientIpResolver = clientIpResolver;
     }
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    ApiResponse<UserResponse> register(@RequestBody @Valid UserCreationRequest request) {
+    ApiResponse<UserResponse> register(@RequestBody @Valid UserCreationRequest request,
+                                       HttpServletRequest httpRequest) {
         return ApiResponse.<UserResponse>builder()
-                .result(userService.createUser(request))
+                .result(userService.createUser(request, clientIpResolver.resolve(httpRequest)))
                 .message(SuccessMessage.REGISTER_SUCCESS)
                 .build();
     }
@@ -49,7 +54,7 @@ public class AuthenticationController {
     @PostMapping("/token")
     ApiResponse<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest request,
                                                       HttpServletRequest httpRequest) {
-        var result = authenticationService.authenticate(request, httpRequest.getRemoteAddr());
+        var result = authenticationService.authenticate(request, clientIpResolver.resolve(httpRequest));
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(result)
                 .message(SuccessMessage.LOGIN_SUCCESS)
@@ -59,7 +64,7 @@ public class AuthenticationController {
     @PostMapping("/google-login")
     ApiResponse<AuthenticationResponse> googleLogin(@RequestBody @Valid GoogleLoginRequest request,
                                                      HttpServletRequest httpRequest) {
-        var result = authenticationService.googleAuthenticate(request, httpRequest.getRemoteAddr());
+        var result = authenticationService.googleAuthenticate(request, clientIpResolver.resolve(httpRequest));
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(result)
                 .message(SuccessMessage.GOOGLE_LOGIN_SUCCESS)
@@ -69,7 +74,7 @@ public class AuthenticationController {
     @PostMapping("/facebook-login")
     ApiResponse<AuthenticationResponse> facebookLogin(@RequestBody @Valid com.cangiuoc.cgfoodtour.dto.request.FacebookLoginRequest request,
                                                        HttpServletRequest httpRequest) {
-        var result = authenticationService.facebookAuthenticate(request, httpRequest.getRemoteAddr());
+        var result = authenticationService.facebookAuthenticate(request, clientIpResolver.resolve(httpRequest));
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(result)
                 .message(SuccessMessage.FACEBOOK_LOGIN_SUCCESS)
@@ -401,7 +406,7 @@ public class AuthenticationController {
     ApiResponse<String> resendVerificationEmail(@RequestParam String email,
                                                 HttpServletRequest httpRequest) {
         String normalizedEmail = email.trim().toLowerCase(java.util.Locale.ROOT);
-        authAbuseProtectionService.checkIssue(normalizedEmail, httpRequest.getRemoteAddr());
+        authAbuseProtectionService.checkIssue(normalizedEmail, clientIpResolver.resolve(httpRequest));
         userService.resendVerificationEmail(normalizedEmail);
         return ApiResponse.<String>builder()
                 .result("If the account is eligible, a verification email will be sent.")
@@ -414,7 +419,7 @@ public class AuthenticationController {
     @PostMapping("/forgot-password")
     ApiResponse<String> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request,
                                        HttpServletRequest httpRequest) {
-        authenticationService.forgotPassword(request, httpRequest.getRemoteAddr());
+        authenticationService.forgotPassword(request, clientIpResolver.resolve(httpRequest));
         return ApiResponse.<String>builder()
                 .result("If the account is eligible, password reset instructions will be sent.")
                 .message(SuccessMessage.FORGOT_PASSWORD_SUCCESS)
@@ -424,7 +429,7 @@ public class AuthenticationController {
     @PostMapping("/verify-otp")
     ApiResponse<String> verifyOtp(@RequestBody @Valid VerifyOtpRequest request,
                                   HttpServletRequest httpRequest) {
-        authenticationService.verifyOtp(request, httpRequest.getRemoteAddr());
+        authenticationService.verifyOtp(request, clientIpResolver.resolve(httpRequest));
         return ApiResponse.<String>builder()
                 .result("OTP is valid")
                 .message("OTP_VALID")
@@ -434,7 +439,7 @@ public class AuthenticationController {
     @PostMapping("/reset-password")
     ApiResponse<String> resetPassword(@RequestBody @Valid ResetPasswordRequest request,
                                       HttpServletRequest httpRequest) {
-        authenticationService.resetPassword(request, httpRequest.getRemoteAddr());
+        authenticationService.resetPassword(request, clientIpResolver.resolve(httpRequest));
         return ApiResponse.<String>builder()
                 .result("Password reset successfully")
                 .message(SuccessMessage.RESET_PASSWORD_SUCCESS)

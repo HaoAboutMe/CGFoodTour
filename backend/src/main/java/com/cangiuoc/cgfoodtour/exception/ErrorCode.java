@@ -58,7 +58,11 @@ public enum ErrorCode {
     INVALID_MAP_URL(1049, "Google Maps URL is invalid or unsupported", HttpStatus.BAD_REQUEST),
     DELETE_CONFIRMATION_INVALID(1050, "Account deletion confirmation is invalid", HttpStatus.BAD_REQUEST),
     MEDIA_DELETE_PENDING(1051, "Media cleanup has been queued", HttpStatus.ACCEPTED),
-    IMAGE_NOT_OWNED(1052, "Image does not belong to this resource", HttpStatus.FORBIDDEN);
+    IMAGE_NOT_OWNED(1052, "Image does not belong to this resource", HttpStatus.FORBIDDEN),
+    REGISTRATION_RATE_LIMITED(1053, "Too many registration attempts. Please try again later.", HttpStatus.TOO_MANY_REQUESTS),
+    MAP_RESOLUTION_RATE_LIMITED(1054, "Too many map resolution attempts. Please try again later.", HttpStatus.TOO_MANY_REQUESTS),
+    MAP_RESOLUTION_BUSY(1055, "Map resolution service is temporarily busy", HttpStatus.SERVICE_UNAVAILABLE),
+    INVALID_PAGE_REQUEST(1056, "Invalid page, size, filter, or sort value", HttpStatus.BAD_REQUEST);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

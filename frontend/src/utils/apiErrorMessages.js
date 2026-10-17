@@ -51,7 +51,11 @@ const API_ERROR_MESSAGES_VI = Object.freeze({
   1049: 'Liên kết Google Maps không hợp lệ hoặc không được hỗ trợ.',
   1050: 'Thông tin xác nhận xóa tài khoản không chính xác.',
   1051: 'Việc dọn dẹp hình ảnh đã được đưa vào hàng đợi.',
-  1052: 'Hình ảnh không thuộc tài nguyên này.'
+  1052: 'Hình ảnh không thuộc tài nguyên này.',
+  1053: 'Bạn đã gửi quá nhiều yêu cầu đăng ký. Vui lòng thử lại sau.',
+  1054: 'Bạn đã yêu cầu xử lý liên kết bản đồ quá nhiều lần. Vui lòng thử lại sau.',
+  1055: 'Dịch vụ xử lý bản đồ đang bận. Vui lòng thử lại sau.',
+  1056: 'Thông tin trang, bộ lọc hoặc sắp xếp không hợp lệ.'
 })
 
 export function getVietnameseApiError(error, fallback = 'Không thể hoàn tất thao tác. Vui lòng thử lại.') {

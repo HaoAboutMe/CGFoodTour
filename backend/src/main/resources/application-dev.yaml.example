@@ -51,6 +51,18 @@ jwt:
   refreshable-duration: 1200 # seconds
 
 security:
+  client-ip:
+    trust-forwarded-headers: false
+    trusted-proxies: []
+    maximum-forwarded-hops: 5
+  registration:
+    ip-pepper: ${JWT_SIGNER_KEY}
+    cleanup-cron: 0 30 3 * * *
+  maps-resolver:
+    maximum-concurrent-requests: 10
+    maximum-cache-entries: 5000
+    success-cache-ttl: 15m
+    negative-cache-ttl: 1m
   auth-rate-limit:
     login-email-limit: 10
     login-ip-limit: 30
@@ -58,6 +70,15 @@ security:
     social-ip-limit: 20
     social-window: 5m
     maximum-keys: 10000
+    registration-ip-limit: 5
+    registration-email-limit: 3
+    registration-ip-window: 1h
+    registration-email-window: 24h
+    pending-registration-limit: 5
+    pending-registration-retention: 7d
+    maps-user-limit: 10
+    maps-ip-limit: 30
+    maps-window: 5m
   otp:
     pepper: YOUR_DEVELOPMENT_OTP_PEPPER
 

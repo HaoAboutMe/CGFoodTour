@@ -49,7 +49,7 @@ Lỗi chính: `USER_NOT_EXISTED`, `PASSWORD_INCORRECT`, `EMAIL_NOT_VERIFIED`, `A
 | Method/path | Access | Input | Result / rules |
 |---|---|---|---|
 | POST `/users` | Deprecated/không public | — | Registration canonical là `POST /auth/register` |
-| GET `/users` | Admin (service) | — | tất cả `UserResponse` |
+| GET `/users` | Admin (service) | `page,size,query,enabled,role,sort` | `PageResponse<UserResponse>`; size tối đa 100 |
 | GET `/users/me` | Auth | — | user theo JWT subject email |
 | GET `/users/{userId}` | Admin | path ID | `UserResponse`; self-service dùng `/users/me` |
 | PUT `/users/{userId}` | Admin | username/name/DOB age 18+/roles validated | thay toàn bộ role set; role change tăng tokenVersion |
@@ -77,15 +77,16 @@ Mutations broadcast SSE `STORES_UPDATED` sau khi service thành công.
 | Method/path | Access | Input | Result / rules |
 |---|---|---|---|
 | GET `/v1/stores/events` | Public | — | SSE, INIT rồi event `message`; timeout 10 phút |
-| GET `/v1/stores/parse-gmaps?url=` | Public | arbitrary string | `{latitude,longitude}` hoặc `{}`; có server-side redirect/HTML fetch |
+| GET `/v1/stores/parse-gmaps?url=` | Auth | Google Maps HTTPS URL | `{latitude,longitude}` hoặc `{}`; quota user/IP, cache, concurrency guard và SSRF validation |
 | POST `/v1/stores` | Auth | `StoreRequest` | owner=current user; PENDING, unverified; custom string ID |
-| GET `/v1/stores?categoryId=` | Public, optional JWT | optional integer | chỉ APPROVED, trả `PublicStoreResponse`; JWT cá nhân hóa `isSaved` |
-| GET `/v1/stores/mine` | Auth | — | mọi trạng thái của store do principal sở hữu; trả management response |
-| GET `/v1/stores/admin` | Admin | — | mọi store và moderation/owner fields; trả management response |
-| GET `/v1/stores/ranking` | Public | — | APPROVED, totalVotes≥10, satisfaction desc/votes desc |
+| GET `/v1/stores` | Public, optional JWT | `page,size,categoryId,query,sort` | `PageResponse<PublicStoreResponse>`; chỉ APPROVED/owner enabled; size tối đa 100 |
+| GET `/v1/stores/mine` | Auth | `page,size,status,sort` | page store của principal ở mọi trạng thái; management response |
+| GET `/v1/stores/admin` | Admin | `page,size,status,categoryId,query,sort` | page store và moderation/owner fields |
+| GET `/v1/stores/ranking` | Public | `limit` mặc định 20, tối đa 100 | APPROVED, totalVotes≥10, satisfaction desc/votes desc |
 | GET `/v1/stores/random?categoryId=` | Public | optional integer | random APPROVED hoặc 404 |
 | GET `/v1/stores/{id}` | Public, optional JWT | string ID | chỉ APPROVED; non-public trả 404 |
-| PUT `/v1/stores/{id}` | Owner/Admin | full `StoreRequest` | owner edit non-hidden → PENDING/unverified; admin giữ status |
+| PUT `/v1/stores/{id}` | Owner/Admin | JSON `StoreRequest`, hoặc multipart `store` JSON + optional `banner` | metadata/banner áp dụng cùng lần lưu; owner edit non-hidden → PENDING/unverified; admin giữ status |
+| PATCH `/v1/stores/{id}/banner` | Owner/Admin | multipart `file` | cập nhật banner độc lập; owner non-hidden vẫn → PENDING/unverified; ảnh cũ chỉ xóa sau commit |
 | DELETE `/v1/stores/{id}` | Owner/Admin | optional `{reason}` | admin bắt buộc reason; hard-delete children/store |
 | POST `/v1/stores/{id}/hide` | Owner/Admin | optional `{reason}` | chỉ APPROVED; admin cần reason; status HIDDEN |
 | POST `/v1/stores/{id}/recover` | Owner/Admin | optional `{reason}` | chỉ HIDDEN; admin-hidden chỉ admin; → APPROVED |
@@ -96,7 +97,7 @@ Mutations broadcast SSE `STORES_UPDATED` sau khi service thành công.
 | POST `/v1/stores/{id}/approve` | Admin | ID | status APPROVED, verified, clear rejection |
 | POST `/v1/stores/{id}/reject` | Admin | `{reason}` nonblank | status REJECTED, unverified |
 | POST `/v1/stores/{id}/save` | Auth | ID | toggle bookmark và savedCount; trả `isSaved` |
-| GET `/v1/stores/saved` | Auth | — | saved APPROVED stores newest first |
+| GET `/v1/stores/saved` | Auth | `page,size` | page saved APPROVED stores newest first |
 
 `StoreRequest`: `categoryId`, `name`, `addressLine`, `landmarkNote`, `openTime`, `closeTime` bắt buộc; phone/GPS/map/banner optional; price defaults 0; có field `isVerified` nhưng backend override khi create/owner resubmit.
 

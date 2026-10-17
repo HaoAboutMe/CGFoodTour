@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Store, Plus, Edit2, Trash2, X, ChevronLeft, MapPin, PlusCircle, Utensils, EyeOff, RotateCcw, HelpCircle, Link as LinkIcon, CheckCircle2, Bookmark } from 'lucide-react'
 import MySubmissionsSection from './MySubmissionsSection'
@@ -122,6 +122,12 @@ export default function MyStoresSection({
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadingFood, setUploadingFood] = useState(false)
   const [pendingBannerFile, setPendingBannerFile] = useState(null)
+  const [pendingEditBannerFile, setPendingEditBannerFile] = useState(null)
+  const [editBannerPreviewUrl, setEditBannerPreviewUrl] = useState('')
+  const [editBannerError, setEditBannerError] = useState('')
+  const [originalEditingStore, setOriginalEditingStore] = useState(null)
+  const [showDiscardEditModal, setShowDiscardEditModal] = useState(false)
+  const editSaveInFlightRef = useRef(false)
   const [pendingFoodFile, setPendingFoodFile] = useState(null)
   const [editingFood, setEditingFood] = useState(null)
   const [actionModalStore, setActionModalStore] = useState(null)
@@ -142,8 +148,21 @@ export default function MyStoresSection({
     if (editingStore) {
       setEditGmapsUrl(editingStore.mapUrl || '')
       setEditSections({ basic: true, location: true, media: true })
+      setOriginalEditingStore({ ...editingStore })
+      setPendingEditBannerFile(null)
+      setEditBannerPreviewUrl('')
+      setEditBannerError('')
+      setShowDiscardEditModal(false)
+    } else {
+      setOriginalEditingStore(null)
     }
-  }, [editingStore])
+    // Reset the draft only when opening a different store, not on every field change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingStore?.id])
+
+  useEffect(() => () => {
+    if (editBannerPreviewUrl) URL.revokeObjectURL(editBannerPreviewUrl)
+  }, [editBannerPreviewUrl])
 
   useEffect(() => {
     if (!editingStore && storeMapUrl && storeMapUrl !== addGmapsUrl) {
@@ -366,6 +385,26 @@ export default function MyStoresSection({
     }
   }
 
+  const onLocalUpdateStore = async (e) => {
+    e.preventDefault()
+    if (editSaveInFlightRef.current) return
+    editSaveInFlightRef.current = true
+    setUploadingBanner(true)
+    try {
+      const updatedStore = await handleUpdateStore(e, pendingEditBannerFile)
+      if (updatedStore) {
+        setPendingEditBannerFile(null)
+        setEditBannerPreviewUrl('')
+        setEditBannerError('')
+        setOriginalEditingStore(null)
+        setEditingStore(null)
+      }
+    } finally {
+      editSaveInFlightRef.current = false
+      setUploadingBanner(false)
+    }
+  }
+
   const onLocalSubmitFoodItem = async (e) => {
     e.preventDefault()
     if (editingFood) {
@@ -402,16 +441,49 @@ export default function MyStoresSection({
       setPendingBannerFile(file)
       setStoreBannerUrl(URL.createObjectURL(file))
     } else if (type === 'editBanner') {
-      setUploadingBanner(true)
-      const updatedStore = await handleUploadStoreBanner(editingStore.id, file)
-      setUploadingBanner(false)
-      if (updatedStore) {
-        setEditingStore(updatedStore)
+      const supportedTypes = ['image/jpeg', 'image/png', 'image/gif']
+      if (!supportedTypes.includes(file.type)) {
+        setEditBannerError('Chỉ hỗ trợ ảnh JPG, PNG hoặc GIF.')
+        e.target.value = ''
+        return
       }
+      if (file.size > 2 * 1024 * 1024) {
+        setEditBannerError('Ảnh banner không được vượt quá 2 MB.')
+        e.target.value = ''
+        return
+      }
+      setEditBannerError('')
+      setPendingEditBannerFile(file)
+      setEditBannerPreviewUrl(URL.createObjectURL(file))
+      e.target.value = ''
     } else if (type === 'food') {
       setPendingFoodFile(file)
       setFoodImage(URL.createObjectURL(file))
     }
+  }
+
+  const hasUnsavedStoreChanges = Boolean(
+    editingStore && originalEditingStore && (
+      pendingEditBannerFile || JSON.stringify(editingStore) !== JSON.stringify(originalEditingStore)
+    )
+  )
+
+  const closeStoreEdit = () => {
+    setPendingEditBannerFile(null)
+    setEditBannerPreviewUrl('')
+    setEditBannerError('')
+    setOriginalEditingStore(null)
+    setShowDiscardEditModal(false)
+    setEditingStore(null)
+  }
+
+  const requestCloseStoreEdit = () => {
+    if (uploadingBanner) return
+    if (hasUnsavedStoreChanges) {
+      setShowDiscardEditModal(true)
+      return
+    }
+    closeStoreEdit()
   }
 
   // Find latest store information to reflect added/updated dishes immediately
@@ -448,11 +520,15 @@ export default function MyStoresSection({
             {(editingStore || isAddingNew || managingDishesForStore) && (
               <button
                 onClick={() => {
-                  setEditingStore(null)
+                  if (editingStore) {
+                    requestCloseStoreEdit()
+                    return
+                  }
                   setIsAddingNew(false)
                   setManagingDishesForStore(null)
                   setEditingFood(null)
                 }}
+                disabled={uploadingBanner}
                 className="brutalist-btn-white text-sm w-full md:w-auto flex items-center gap-2"
               >
                 <ChevronLeft className="w-5 h-5" /> Quay Lại Danh Sách
@@ -510,7 +586,8 @@ export default function MyStoresSection({
             </div>
             <button
               type="button"
-              onClick={() => setEditingStore(null)}
+              onClick={requestCloseStoreEdit}
+              disabled={uploadingBanner}
               className="p-1.5 border-2 border-black hover:bg-neutral-100 transition-colors"
             >
               <X className="w-5 h-5" />
@@ -524,7 +601,7 @@ export default function MyStoresSection({
             </div>
           )}
 
-          <form onSubmit={handleUpdateStore} className="space-y-6">
+          <form onSubmit={onLocalUpdateStore} className="space-y-6">
             {/* Accordion Section 1: Basic Info */}
             <div className="border-2 border-black rounded-xl overflow-hidden shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
               <button
@@ -794,10 +871,10 @@ export default function MyStoresSection({
                   <div className="space-y-3">
                     <label className="text-xs uppercase font-extrabold tracking-wider block">Hình Ảnh Banner Quán Ăn</label>
                     <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#f7f6f2] p-4 border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                      {(editingStore.bannerImageUrl || uploadingBanner) && (
+                      {(editBannerPreviewUrl || editingStore.bannerImageUrl || uploadingBanner) && (
                         <div className="w-24 h-24 border-2 border-black overflow-hidden bg-neutral-200 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] relative flex items-center justify-center">
-                          {editingStore.bannerImageUrl && (
-                            <img src={editingStore.bannerImageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                          {(editBannerPreviewUrl || editingStore.bannerImageUrl) && (
+                            <img src={editBannerPreviewUrl || editingStore.bannerImageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
                           )}
                           {uploadingBanner && (
                             <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex items-center justify-center z-10">
@@ -809,7 +886,7 @@ export default function MyStoresSection({
                       <div className="flex-1 w-full space-y-2">
                         <div className="flex flex-wrap gap-2">
                           <label className="cursor-pointer brutalist-btn-white py-1 px-3 text-xs font-black uppercase text-center flex-1 sm:flex-initial">
-                            {uploadingBanner ? 'Đang Tải Lên...' : 'Chọn Ảnh Từ Thiết Bị'}
+                            {uploadingBanner ? 'Đang Lưu...' : 'Chọn Ảnh Từ Thiết Bị'}
                             <input
                               type="file"
                               accept="image/jpeg,image/png,image/gif"
@@ -819,7 +896,27 @@ export default function MyStoresSection({
                             />
                           </label>
                         </div>
-                        <p className="text-[10px] font-bold text-neutral-500">Hỗ trợ JPG, PNG, GIF. Tải lên Cloudinary tự động.</p>
+                        <p className="text-[10px] font-bold text-neutral-500">Hỗ trợ JPG, PNG, GIF, tối đa 2 MB. Ảnh chỉ được tải lên khi bạn bấm lưu.</p>
+                        {pendingEditBannerFile && (
+                          <div className="flex items-center justify-between gap-2 text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-400 rounded p-2">
+                            <span>Ảnh mới chưa được lưu.</span>
+                            <button
+                              type="button"
+                              disabled={uploadingBanner}
+                              onClick={() => {
+                                setPendingEditBannerFile(null)
+                                setEditBannerPreviewUrl('')
+                                setEditBannerError('')
+                              }}
+                              className="font-black underline cursor-pointer"
+                            >
+                              Bỏ ảnh mới
+                            </button>
+                          </div>
+                        )}
+                        {editBannerError && (
+                          <p className="text-[10px] font-bold text-red-700 bg-red-50 border border-red-400 rounded p-2">{editBannerError}</p>
+                        )}
                       </div>
                     </div>
 
@@ -833,7 +930,7 @@ export default function MyStoresSection({
               disabled={uploadingBanner}
               className="w-full brutalist-btn-red py-3 text-sm font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {uploadingBanner ? 'Đang Tải Ảnh...' : 'Lưu Thay Đổi Quán Ăn'}
+              {uploadingBanner ? 'Đang Lưu Thay Đổi...' : 'Lưu Thay Đổi Quán Ăn'}
             </button>
           </form>
         </div>
@@ -1887,6 +1984,43 @@ export default function MyStoresSection({
         actionType={actionModalType}
         isStaffOrAdmin={false}
       />
+
+      {showDiscardEditModal && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white border-4 border-black p-6 max-w-md w-full shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] space-y-5">
+            <div className="flex items-center justify-between border-b-3 border-black pb-3">
+              <h3 className="text-lg font-black uppercase">Bỏ thay đổi chưa lưu?</h3>
+              <button
+                type="button"
+                onClick={() => setShowDiscardEditModal(false)}
+                className="p-1 border-2 border-black hover:bg-neutral-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm font-semibold text-neutral-700">
+              Thông tin và ảnh banner bạn vừa chọn chưa được lưu. Quay lại sẽ bỏ toàn bộ các thay đổi này.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDiscardEditModal(false)}
+                className="brutalist-btn-white py-2 px-4 text-xs font-black uppercase"
+              >
+                Tiếp tục chỉnh sửa
+              </button>
+              <button
+                type="button"
+                onClick={closeStoreEdit}
+                className="brutalist-btn-red py-2 px-4 text-xs font-black uppercase"
+              >
+                Bỏ thay đổi
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Google Maps Link Guide Modal */}
       {isGmapsGuideOpen && createPortal(

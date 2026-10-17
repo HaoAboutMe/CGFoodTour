@@ -35,6 +35,33 @@ public class AuthRateLimitProperties {
     @Min(1)
     private int maximumKeys = 10_000;
 
+    @Min(1)
+    private int registrationIpLimit = 5;
+
+    @Min(1)
+    private int registrationEmailLimit = 3;
+
+    @NotNull
+    private Duration registrationIpWindow = Duration.ofHours(1);
+
+    @NotNull
+    private Duration registrationEmailWindow = Duration.ofHours(24);
+
+    @Min(1)
+    private int pendingRegistrationLimit = 5;
+
+    @NotNull
+    private Duration pendingRegistrationRetention = Duration.ofDays(7);
+
+    @Min(1)
+    private int mapsUserLimit = 10;
+
+    @Min(1)
+    private int mapsIpLimit = 30;
+
+    @NotNull
+    private Duration mapsWindow = Duration.ofMinutes(5);
+
     @AssertTrue(message = "auth rate-limit windows must be positive")
     public boolean isWindowConfigurationValid() {
         return loginWindow != null
@@ -42,6 +69,10 @@ public class AuthRateLimitProperties {
                 && !loginWindow.isNegative()
                 && socialWindow != null
                 && !socialWindow.isZero()
-                && !socialWindow.isNegative();
+                && !socialWindow.isNegative()
+                && registrationIpWindow != null && !registrationIpWindow.isZero() && !registrationIpWindow.isNegative()
+                && registrationEmailWindow != null && !registrationEmailWindow.isZero() && !registrationEmailWindow.isNegative()
+                && pendingRegistrationRetention != null && !pendingRegistrationRetention.isZero() && !pendingRegistrationRetention.isNegative()
+                && mapsWindow != null && !mapsWindow.isZero() && !mapsWindow.isNegative();
     }
 }

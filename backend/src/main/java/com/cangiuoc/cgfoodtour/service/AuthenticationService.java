@@ -699,6 +699,8 @@ public class AuthenticationService
         if (!Boolean.TRUE.equals(user.getEnabled()) && !Boolean.TRUE.equals(user.getEmailVerified())) {
             user.setEnabled(true);
             user.setEmailVerified(true);
+            user.setRegistrationIpHash(null);
+            user.setPendingVerificationExpiresAt(null);
         }
     }
 

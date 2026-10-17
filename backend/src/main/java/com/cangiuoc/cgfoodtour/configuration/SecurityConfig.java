@@ -58,6 +58,7 @@ public class SecurityConfig {
                                 // Then allow public endpoints
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
                                 .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS).permitAll()
+                                .requestMatchers(HttpMethod.GET, "/v1/stores/parse-gmaps").authenticated()
                                 .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll()
                                 // All other requests need authentication
                                 .anyRequest().authenticated());

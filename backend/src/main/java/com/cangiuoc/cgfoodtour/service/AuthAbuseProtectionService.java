@@ -56,6 +56,26 @@ public class AuthAbuseProtectionService {
                 properties.getSocialIpLimit(), properties.getSocialWindow());
     }
 
+    public void checkRegistrationAttempt(String normalizedEmail, String clientIp) {
+        try {
+            consume("register:ip:" + safeIp(clientIp), properties.getRegistrationIpLimit(),
+                    properties.getRegistrationIpWindow());
+            consume("register:email:" + normalizedEmail, properties.getRegistrationEmailLimit(),
+                    properties.getRegistrationEmailWindow());
+        } catch (AppException exception) {
+            throw new AppException(ErrorCode.REGISTRATION_RATE_LIMITED);
+        }
+    }
+
+    public void checkMapsResolutionAttempt(String userId, String clientIp) {
+        try {
+            consume("maps:user:" + userId, properties.getMapsUserLimit(), properties.getMapsWindow());
+            consume("maps:ip:" + safeIp(clientIp), properties.getMapsIpLimit(), properties.getMapsWindow());
+        } catch (AppException exception) {
+            throw new AppException(ErrorCode.MAP_RESOLUTION_RATE_LIMITED);
+        }
+    }
+
     private synchronized void consume(String key, int limit, Duration window) {
         Instant now = clock.instant();
         WindowCounter current = activeCounter(key, now);

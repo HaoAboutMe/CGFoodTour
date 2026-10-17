@@ -59,6 +59,18 @@ jwt:
   refreshable-duration: ${JWT_REFRESHABLE_DURATION:2592000} # 30 days in seconds
 
 security:
+  client-ip:
+    trust-forwarded-headers: ${TRUST_FORWARDED_HEADERS:false}
+    trusted-proxies: ${TRUSTED_PROXY_CIDRS:}
+    maximum-forwarded-hops: ${MAXIMUM_FORWARDED_HOPS:5}
+  registration:
+    ip-pepper: ${REGISTRATION_IP_PEPPER:${JWT_SIGNER_KEY}}
+    cleanup-cron: ${REGISTRATION_CLEANUP_CRON:0 30 3 * * *}
+  maps-resolver:
+    maximum-concurrent-requests: ${MAPS_MAXIMUM_CONCURRENT_REQUESTS:10}
+    maximum-cache-entries: ${MAPS_MAXIMUM_CACHE_ENTRIES:5000}
+    success-cache-ttl: ${MAPS_SUCCESS_CACHE_TTL:15m}
+    negative-cache-ttl: ${MAPS_NEGATIVE_CACHE_TTL:1m}
   auth-rate-limit:
     login-email-limit: ${AUTH_LOGIN_EMAIL_LIMIT:10}
     login-ip-limit: ${AUTH_LOGIN_IP_LIMIT:30}
@@ -66,6 +78,15 @@ security:
     social-ip-limit: ${AUTH_SOCIAL_IP_LIMIT:20}
     social-window: ${AUTH_SOCIAL_WINDOW:5m}
     maximum-keys: ${AUTH_RATE_LIMIT_MAXIMUM_KEYS:10000}
+    registration-ip-limit: ${AUTH_REGISTRATION_IP_LIMIT:5}
+    registration-email-limit: ${AUTH_REGISTRATION_EMAIL_LIMIT:3}
+    registration-ip-window: ${AUTH_REGISTRATION_IP_WINDOW:1h}
+    registration-email-window: ${AUTH_REGISTRATION_EMAIL_WINDOW:24h}
+    pending-registration-limit: ${AUTH_PENDING_REGISTRATION_LIMIT:5}
+    pending-registration-retention: ${AUTH_PENDING_REGISTRATION_RETENTION:7d}
+    maps-user-limit: ${AUTH_MAPS_USER_LIMIT:10}
+    maps-ip-limit: ${AUTH_MAPS_IP_LIMIT:30}
+    maps-window: ${AUTH_MAPS_WINDOW:5m}
   otp:
     # Use a dedicated high-entropy secret in production; do not reuse or commit real values.
     pepper: ${OTP_PEPPER:${JWT_SIGNER_KEY}}

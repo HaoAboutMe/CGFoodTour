@@ -12,6 +12,7 @@
 - **M-02, M-04:** public store dùng DTO riêng; food-item read tuân theo visibility của store.
 - **M-05, M-18:** user update được validate nhất quán; `GET /users/{id}` chỉ dành cho ADMIN và có method-security test.
 - **M-15:** credential được redact trước khi vào frontend log state; DevConsole không được đóng gói trong production build.
+- **Store edit/banner atomicity:** form edit chỉ preview ảnh cục bộ; metadata và banner được gửi trong một request multipart khi bấm lưu. Rollback database dọn ảnh mới, commit thành công mới dọn ảnh cũ; endpoint banner riêng không còn bypass trạng thái `PENDING` của owner.
 
 Các mục trên được giữ lại phía dưới như lịch sử phát hiện. Manual browser E2E với database/SMTP/OAuth thật vẫn chưa được xác nhận; các issue không được nêu trong cập nhật này không mặc nhiên được xem là đã xử lý.
 
@@ -104,6 +105,8 @@ Chưa có lỗ hổng Critical được xác minh là khai thác được trong 
 - **Tiếp theo:** thêm validation có chủ ý, thống nhất rule và client text/tests.
 
 ### M-06 — N+1 query trong store list
+
+> **Trạng thái 17/10/2026:** Đã xử lý trên các collection API mới bằng pagination và batch query food/report/saved. Các detail/mutation response đơn lẻ vẫn dùng assembler đơn-record phù hợp.
 
 - **Bằng chứng:** `StoreService.java:611-635` per response query food/report/user/save; list loops `100-125`.
 - **Điều kiện:** list nhiều store, nhất là request authenticated.

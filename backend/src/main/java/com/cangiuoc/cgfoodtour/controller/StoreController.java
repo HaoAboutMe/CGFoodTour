@@ -8,8 +8,11 @@ import com.cangiuoc.cgfoodtour.dto.request.StoreRequest;
 import com.cangiuoc.cgfoodtour.dto.request.RejectStoreRequest;
 import com.cangiuoc.cgfoodtour.dto.response.StoreResponse;
 import com.cangiuoc.cgfoodtour.dto.response.PublicStoreResponse;
+import com.cangiuoc.cgfoodtour.dto.response.PageResponse;
 import com.cangiuoc.cgfoodtour.service.StoreService;
 import com.cangiuoc.cgfoodtour.service.SseNotificationService;
+import com.cangiuoc.cgfoodtour.service.ClientIpResolver;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -31,6 +34,7 @@ import java.util.Map;
 public class StoreController {
     StoreService storeService;
     SseNotificationService sseNotificationService;
+    ClientIpResolver clientIpResolver;
 
     private String getCurrentUserEmail() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -46,9 +50,11 @@ public class StoreController {
     }
 
     @GetMapping("/parse-gmaps")
-    public ApiResponse<Map<String, String>> parseGmapsUrl(@RequestParam("url") String url) {
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<Map<String, String>> parseGmapsUrl(@RequestParam("url") String url,
+                                                          HttpServletRequest request) {
         return ApiResponse.<Map<String, String>>builder()
-                .result(storeService.parseGoogleMapsUrl(url))
+                .result(storeService.parseGoogleMapsUrl(url, getCurrentUserEmail(), clientIpResolver.resolve(request)))
                 .message("Parsed Google Maps URL")
                 .build();
     }
@@ -66,19 +72,25 @@ public class StoreController {
     }
 
     @GetMapping
-    public ApiResponse<List<PublicStoreResponse>> getStores(@RequestParam(value = "categoryId", required = false) Integer categoryId) {
+    public ApiResponse<PageResponse<PublicStoreResponse>> getStores(
+            @RequestParam(value = "categoryId", required = false) Integer categoryId,
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "sort", defaultValue = "newest") String sort,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "24") int size) {
         String email = getCurrentUserEmail();
-        return ApiResponse.<List<PublicStoreResponse>>builder()
-                .result(storeService.getStores(categoryId, email))
+        return ApiResponse.<PageResponse<PublicStoreResponse>>builder()
+                .result(storeService.getStores(categoryId, query, sort, page, size, email))
                 .message("Stores retrieved successfully")
                 .build();
     }
 
     @GetMapping("/ranking")
-    public ApiResponse<List<PublicStoreResponse>> getRanking() {
+    public ApiResponse<List<PublicStoreResponse>> getRanking(
+            @RequestParam(value = "limit", defaultValue = "20") int limit) {
         String email = getCurrentUserEmail();
         return ApiResponse.<List<PublicStoreResponse>>builder()
-                .result(storeService.getRanking(email))
+                .result(storeService.getRanking(email, limit))
                 .message("Ranking retrieved successfully")
                 .build();
     }
@@ -103,29 +115,54 @@ public class StoreController {
 
     @GetMapping("/mine")
     @PreAuthorize("isAuthenticated()")
-    public ApiResponse<List<StoreResponse>> getMyStores() {
+    public ApiResponse<PageResponse<StoreResponse>> getMyStores(
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "sort", defaultValue = "newest") String sort,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
         String email = getCurrentUserEmail();
-        return ApiResponse.<List<StoreResponse>>builder()
-                .result(storeService.getMyStores(email))
+        return ApiResponse.<PageResponse<StoreResponse>>builder()
+                .result(storeService.getMyStores(email, status, sort, page, size))
                 .message("Owned stores retrieved successfully")
                 .build();
     }
 
     @GetMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<List<StoreResponse>> getAdminStores() {
+    public ApiResponse<PageResponse<StoreResponse>> getAdminStores(
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "categoryId", required = false) Integer categoryId,
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "sort", defaultValue = "newest") String sort,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
         String email = getCurrentUserEmail();
-        return ApiResponse.<List<StoreResponse>>builder()
-                .result(storeService.getAdminStores(email))
+        return ApiResponse.<PageResponse<StoreResponse>>builder()
+                .result(storeService.getAdminStores(email, status, categoryId, query, sort, page, size))
                 .message("Administrative stores retrieved successfully")
                 .build();
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<StoreResponse> updateStore(@PathVariable String id, @RequestBody @Valid StoreRequest request) {
         String email = getCurrentUserEmail();
         StoreResponse response = storeService.updateStore(id, request, email);
+        sseNotificationService.broadcast("STORES_UPDATED");
+        return ApiResponse.<StoreResponse>builder()
+                .result(response)
+                .message("Store updated successfully and is pending approval")
+                .build();
+    }
+
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<StoreResponse> updateStoreWithBanner(
+            @PathVariable String id,
+            @RequestPart("store") @Valid StoreRequest request,
+            @RequestPart(value = "banner", required = false) MultipartFile banner) {
+        String email = getCurrentUserEmail();
+        StoreResponse response = storeService.updateStore(id, request, banner, email);
         sseNotificationService.broadcast("STORES_UPDATED");
         return ApiResponse.<StoreResponse>builder()
                 .result(response)
@@ -259,10 +296,12 @@ public class StoreController {
 
     @GetMapping("/saved")
     @PreAuthorize("isAuthenticated()")
-    public ApiResponse<List<PublicStoreResponse>> getSavedStores() {
+    public ApiResponse<PageResponse<PublicStoreResponse>> getSavedStores(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "24") int size) {
         String email = getCurrentUserEmail();
-        List<PublicStoreResponse> responses = storeService.getSavedStoresForUser(email);
-        return ApiResponse.<List<PublicStoreResponse>>builder()
+        PageResponse<PublicStoreResponse> responses = storeService.getSavedStoresForUser(email, page, size);
+        return ApiResponse.<PageResponse<PublicStoreResponse>>builder()
                 .result(responses)
                 .message("Fetched saved stores successfully")
                 .build();

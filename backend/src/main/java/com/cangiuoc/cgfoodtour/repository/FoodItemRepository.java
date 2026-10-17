@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface FoodItemRepository extends JpaRepository<FoodItem, Long> {
     List<FoodItem> findByStoreId(String storeId);
+    List<FoodItem> findByStoreIdIn(java.util.Collection<String> storeIds);
     void deleteByStoreId(String storeId);
 }

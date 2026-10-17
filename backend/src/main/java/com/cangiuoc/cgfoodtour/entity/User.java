@@ -54,6 +54,10 @@ public class User
     LocalDateTime disabledAt;
     String disabledByAdminId;
 
+    @Column(length = 64)
+    String registrationIpHash;
+    LocalDateTime pendingVerificationExpiresAt;
+
     @ManyToMany
     Set<Role> roles;
     LocalDateTime createdAt;
