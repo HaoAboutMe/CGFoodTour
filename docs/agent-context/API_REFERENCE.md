@@ -7,13 +7,13 @@
 - Thành công thường HTTP 200, kể cả create/delete; controller không dùng `@ResponseStatus`.
 - Bearer: `Authorization: Bearer <JWT>`.
 - Ký hiệu: **Public** = filter chain permit; **Auth** = JWT; **Admin** = `ROLE_ADMIN`; **Owner/Admin** = service object-level check.
-- Lỗi nghiệp vụ theo `ErrorCode`; validation thường 400. Unauthenticated 401, unauthorized 403, not-found 404. Runtime chung hiện trả 400; DB integrity trả 500 và có thể kèm root cause.
+- Lỗi nghiệp vụ theo `ErrorCode`; validation thường 400. Unauthenticated 401, unauthorized 403, not-found 404. Runtime ngoài dự kiến trả 500 generic; DB integrity trả 409 generic và chỉ log root cause ở server.
 
 ## 2. Authentication
 
 | Method/path | Access | Input | Result / behavior |
 |---|---|---|---|
-| POST `/auth/token` | Public | `{email,password}`; không Bean Validation | `{token,isAuthenticated}`; kiểm BCrypt, verified, enabled |
+| POST `/auth/token` | Public | `{email,password}` validated | access/refresh token pair; rate limit IP/email; unknown email và sai password cùng trả `INVALID_CREDENTIALS` |
 | POST `/auth/google-login` | Public | `{idToken}`; field không validation annotation | verify Google JWK/issuer/audience/email; link/create user; JWT |
 | POST `/auth/facebook-login` | Public | `{accessToken}` nonblank | gọi Graph `/me`, link facebookId/email hoặc tạo user; JWT |
 | POST `/auth/introspect` | Public | `{token}` | `{valid}`; signature, normal expiry, blacklist |
@@ -42,18 +42,19 @@ Lỗi chính: `USER_NOT_EXISTED`, `PASSWORD_INCORRECT`, `EMAIL_NOT_VERIFIED`, `A
 - Registration, resend verification và forgot-password hiện chờ SMTP xác nhận gửi; chỉ trả success sau khi hoàn tất. Lỗi SMTP trả `EMAIL_SEND_FAILED`, frontend không chuyển bước.
 - Resend verification và forgot-password trả HTTP 200 thay vì 202 vì không còn xử lý email nền.
 - `PUT /users/me/change-password`: sai mật khẩu hiện tại trả `PASSWORD_INCORRECT` (1017/400), không trả `UNAUTHENTICATED`; success chỉ được trả sau khi password hash và `tokenVersion` đã `saveAndFlush`.
+- Login email/password có bounded in-memory limiter theo IP/email; Google/Facebook login có limiter theo provider/IP trước outbound validation. `INVALID_CREDENTIALS` (1026/401) không cho phép phân biệt email không tồn tại với password sai.
 
 ## 3. User
 
 | Method/path | Access | Input | Result / rules |
 |---|---|---|---|
-| POST `/users` | Public | `UserCreationRequest`: username min3, email required/valid, password min8, DOB age min5 | tạo disabled/unverified USER, avatar default, token verify email |
+| POST `/users` | Deprecated/không public | — | Registration canonical là `POST /auth/register` |
 | GET `/users` | Admin (service) | — | tất cả `UserResponse` |
 | GET `/users/me` | Auth | — | user theo JWT subject email |
-| GET `/users/{userId}` | Admin hoặc chính user (post-authorize qua return email) | path ID | `UserResponse` |
-| PUT `/users/{userId}` | Admin | username/name/DOB/roles; controller không `@Valid` | MapStruct update và thay toàn bộ role set |
-| PUT `/users/me` | Auth | username/name/DOB; controller không `@Valid` | đổi profile; check duplicate username |
-| PUT `/users/me/change-password` | Auth | `{oldPassword,newPassword}`; controller không `@Valid` | match old, BCrypt new |
+| GET `/users/{userId}` | Admin | path ID | `UserResponse`; self-service dùng `/users/me` |
+| PUT `/users/{userId}` | Admin | username/name/DOB age 18+/roles validated | thay toàn bộ role set; role change tăng tokenVersion |
+| PUT `/users/me` | Auth | username/name/DOB age 18+ validated | đổi profile; check duplicate username |
+| PUT `/users/me/change-password` | Auth | `{oldPassword,newPassword}` validated | match old, BCrypt new, tăng tokenVersion |
 | PATCH `/users/me/avatar` | Auth | multipart `file` | max 2 MiB, MIME prefix `image/`, replace Cloudinary image |
 | DELETE `/users/{userId}` | Admin | path ID | hard delete user; child/FK behavior chưa xác minh |
 
@@ -78,10 +79,12 @@ Mutations broadcast SSE `STORES_UPDATED` sau khi service thành công.
 | GET `/v1/stores/events` | Public | — | SSE, INIT rồi event `message`; timeout 10 phút |
 | GET `/v1/stores/parse-gmaps?url=` | Public | arbitrary string | `{latitude,longitude}` hoặc `{}`; có server-side redirect/HTML fetch |
 | POST `/v1/stores` | Auth | `StoreRequest` | owner=current user; PENDING, unverified; custom string ID |
-| GET `/v1/stores?categoryId=` | Public, optional JWT | optional integer | admin all; owner own; others APPROVED; JWT cá nhân hóa `isSaved` |
+| GET `/v1/stores?categoryId=` | Public, optional JWT | optional integer | chỉ APPROVED, trả `PublicStoreResponse`; JWT cá nhân hóa `isSaved` |
+| GET `/v1/stores/mine` | Auth | — | mọi trạng thái của store do principal sở hữu; trả management response |
+| GET `/v1/stores/admin` | Admin | — | mọi store và moderation/owner fields; trả management response |
 | GET `/v1/stores/ranking` | Public | — | APPROVED, totalVotes≥10, satisfaction desc/votes desc |
 | GET `/v1/stores/random?categoryId=` | Public | optional integer | random APPROVED hoặc 404 |
-| GET `/v1/stores/{id}` | Public, optional JWT | string ID | chỉ approved/admin/owner |
+| GET `/v1/stores/{id}` | Public, optional JWT | string ID | chỉ APPROVED; non-public trả 404 |
 | PUT `/v1/stores/{id}` | Owner/Admin | full `StoreRequest` | owner edit non-hidden → PENDING/unverified; admin giữ status |
 | DELETE `/v1/stores/{id}` | Owner/Admin | optional `{reason}` | admin bắt buộc reason; hard-delete children/store |
 | POST `/v1/stores/{id}/hide` | Owner/Admin | optional `{reason}` | chỉ APPROVED; admin cần reason; status HIDDEN |
@@ -97,15 +100,15 @@ Mutations broadcast SSE `STORES_UPDATED` sau khi service thành công.
 
 `StoreRequest`: `categoryId`, `name`, `addressLine`, `landmarkNote`, `openTime`, `closeTime` bắt buộc; phone/GPS/map/banner optional; price defaults 0; có field `isVerified` nhưng backend override khi create/owner resubmit.
 
-`StoreResponse`: store/category/contact/location/time/price/banner, verification/status/moderation fields, owner ID/email/name, rating counters, bookmark state/count, food items, daily closed warning, timestamps.
+`PublicStoreResponse` không chứa owner ID/email/name hoặc moderation/recovery reason. `StoreResponse` là management DTO dùng cho `/mine`, `/admin` và mutation response được bảo vệ.
 
 ## 6. Food items
 
 | Method/path | Access | Input | Result / rules |
 |---|---|---|---|
 | POST `/v1/food-items/store/{storeId}` | Owner/Admin | name nonblank, price ≥0, image/description, signature | tạo item cho store |
-| GET `/v1/food-items/store/{storeId}` | Public | store ID | tất cả item; không kiểm store status |
-| GET `/v1/food-items/{id}` | Public | item ID | item; không kiểm store status |
+| GET `/v1/food-items/store/{storeId}` | Public, optional JWT | store ID | public chỉ APPROVED; owner/admin đọc được non-public; còn lại 404 |
+| GET `/v1/food-items/{id}` | Public, optional JWT | item ID | cùng visibility policy với store; resource không được phép đọc trả 404 |
 | PUT `/v1/food-items/{id}` | Owner/Admin | same create | update item |
 | DELETE `/v1/food-items/{id}` | Owner/Admin | item ID | delete |
 
