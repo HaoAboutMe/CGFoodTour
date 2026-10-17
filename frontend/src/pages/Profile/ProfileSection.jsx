@@ -194,6 +194,7 @@ export default function ProfileSection({
                 type="date"
                 required
                 value={upDob}
+                max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().slice(0, 10)}
                 onChange={(e) => setUpDob(e.target.value)}
                 className="brutalist-input"
               />

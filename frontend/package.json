@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
+    "test:redaction": "node --test src/utils/redactSensitiveData.test.js",
+    "test:ui-errors": "node --test src/utils/apiErrorMessages.test.js",
     "preview": "vite preview"
   },
   "dependencies": {

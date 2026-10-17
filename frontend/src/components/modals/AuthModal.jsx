@@ -419,6 +419,7 @@ export default function AuthModal({
                     type="date"
                     required
                     value={regDob}
+                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().slice(0, 10)}
                     onChange={(e) => setRegDob(e.target.value)}
                     className="brutalist-input"
                   />

@@ -1491,6 +1491,7 @@ export default function AdminSection({
                   <input
                     type="date"
                     value={adminUserDob}
+                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().slice(0, 10)}
                     onChange={(e) => setAdminUserDob(e.target.value)}
                     className="brutalist-input"
                   />
