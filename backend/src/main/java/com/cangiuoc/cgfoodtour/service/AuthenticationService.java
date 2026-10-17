@@ -61,6 +61,8 @@ public class AuthenticationService
 {
     private static final String ACCESS_TOKEN_TYPE = "access";
     private static final String REFRESH_TOKEN_TYPE = "refresh";
+    private static final String DUMMY_PASSWORD_HASH = new BCryptPasswordEncoder()
+            .encode("cgfoodtour-login-timing-placeholder");
 
     UserRepository userRepository;
     RoleRepository roleRepository;
@@ -132,18 +134,27 @@ public class AuthenticationService
                 .build();
     }
 
-    public AuthenticationResponse authenticate(AuthenticationRequest request)
+    public AuthenticationResponse authenticate(AuthenticationRequest request, String clientIp)
     {
-        var user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        String email = normalizeEmail(request.getEmail());
+        authAbuseProtectionService.checkLoginAttempt(email, clientIp);
+        var userResult = userRepository.findByEmail(email);
+        if (userResult.isEmpty()) {
+            passwordEncoder.matches(request.getPassword(), DUMMY_PASSWORD_HASH);
+            authAbuseProtectionService.recordLoginFailure(email);
+            throw new AppException(ErrorCode.INVALID_CREDENTIALS);
+        }
+        var user = userResult.get();
 
-        //Math 2 password của request và user trong database
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
 
         if(!authenticated)
         {
-            throw new AppException(ErrorCode.PASSWORD_INCORRECT);
+            authAbuseProtectionService.recordLoginFailure(email);
+            throw new AppException(ErrorCode.INVALID_CREDENTIALS);
         }
+
+        authAbuseProtectionService.recordLoginSuccess(email);
 
         // Kiểm tra email đã được xác thực chưa
         if (!user.getEmailVerified())
@@ -404,7 +415,8 @@ public class AuthenticationService
     }
 
     @Transactional
-    public AuthenticationResponse googleAuthenticate(GoogleLoginRequest request) {
+    public AuthenticationResponse googleAuthenticate(GoogleLoginRequest request, String clientIp) {
+        authAbuseProtectionService.checkSocialLoginAttempt("google", clientIp);
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri("https://www.googleapis.com/oauth2/v3/certs").build();
         org.springframework.security.oauth2.jwt.Jwt jwt;
         try {
@@ -498,7 +510,8 @@ public class AuthenticationService
     }
 
     @Transactional
-    public AuthenticationResponse facebookAuthenticate(FacebookLoginRequest request) {
+    public AuthenticationResponse facebookAuthenticate(FacebookLoginRequest request, String clientIp) {
+        authAbuseProtectionService.checkSocialLoginAttempt("facebook", clientIp);
         String accessToken = request.getAccessToken();
         String validatedFacebookId = validateFacebookToken(accessToken);
 

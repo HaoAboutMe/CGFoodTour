@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatusCode;
 
 @Getter
 public enum ErrorCode {
-    UNCATEGORIZED_EXCEPTION(9999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR),
+    UNCATEGORIZED_EXCEPTION(9999, "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_KEY(1001, "Invalid message key", HttpStatus.BAD_REQUEST),
     USER_EXISTED(1002, "User already exists", HttpStatus.BAD_REQUEST),
     USERNAME_INVALID(1003, "Username must be at {min} charactors", HttpStatus.BAD_REQUEST),
@@ -32,6 +32,10 @@ public enum ErrorCode {
     AUTH_RATE_LIMITED(1023, "Too many authentication attempts. Please try again later.", HttpStatus.TOO_MANY_REQUESTS),
     SOCIAL_ACCOUNT_CONFLICT(1024, "This social account is already linked to another user", HttpStatus.CONFLICT),
     INVALID_ACCOUNT_STATE(1025, "Account state is inconsistent. Please contact support", HttpStatus.CONFLICT),
+    INVALID_CREDENTIALS(1026, "Email or password is incorrect", HttpStatus.UNAUTHORIZED),
+    DATA_CONFLICT(1027, "Request conflicts with existing data", HttpStatus.CONFLICT),
+    REQUIRED_FIELD_MISSING(1028, "Required field is missing", HttpStatus.BAD_REQUEST),
+    ROLE_INVALID(1029, "One or more roles are invalid", HttpStatus.BAD_REQUEST),
     CATEGORY_NOT_FOUND(1030, "Category not found", HttpStatus.NOT_FOUND),
     STORE_NOT_FOUND(1031, "Store not found", HttpStatus.NOT_FOUND),
     FOOD_ITEM_NOT_FOUND(1032, "Food item not found", HttpStatus.NOT_FOUND),

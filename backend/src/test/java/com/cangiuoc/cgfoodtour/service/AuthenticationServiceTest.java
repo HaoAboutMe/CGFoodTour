@@ -10,6 +10,8 @@ import com.cangiuoc.cgfoodtour.dto.request.VerifyOtpRequest;
 import com.cangiuoc.cgfoodtour.entity.InvalidatedToken;
 import com.cangiuoc.cgfoodtour.entity.PasswordResetOtp;
 import com.cangiuoc.cgfoodtour.entity.User;
+import com.cangiuoc.cgfoodtour.exception.AppException;
+import com.cangiuoc.cgfoodtour.exception.ErrorCode;
 import com.cangiuoc.cgfoodtour.repository.InvalidatedTokenRepository;
 import com.cangiuoc.cgfoodtour.repository.PasswordResetOtpRepository;
 import com.cangiuoc.cgfoodtour.repository.RoleRepository;
@@ -77,7 +79,10 @@ class AuthenticationServiceTest {
         AuthenticationRequest login = new AuthenticationRequest();
         login.setEmail(user.getEmail());
         login.setPassword("password123");
-        var pair = authenticationService.authenticate(login);
+        var pair = authenticationService.authenticate(login, "192.0.2.1");
+
+        verify(authAbuseProtectionService).checkLoginAttempt(user.getEmail(), "192.0.2.1");
+        verify(authAbuseProtectionService).recordLoginSuccess(user.getEmail());
 
         assertThat(pair.getAccessToken()).isNotBlank();
         assertThat(pair.getRefreshToken()).isNotBlank().isNotEqualTo(pair.getAccessToken());
@@ -96,6 +101,27 @@ class AuthenticationServiceTest {
     }
 
     @Test
+    void unknownEmailAndWrongPasswordUseTheSamePublicError() {
+        AuthenticationRequest unknown = new AuthenticationRequest("missing@example.com", "password123");
+        when(userRepository.findByEmail("missing@example.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authenticationService.authenticate(unknown, "192.0.2.2"))
+                .isInstanceOfSatisfying(AppException.class,
+                        exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_CREDENTIALS));
+        verify(passwordEncoder).matches(eq("password123"), anyString());
+        verify(authAbuseProtectionService).recordLoginFailure("missing@example.com");
+
+        AuthenticationRequest wrong = new AuthenticationRequest(user.getEmail(), "wrong-password");
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrong-password", "encoded")).thenReturn(false);
+
+        assertThatThrownBy(() -> authenticationService.authenticate(wrong, "192.0.2.3"))
+                .isInstanceOfSatisfying(AppException.class,
+                        exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_CREDENTIALS));
+        verify(authAbuseProtectionService).recordLoginFailure(user.getEmail());
+    }
+
+    @Test
     void logoutRevokesBothAccessAndRefreshTokens() throws Exception {
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", "encoded")).thenReturn(true);
@@ -104,7 +130,7 @@ class AuthenticationServiceTest {
         AuthenticationRequest login = new AuthenticationRequest();
         login.setEmail(user.getEmail());
         login.setPassword("password123");
-        var pair = authenticationService.authenticate(login);
+        var pair = authenticationService.authenticate(login, "192.0.2.1");
 
         authenticationService.logout(LogOutRequest.builder()
                 .accessToken(pair.getAccessToken())
@@ -129,7 +155,7 @@ class AuthenticationServiceTest {
         AuthenticationRequest login = new AuthenticationRequest();
         login.setEmail(user.getEmail());
         login.setPassword("password123");
-        var pair = authenticationService.authenticate(login);
+        var pair = authenticationService.authenticate(login, "192.0.2.1");
 
         authenticationService.logout(LogOutRequest.builder()
                 .accessToken("malformed-access-token")
@@ -212,7 +238,7 @@ class AuthenticationServiceTest {
         AuthenticationRequest login = new AuthenticationRequest();
         login.setEmail(user.getEmail());
         login.setPassword("password123");
-        String oldAccessToken = authenticationService.authenticate(login).getAccessToken();
+        String oldAccessToken = authenticationService.authenticate(login, "192.0.2.1").getAccessToken();
 
         String otp = "123456";
         PasswordResetOtp challenge = PasswordResetOtp.builder()
