@@ -105,26 +105,41 @@ public class UserService
         return userMapper.toUserResponse(user);
     }
 
-    @PreAuthorize("hasRole('ADMIN') or returnObject.email == authentication.name")
+    @PreAuthorize("hasRole('ADMIN')")
     public UserResponse getUserById(String userId)
     {
         log.info("In method get user ID");
 
         return userMapper.toUserResponse(userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId)));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     public UserResponse updateUser(UserUpdateRequest request, String userId)
     {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        if ((user.getUsername() == null || !user.getUsername().equalsIgnoreCase(request.getUsername()))
+                && userRepository.existsByUsername(request.getUsername())) {
+            throw new AppException(ErrorCode.USERNAME_EXISTED);
+        }
+        var requestedRoleNames = new HashSet<>(request.getRoles());
+        var roles = roleRepository.findAllById(requestedRoleNames);
+        if (roles.size() != requestedRoleNames.size()) {
+            throw new AppException(ErrorCode.ROLE_INVALID);
+        }
+        var existingRoleNames = user.getRoles() == null
+                ? java.util.Set.<String>of()
+                : user.getRoles().stream().map(Role::getName).collect(java.util.stream.Collectors.toSet());
+        boolean rolesChanged = !existingRoleNames.equals(requestedRoleNames);
         userMapper.updateUser(user, request);
-
-        var roles = roleRepository.findAllById(request.getRoles());
         user.setRoles(new HashSet<>(roles));
 
-        return userMapper.toUserResponse(userRepository.save(user));
+        if (rolesChanged) {
+            user.setTokenVersion(currentTokenVersion(user) + 1);
+        }
+
+        return userMapper.toUserResponse(userRepository.saveAndFlush(user));
     }
 
     public UserResponse updateMyInfo(MyInfoUpdateRequest request)
@@ -177,7 +192,7 @@ public class UserService
     public void deleteUser(String userId)
     {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         userRepository.delete(user);
     }
 

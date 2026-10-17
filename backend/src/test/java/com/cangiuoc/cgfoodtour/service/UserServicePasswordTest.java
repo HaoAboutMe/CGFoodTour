@@ -1,6 +1,8 @@
 package com.cangiuoc.cgfoodtour.service;
 
 import com.cangiuoc.cgfoodtour.dto.request.ChangePasswordRequest;
+import com.cangiuoc.cgfoodtour.dto.request.UserUpdateRequest;
+import com.cangiuoc.cgfoodtour.entity.Role;
 import com.cangiuoc.cgfoodtour.entity.User;
 import com.cangiuoc.cgfoodtour.entity.VerificationToken;
 import com.cangiuoc.cgfoodtour.mapper.UserMapper;
@@ -19,6 +21,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -71,6 +76,32 @@ class UserServicePasswordTest {
         assertThat(user.getPassword()).isEqualTo("new-encoded");
         assertThat(user.getTokenVersion()).isEqualTo(5L);
         verify(userRepository).saveAndFlush(user);
+    }
+
+    @Test
+    void changingRolesIncrementsTokenVersion() {
+        Role admin = Role.builder().name("ADMIN").build();
+        Role regular = Role.builder().name("USER").build();
+        User user = User.builder()
+                .id("user-1")
+                .roles(new HashSet<>(List.of(admin)))
+                .tokenVersion(3L)
+                .build();
+        UserUpdateRequest request = UserUpdateRequest.builder()
+                .username("foodlover")
+                .firstname("Food")
+                .lastname("Lover")
+                .dateOfBirth(LocalDate.of(2000, 1, 1))
+                .roles(List.of("USER"))
+                .build();
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(user));
+        when(roleRepository.findAllById(new HashSet<>(List.of("USER")))).thenReturn(List.of(regular));
+        when(userRepository.saveAndFlush(user)).thenReturn(user);
+
+        userService.updateUser(request, "user-1");
+
+        assertThat(user.getTokenVersion()).isEqualTo(4L);
+        assertThat(user.getRoles()).extracting(Role::getName).containsExactly("USER");
     }
 
     @Test
