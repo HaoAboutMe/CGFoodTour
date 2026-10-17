@@ -32,13 +32,27 @@ public class User
     LocalDate dateOfBirth;
     String avatarUrl;
     String avatarPublicId;
+
+    @Column(unique = true)
+    String googleId;
+
+    @Column(unique = true)
     String facebookId;
+
+    @Builder.Default
+    @Column
+    Long tokenVersion = 0L;
 
     @Builder.Default
     Boolean enabled = false;  // Tài khoản chưa được kích hoạt mặc định
 
     @Builder.Default
     Boolean emailVerified = false;  // Email chưa được xác thực
+
+    @Column(length = 1000)
+    String disabledReason;
+    LocalDateTime disabledAt;
+    String disabledByAdminId;
 
     @ManyToMany
     Set<Role> roles;

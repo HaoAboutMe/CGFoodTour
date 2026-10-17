@@ -1,6 +1,19 @@
 # Known Issues và khoảng trống xác minh
 
-> Mức độ là đánh giá kiến trúc dựa trên source ngày 15/10/2026, không phải kết luận pentest. Không có issue nào được sửa trong đợt phân tích này.
+> Mức độ và bằng chứng gốc là đánh giá kiến trúc dựa trên source ngày 15/10/2026, không phải kết luận pentest. Xem phần cập nhật trạng thái bên dưới trước khi dùng danh sách này làm backlog hiện tại.
+
+## Cập nhật trạng thái — 17/10/2026
+
+Đã triển khai và có automated verification trong đợt
+[`PRE_HOSTING_SECURITY_REMEDIATION_BLUEPRINT.md`](PRE_HOSTING_SECURITY_REMEDIATION_BLUEPRINT.md):
+
+- Chống brute-force login email/password theo IP và email; social login theo IP; unknown email và wrong password cùng trả lỗi generic.
+- **M-01, M-11:** response không còn lộ DB root cause; runtime không dự kiến trả HTTP 500 generic và ghi stack trace phía server.
+- **M-02, M-04:** public store dùng DTO riêng; food-item read tuân theo visibility của store.
+- **M-05, M-18:** user update được validate nhất quán; `GET /users/{id}` chỉ dành cho ADMIN và có method-security test.
+- **M-15:** credential được redact trước khi vào frontend log state; DevConsole không được đóng gói trong production build.
+
+Các mục trên được giữ lại phía dưới như lịch sử phát hiện. Manual browser E2E với database/SMTP/OAuth thật vẫn chưa được xác nhận; các issue không được nêu trong cập nhật này không mặc nhiên được xem là đã xử lý.
 
 ## Critical
 

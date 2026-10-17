@@ -1,6 +1,7 @@
 package com.cangiuoc.cgfoodtour.mapper;
 
 import com.cangiuoc.cgfoodtour.dto.request.StoreRequest;
+import com.cangiuoc.cgfoodtour.dto.response.PublicStoreResponse;
 import com.cangiuoc.cgfoodtour.dto.response.StoreResponse;
 import com.cangiuoc.cgfoodtour.entity.Store;
 import org.mapstruct.Mapper;
@@ -13,6 +14,11 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface StoreMapper {
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "bannerImageUrl", ignore = true)
+    @Mapping(target = "bannerImagePublicId", ignore = true)
+    @Mapping(target = "mapUrl", ignore = true)
+    @Mapping(target = "latitude", ignore = true)
+    @Mapping(target = "longitude", ignore = true)
     Store toStore(StoreRequest request);
 
     @Mapping(target = "categoryId", source = "category.id")
@@ -26,8 +32,19 @@ public interface StoreMapper {
     @Mapping(target = "isReportedClosed", ignore = true)
     StoreResponse toStoreResponse(Store store);
 
+    @Mapping(target = "categoryId", source = "category.id")
+    @Mapping(target = "categoryName", source = "category.name")
+    @Mapping(target = "foodItems", ignore = true)
+    @Mapping(target = "isReportedClosed", ignore = true)
+    PublicStoreResponse toPublicStoreResponse(Store store);
+
     List<StoreResponse> toStoreResponseList(List<Store> stores);
 
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "bannerImageUrl", ignore = true)
+    @Mapping(target = "bannerImagePublicId", ignore = true)
+    @Mapping(target = "mapUrl", ignore = true)
+    @Mapping(target = "latitude", ignore = true)
+    @Mapping(target = "longitude", ignore = true)
     void updateStore(@MappingTarget Store store, StoreRequest request);
 }

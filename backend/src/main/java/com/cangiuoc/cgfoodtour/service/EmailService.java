@@ -12,6 +12,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.web.util.HtmlUtils;
 
 @Slf4j
 @Service
@@ -26,7 +27,6 @@ public class EmailService {
     @Value("${app.base-url:http://localhost:8080/api}")
     String baseUrl;
 
-    @Async
     public void sendVerificationEmail(String toEmail, String token) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -49,7 +49,6 @@ public class EmailService {
         }
     }
 
-    @Async
     public void sendOtpEmail(String toEmail, String otp) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -67,6 +66,115 @@ public class EmailService {
         } catch (Exception e) {
             log.error("Failed to send OTP email", e);
             throw new AppException(ErrorCode.EMAIL_SEND_FAILED);
+        }
+    }
+
+    /**
+     * Account-state notifications are best-effort: the administrative action has
+     * already committed when this method is called, so an SMTP outage must not make
+     * the API report that the account was not disabled.
+     */
+    public void sendAccountDisabledEmail(String toEmail, String username, String reason) {
+        if (toEmail == null || toEmail.isBlank()) return;
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject("Thông báo khóa tài khoản - CGFoodTour");
+
+            String safeUsername = HtmlUtils.htmlEscape(
+                    username == null || username.isBlank() ? "người dùng" : username);
+            String safeReason = HtmlUtils.htmlEscape(
+                    reason == null || reason.isBlank() ? "Không có lý do chi tiết" : reason);
+            String htmlContent = """
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <style>
+                            body { font-family: 'Space Grotesk', Arial, sans-serif; background: #F7F6F2; color: #111111; padding: 25px 15px; }
+                            .container { max-width: 580px; margin: 0 auto; background: #FFFFFF; border: 3px solid #111111; border-radius: 20px; padding: 28px; box-shadow: 6px 6px 0 #111111; }
+                            .header { background: #FDE047; padding: 12px 20px; border: 2.5px solid #111111; border-radius: 12px; font-size: 15px; font-weight: 900; text-transform: uppercase; margin-bottom: 24px; box-shadow: 3px 3px 0 #111111; }
+                            p { font-size: 15px; font-weight: 600; line-height: 1.6; }
+                            .reason { background: #FFF7ED; border: 2.5px solid #111111; border-radius: 14px; padding: 18px; margin: 22px 0; box-shadow: 4px 4px 0 #111111; }
+                            .reason-title { margin: 0 0 8px; font-size: 12px; font-weight: 900; text-transform: uppercase; }
+                            .reason-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+                            .notice { color: #555555; font-size: 13px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">Thông báo từ quản trị viên CGFoodTour</div>
+                            <p>Xin chào <strong>@%s</strong>,</p>
+                            <p>Tài khoản CGFoodTour của bạn đã bị quản trị viên khóa. Các phiên đăng nhập hiện tại đã bị thu hồi và bạn sẽ không thể đăng nhập cho đến khi tài khoản được mở khóa.</p>
+                            <div class="reason">
+                                <p class="reason-title">Lý do khóa tài khoản</p>
+                                <p class="reason-text">%s</p>
+                            </div>
+                            <p class="notice">Nếu cần trao đổi thêm, vui lòng liên hệ bộ phận hỗ trợ CGFoodTour. Không trả lời trực tiếp email tự động này.</p>
+                            <p>Trân trọng,<br><strong>Cần Giuộc FoodTour Team</strong></p>
+                        </div>
+                    </body>
+                    </html>
+                    """.formatted(safeUsername, safeReason);
+
+            helper.setText(htmlContent, true);
+            mailSender.send(message);
+            log.info("Account disabled notification dispatched successfully for user {}", safeUsername);
+        } catch (Exception exception) {
+            log.error("Failed to send account disabled notification", exception);
+        }
+    }
+
+    public void sendAccountEnabledEmail(String toEmail, String username) {
+        if (toEmail == null || toEmail.isBlank()) return;
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject("Chào mừng bạn trở lại CGFoodTour");
+
+            String safeUsername = HtmlUtils.htmlEscape(
+                    username == null || username.isBlank() ? "người dùng" : username);
+            String htmlContent = """
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <style>
+                            body { font-family: 'Space Grotesk', Arial, sans-serif; background: #F7F6F2; color: #111111; padding: 25px 15px; }
+                            .container { max-width: 580px; margin: 0 auto; background: #FFFFFF; border: 3px solid #111111; border-radius: 20px; padding: 28px; box-shadow: 6px 6px 0 #111111; }
+                            .header { background: #6EE7B7; padding: 12px 20px; border: 2.5px solid #111111; border-radius: 12px; font-size: 15px; font-weight: 900; text-transform: uppercase; margin-bottom: 24px; box-shadow: 3px 3px 0 #111111; }
+                            p { font-size: 15px; font-weight: 600; line-height: 1.6; }
+                            .welcome { background: #ECFDF5; border: 2.5px solid #111111; border-radius: 14px; padding: 18px; margin: 22px 0; box-shadow: 4px 4px 0 #111111; }
+                            .welcome p { margin: 0; }
+                            .notice { color: #555555; font-size: 13px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">Chào mừng bạn trở lại CGFoodTour</div>
+                            <p>Xin chào <strong>@%s</strong>,</p>
+                            <div class="welcome">
+                                <p>Tài khoản CGFoodTour của bạn đã được mở khóa. Bạn có thể đăng nhập và tiếp tục sử dụng các chức năng của hệ thống ngay bây giờ.</p>
+                            </div>
+                            <p>Chúng tôi thành thật xin lỗi vì những bất tiện bạn gặp phải trong thời gian tài khoản bị khóa và rất vui được chào đón bạn trở lại cộng đồng CGFoodTour.</p>
+                            <p class="notice">Các quán đã được duyệt trước đó có thể xuất hiện công khai trở lại. Nếu vẫn gặp vấn đề khi đăng nhập hoặc sử dụng tài khoản, vui lòng liên hệ bộ phận hỗ trợ.</p>
+                            <p>Trân trọng,<br><strong>Cần Giuộc FoodTour Team</strong></p>
+                        </div>
+                    </body>
+                    </html>
+                    """.formatted(safeUsername);
+
+            helper.setText(htmlContent, true);
+            mailSender.send(message);
+            log.info("Account enabled notification dispatched successfully for user {}", safeUsername);
+        } catch (Exception exception) {
+            log.error("Failed to send account enabled notification", exception);
         }
     }
 

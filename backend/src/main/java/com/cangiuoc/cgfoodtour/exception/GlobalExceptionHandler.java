@@ -24,10 +24,11 @@ public class GlobalExceptionHandler {
     // lỗi đến từ AppException
     @ExceptionHandler(value = RuntimeException.class)
     ResponseEntity<ApiResponse> handlingRuntimeException(RuntimeException exception) {
+        log.error("Unhandled application exception", exception);
         ApiResponse apiResponse = new ApiResponse();
         apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
         apiResponse.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
-        return ResponseEntity.badRequest().body(apiResponse);
+        return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode()).body(apiResponse);
     }
 
     @ExceptionHandler(value = AppException.class)
@@ -91,14 +92,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = DataIntegrityViolationException.class)
     ResponseEntity<ApiResponse> handlingDataIntegrityViolationException(DataIntegrityViolationException exception) {
+        log.error("Database integrity violation", exception);
         ApiResponse apiResponse = new ApiResponse();
-        apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
-        String message = exception.getRootCause() != null ? exception.getRootCause().getMessage()
-                : exception.getMessage();
-        apiResponse.setMessage("Database integrity violation: " + message);
+        apiResponse.setCode(ErrorCode.DATA_CONFLICT.getCode());
+        apiResponse.setMessage(ErrorCode.DATA_CONFLICT.getMessage());
 
         return ResponseEntity
-                .status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode())
+                .status(ErrorCode.DATA_CONFLICT.getStatusCode())
                 .body(apiResponse);
     }
 

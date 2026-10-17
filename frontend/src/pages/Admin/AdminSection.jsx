@@ -34,10 +34,12 @@ import {
   ZoomIn
 } from 'lucide-react'
 import StoreActionModal from '@/components/modals/StoreActionModal'
+import AccountStatusModal from '@/components/modals/AccountStatusModal'
 import CustomSelect from '@/components/common/CustomSelect'
 import CategoryIcon from '@/components/common/CategoryIcon'
 import CategoryIconPicker from '@/components/common/CategoryIconPicker'
 import ImageViewerModal from '@/components/modals/ImageViewerModal'
+import { getSafeGoogleMapsUrl } from '@/utils/googleMapsUrl'
 
 export default function AdminSection({
   isUserAdmin,
@@ -61,7 +63,6 @@ export default function AdminSection({
   foodDesc,
   setFoodDesc,
   handleCreateFoodItem,
-  handleUploadImage,
   adminPendingStores = [],
   handleAdminApprove,
   handleAdminReject,
@@ -72,6 +73,8 @@ export default function AdminSection({
   adminUsersList = [],
   handleOpenAdminEditUser,
   handleAdminDeleteUser,
+  handleAdminDisableUser,
+  handleAdminEnableUser,
   editingUser,
   setEditingUser,
   adminUserUsername,
@@ -101,7 +104,6 @@ export default function AdminSection({
   const [editingCategory, setEditingCategory] = useState(null)
   const [editCatName, setEditCatName] = useState('')
   const [editCatIcon, setEditCatIcon] = useState('fa-bread-slice')
-  const [uploadingFood, setUploadingFood] = useState(false)
   const [storeStatusFilter, setStoreStatusFilter] = useState('ALL')
   const [storeCategoryFilter, setStoreCategoryFilter] = useState('ALL')
   const [storeSearchQuery, setStoreSearchQuery] = useState('')
@@ -110,6 +112,8 @@ export default function AdminSection({
   const [categorySortBy, setCategorySortBy] = useState('ID_ASC')
   const [storesPage, setStoresPage] = useState(1)
   const [usersPage, setUsersPage] = useState(1)
+  const [accountActionUser, setAccountActionUser] = useState(null)
+  const [accountActionType, setAccountActionType] = useState(null)
   const STORES_PER_PAGE = 12
   const USERS_PER_PAGE = 10
 
@@ -150,18 +154,18 @@ export default function AdminSection({
     }
   }
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    setUploadingFood(true)
-    const url = await handleUploadImage(file)
-    setUploadingFood(false)
-    if (url) {
-      setFoodImage(url)
-    }
+  const closeAccountActionModal = () => {
+    setAccountActionUser(null)
+    setAccountActionType(null)
   }
 
-
+  const handleAccountActionConfirm = async ({ reason }) => {
+    if (!accountActionUser || !accountActionType) return false
+    if (accountActionType === 'DISABLE') {
+      return handleAdminDisableUser(accountActionUser, reason)
+    }
+    return handleAdminEnableUser(accountActionUser)
+  }
 
   if (!isUserAdmin) {
     return (
@@ -1065,6 +1069,9 @@ export default function AdminSection({
                                     )}
                                   </div>
                                   <p className="text-[10px] text-neutral-500 font-semibold">{u.email}</p>
+                                  <span className={`inline-block mt-1 text-[9px] font-black uppercase px-2 py-0.5 border border-black rounded ${u.enabled ? 'bg-[#e6fcf5] text-[#087f5b]' : u.emailVerified ? 'bg-[#fff5f5] text-[#c92a2a]' : 'bg-[#fff9db] text-[#b45309]'}`}>
+                                    {u.enabled ? 'Hoạt động' : u.emailVerified ? 'Đã khóa' : 'Chờ xác thực'}
+                                  </span>
                                 </td>
                                 <td className="py-3 font-bold text-neutral-700">
                                   {[u.firstname, u.lastname].filter(Boolean).join(' ') || 'Chưa nhập'}
@@ -1110,7 +1117,23 @@ export default function AdminSection({
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() => handleAdminDeleteUser(u.id)}
+                                      onClick={() => {
+                                        setAccountActionUser(u)
+                                        setAccountActionType(u.enabled ? 'DISABLE' : 'ENABLE')
+                                      }}
+                                      disabled={u.id === currentUser?.id || (!u.enabled && !u.emailVerified)}
+                                      className={`w-24 h-8 shrink-0 inline-flex items-center justify-center text-black font-black text-[11px] uppercase border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                                        u.enabled
+                                          ? 'bg-amber-300 hover:bg-amber-400'
+                                          : 'bg-emerald-300 hover:bg-emerald-400'
+                                      }`}
+                                    >
+                                      {u.enabled ? 'Khóa' : 'Mở khóa'}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAdminDeleteUser(u)}
+                                      disabled={u.id === currentUser?.id}
                                       className="px-2.5 py-1.5 bg-[#fff5f5] hover:bg-[#ffe0e0] text-[#ff3e3e] font-black text-[11px] uppercase border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] flex items-center gap-1.5 cursor-pointer transition-all"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
@@ -1376,6 +1399,16 @@ export default function AdminSection({
         onConfirm={handleAdminActionConfirm}
       />
 
+      {accountActionUser && accountActionType && (
+        <AccountStatusModal
+          key={`${accountActionType}-${accountActionUser.id}`}
+          user={accountActionUser}
+          actionType={accountActionType}
+          onClose={closeAccountActionModal}
+          onConfirm={handleAccountActionConfirm}
+        />
+      )}
+
       {/* Admin Rejection Modal */}
       {rejectingStore && createPortal(
         <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4 animate-fade-in-up">
@@ -1491,6 +1524,7 @@ export default function AdminSection({
                   <input
                     type="date"
                     value={adminUserDob}
+                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().slice(0, 10)}
                     onChange={(e) => setAdminUserDob(e.target.value)}
                     className="brutalist-input"
                   />
@@ -1674,11 +1708,11 @@ export default function AdminSection({
                     <MapPin className="w-4 h-4 text-[#ff3e3e] shrink-0 mt-0.5" />
                     <div className="space-y-1">
                       <p className="font-extrabold text-sm uppercase">Địa Chỉ Chi Tiết</p>
-                      {viewingStore.mapUrl || (viewingStore.latitude && viewingStore.longitude) ? (
+                      {getSafeGoogleMapsUrl(viewingStore.mapUrl, viewingStore.latitude, viewingStore.longitude) ? (
                         <a
-                          href={viewingStore.mapUrl || `https://www.google.com/maps/search/?api=1&query=${viewingStore.latitude},${viewingStore.longitude}`}
+                          href={getSafeGoogleMapsUrl(viewingStore.mapUrl, viewingStore.latitude, viewingStore.longitude)}
                           target="_blank"
-                          rel="noreferrer"
+                          rel="noopener noreferrer"
                           className="font-bold text-neutral-800 hover:text-[#ff3e3e] underline block transition-colors leading-snug"
                           title="Bấm để mở địa chỉ chi tiết trên Google Maps"
                         >
@@ -1690,11 +1724,11 @@ export default function AdminSection({
                       {viewingStore.landmarkNote && (
                         <p className="text-[#ff3e3e] italic font-black">“ {viewingStore.landmarkNote} ”</p>
                       )}
-                      {(viewingStore.mapUrl || (viewingStore.latitude && viewingStore.longitude)) && (
+                      {getSafeGoogleMapsUrl(viewingStore.mapUrl, viewingStore.latitude, viewingStore.longitude) && (
                         <a
-                          href={viewingStore.mapUrl || `https://www.google.com/maps/search/?api=1&query=${viewingStore.latitude},${viewingStore.longitude}`}
+                          href={getSafeGoogleMapsUrl(viewingStore.mapUrl, viewingStore.latitude, viewingStore.longitude)}
                           target="_blank"
-                          rel="noreferrer"
+                          rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-300 px-2.5 py-1 rounded-lg mt-1 shadow-xs transition-colors cursor-pointer"
                         >
                           Xem địa chỉ chi tiết trên Google Maps

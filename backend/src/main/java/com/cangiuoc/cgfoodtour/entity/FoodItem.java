@@ -32,6 +32,9 @@ public class FoodItem {
     @Column(name = "image_url")
     String imageUrl;
 
+    @Column(name = "image_public_id")
+    String imagePublicId;
+
     @Column(length = 255)
     String description;
 

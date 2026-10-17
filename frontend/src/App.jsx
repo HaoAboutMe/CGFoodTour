@@ -16,12 +16,16 @@ import ProfileSection from '@/pages/Profile/ProfileSection'
 import ExploreSection from '@/pages/Explore/ExploreSection'
 import AboutSection from '@/pages/About/AboutSection'
 import SavedStoresSection from '@/components/SavedStoresSection'
+import { getVietnameseApiError } from '@/utils/apiErrorMessages'
+import { redactSensitiveData } from '@/utils/redactSensitiveData'
 
 // Code splitting & Dynamic imports for heavy sections per Vercel Best Practices (bundle-dynamic-imports)
 const AdminSection = lazy(() => import('@/pages/Admin/AdminSection'))
 const MyStoresSection = lazy(() => import('@/pages/MyStores/MyStoresSection'))
 const CS2CaseOpener = lazy(() => import('@/pages/CS2CaseOpener/CS2CaseOpener'))
-const DevConsole = lazy(() => import('@/components/common/DevConsole'))
+const DevConsole = import.meta.env.DEV
+  ? lazy(() => import('@/components/common/DevConsole'))
+  : null
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '/api')).replace(/\/+$/, '')
 
@@ -32,6 +36,15 @@ function getRefreshDelay(accessToken) {
   } catch {
     return 4 * 60 * 1000
   }
+}
+
+function isAtLeast18(dateValue) {
+  if (!dateValue) return false
+  const birthDate = new Date(`${dateValue}T00:00:00`)
+  if (Number.isNaN(birthDate.getTime())) return false
+  const cutoff = new Date()
+  cutoff.setFullYear(cutoff.getFullYear() - 18)
+  return birthDate <= cutoff
 }
 
 export default function App() {
@@ -59,6 +72,8 @@ export default function App() {
   // App Data
   const [categories, setCategories] = useState([])
   const [stores, setStores] = useState([])
+  const [ownedStores, setOwnedStores] = useState([])
+  const [adminStores, setAdminStores] = useState([])
   const [savedStores, setSavedStores] = useState([])
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [activeStore, setActiveStore] = useState(null)
@@ -251,6 +266,9 @@ export default function App() {
         if (event.data === 'STORES_UPDATED') {
           loadGlobalData();
           if (token) {
+            loadMyStores();
+          }
+          if (isAdmin()) {
             loadAdminPendingStores();
           }
         }
@@ -369,6 +387,7 @@ export default function App() {
 
   // Logger helper
   function logEvent(method, url, requestBody, responseData, isSuccess = true) {
+    if (!import.meta.env.DEV) return
     const timestamp = new Date().toLocaleTimeString()
     setConsoleLogs((prev) => [
       ...prev,
@@ -377,8 +396,8 @@ export default function App() {
         timestamp,
         method,
         url,
-        requestBody,
-        responseData,
+        requestBody: redactSensitiveData(requestBody),
+        responseData: redactSensitiveData(responseData),
         isSuccess
       }
     ])
@@ -599,10 +618,24 @@ export default function App() {
 
     const activeToken = localStorage.getItem('jwtToken') || token
     if (activeToken) {
-      loadSavedStores()
+      await Promise.all([loadSavedStores(), loadMyStores()])
+    } else {
+      setOwnedStores([])
     }
 
     setLoading(false)
+  }
+
+  async function loadMyStores() {
+    const activeToken = localStorage.getItem('jwtToken') || token
+    if (!activeToken) {
+      setOwnedStores([])
+      return
+    }
+    const res = await makeRequest('GET', '/v1/stores/mine')
+    if (res.success && res.data.result) {
+      setOwnedStores(res.data.result)
+    }
   }
 
   // Load saved stores for current logged in user
@@ -650,7 +683,7 @@ export default function App() {
       // Refresh saved stores list
       loadSavedStores()
     } else {
-      showToast(res.error?.message || 'Không thể thực hiện thao tác lưu quán.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Không thể thực hiện thao tác lưu quán.'), 'error')
     }
   }
 
@@ -688,7 +721,11 @@ export default function App() {
       setLoginEmail('')
       setLoginPassword('')
     } else {
-      showToast(res.error?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.', 'error')
+      if (res.error?.code === 1011) {
+        setResendEmail(loginEmail.trim())
+        setAuthMode('verify')
+      }
+      showToast(getVietnameseApiError(res.error, 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.'), 'error')
     }
   }
 
@@ -725,6 +762,16 @@ export default function App() {
       return
     }
 
+    if (!regFirstname.trim() || !regLastname.trim()) {
+      showToast('Họ và tên không được để trống', 'error')
+      return
+    }
+
+    if (!isAtLeast18(regDob)) {
+      showToast('Bạn phải đủ 18 tuổi để đăng ký', 'error')
+      return
+    }
+
     setLoading(true)
     const res = await makeRequest('POST', '/auth/register', {
       username: cleanUsername,
@@ -747,7 +794,7 @@ export default function App() {
       setRegConfirmPassword('')
       setRegDob('')
     } else {
-      showToast(res.error?.message || 'Đăng ký thất bại.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Đăng ký thất bại.'), 'error')
     }
   }
 
@@ -763,7 +810,7 @@ export default function App() {
       setAuthMode('login')
       setVerifyTokenVal('')
     } else {
-      showToast(res.error?.message || 'Mã xác thực không hợp lệ hoặc đã hết hạn.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Mã xác thực không hợp lệ hoặc đã hết hạn.'), 'error')
     }
   }
 
@@ -778,24 +825,29 @@ export default function App() {
       showToast('Đã gửi liên kết xác thực vào email của bạn!', 'success')
       setResendEmail('')
     } else {
-      showToast(res.error?.message || 'Không thể gửi lại email xác thực. Vui lòng thử lại sau.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Không thể gửi lại email xác thực. Vui lòng thử lại sau.'), 'error')
     }
   }
 
   // Forgot Password request OTP
   async function handleForgotPassword(e) {
     if (e && e.preventDefault) e.preventDefault()
+    const targetEmail = (forgotEmail || resetEmail).trim()
+    if (!targetEmail) {
+      showToast('Vui lòng nhập email để nhận mã OTP.', 'error')
+      return
+    }
     setLoading(true)
-    const res = await makeRequest('POST', '/auth/forgot-password', { email: forgotEmail })
+    const res = await makeRequest('POST', '/auth/forgot-password', { email: targetEmail })
     setLoading(false)
 
     if (res.success) {
       showToast('Đã gửi mã OTP đặt lại mật khẩu vào email của bạn!', 'success')
-      setResetEmail(forgotEmail)
+      setResetEmail(targetEmail)
       setForgotStep(2)
       setForgotEmail('')
     } else {
-      showToast(res.error?.message || 'Gửi mã OTP thất bại.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Gửi mã OTP thất bại.'), 'error')
     }
   }
 
@@ -813,7 +865,7 @@ export default function App() {
       showToast('Xác thực OTP thành công!', 'success')
       setForgotStep(3)
     } else {
-      showToast(res.error?.message || 'Mã OTP không đúng hoặc đã hết hạn.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Mã OTP không đúng hoặc đã hết hạn.'), 'error')
     }
   }
 
@@ -833,6 +885,15 @@ export default function App() {
     setLoading(false)
 
     if (res.success) {
+      // Reset password revokes every token that was issued before the reset.
+      setToken('')
+      setRefreshTokenVal('')
+      setCurrentUser(null)
+      setOwnedStores([])
+      setAdminStores([])
+      setAdminPendingStores([])
+      localStorage.removeItem('jwtToken')
+      localStorage.removeItem('refreshToken')
       showToast('Đổi mật khẩu thành công! Hãy đăng nhập.', 'success')
       setAuthMode('login')
       setResetEmail('')
@@ -841,7 +902,7 @@ export default function App() {
       setResetConfirmPassword('')
       setForgotStep(1)
     } else {
-      showToast(res.error?.message || 'Đổi mật khẩu thất bại.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Đổi mật khẩu thất bại.'), 'error')
     }
   }
 
@@ -865,7 +926,7 @@ export default function App() {
       setShowAuthModal(false)
       setSocialGoogleToken('')
     } else {
-      showToast(res.error?.message || 'Đăng nhập Google thất bại.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Đăng nhập Google thất bại.'), 'error')
     }
   }
 
@@ -889,7 +950,7 @@ export default function App() {
       setShowAuthModal(false)
       setSocialFacebookToken('')
     } else {
-      showToast(res.error?.message || 'Đăng nhập Facebook thất bại.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Đăng nhập Facebook thất bại.'), 'error')
     }
   }
 
@@ -1001,6 +1062,14 @@ export default function App() {
   // Update profile basic info
   async function handleUpdateProfile(e) {
     e.preventDefault()
+    if (!upUsername.trim() || !upFirstname.trim() || !upLastname.trim()) {
+      showToast('Thông tin họ tên và username không được để trống.', 'error')
+      return
+    }
+    if (!isAtLeast18(upDob)) {
+      showToast('Ngày sinh phải tương ứng độ tuổi từ 18 trở lên.', 'error')
+      return
+    }
     setLoading(true)
     const res = await makeRequest('PUT', '/users/me', {
       username: upUsername,
@@ -1014,7 +1083,7 @@ export default function App() {
       setCurrentUser(res.data.result)
       showToast('Cập nhật thông tin cá nhân thành công!', 'success')
     } else {
-      showToast(res.error?.message || 'Cập nhật thông tin cá nhân thất bại.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Cập nhật thông tin cá nhân thất bại.'), 'error')
     }
   }
 
@@ -1038,7 +1107,7 @@ export default function App() {
       setAvatarFile(null)
       showToast('Đã tải ảnh đại diện thành công!', 'success')
     } else {
-      showToast(res.error?.message || 'Tải ảnh đại diện thất bại.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Tải ảnh đại diện thất bại.'), 'error')
     }
   }
 
@@ -1047,25 +1116,31 @@ export default function App() {
     setAvatarPreview(currentUser?.avatarUrl || '')
   }
 
-  // Upload Generic Image (Stores/Dishes)
-  async function handleUploadImage(file, folder = '') {
+  async function uploadManagedImage(endpoint, file) {
     if (!file) return null
     const formData = new FormData()
     formData.append('file', file)
 
-    let url = '/v1/upload/image'
-    if (folder) {
-      url += `?folder=${encodeURIComponent(folder)}`
-    }
-
-    const res = await makeRequest('POST', url, formData, true)
+    const res = await makeRequest('PATCH', endpoint, formData, true)
 
     if (res.success && res.data.result) {
-      return res.data.result.url
+      return res.data.result
     } else {
-      showToast(res.error?.message || 'Tải ảnh thất bại.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Tải ảnh thất bại.'), 'error')
       return null
     }
+  }
+
+  async function handleUploadStoreBanner(storeId, file) {
+    const result = await uploadManagedImage(`/v1/stores/${storeId}/banner`, file)
+    if (result) await loadGlobalData()
+    return result
+  }
+
+  async function handleUploadFoodImage(foodId, file) {
+    const result = await uploadManagedImage(`/v1/food-items/${foodId}/image`, file)
+    if (result) await loadGlobalData()
+    return result
   }
 
   // Preview file upload avatar
@@ -1093,13 +1168,13 @@ export default function App() {
 
     if (res.success) {
       showToast('Đổi mật khẩu thành công! Vui lòng đăng nhập lại với mật khẩu mới.', 'success')
-      handleLogout()
+      await handleLogout()
       setShowAuthModal(true)
       setAuthMode('login')
       setPwdOld('')
       setPwdNew('')
     } else {
-      showToast(res.error?.message || 'Đổi mật khẩu thất bại.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Đổi mật khẩu thất bại.'), 'error')
     }
   }
 
@@ -1118,7 +1193,7 @@ export default function App() {
       setCatName('')
       loadGlobalData()
     } else {
-      showToast(res.error?.message || 'Tạo danh mục thất bại.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Tạo danh mục thất bại.'), 'error')
     }
   }
 
@@ -1144,7 +1219,7 @@ export default function App() {
       loadGlobalData()
       return true
     } else {
-      showToast(res.error?.message || 'Không thể cập nhật danh mục.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Không thể cập nhật danh mục.'), 'error')
       return false
     }
   }
@@ -1160,7 +1235,7 @@ export default function App() {
       showToast('Xóa danh mục thành công!', 'success')
       loadGlobalData()
     } else {
-      showToast(res.error?.message || 'Không thể xóa danh mục.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Không thể xóa danh mục.'), 'error')
     }
   }
 
@@ -1181,7 +1256,6 @@ export default function App() {
       closeTime: formatTimeHHmm(storeClose),
       priceMin: parseFloat(storePriceMin) || 0,
       priceMax: parseFloat(storePriceMax) || 0,
-      bannerImageUrl: storeBannerUrl
     })
 
     if (res && res.success && res.data && res.data.result) {
@@ -1210,7 +1284,7 @@ export default function App() {
       return createdStore
     } else {
       setLoading(false)
-      showToast(res?.error?.message || 'Không thể đăng ký quán ăn.', 'error')
+      showToast(getVietnameseApiError(res?.error, 'Không thể đăng ký quán ăn.'), 'error')
       return null
     }
   }
@@ -1237,7 +1311,6 @@ export default function App() {
       closeTime: formatTimeHHmm(editingStore.closeTime),
       priceMin: parseFloat(editingStore.priceMin) || 0,
       priceMax: parseFloat(editingStore.priceMax) || 0,
-      bannerImageUrl: editingStore.bannerImageUrl
     })
     setLoading(false)
 
@@ -1246,7 +1319,7 @@ export default function App() {
       setEditingStore(null)
       await loadGlobalData()
     } else {
-      showToast(res.error?.message || 'Không thể cập nhật quán ăn.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Không thể cập nhật quán ăn.'), 'error')
     }
   }
 
@@ -1266,8 +1339,9 @@ export default function App() {
     if (res.success) {
       showToast('Đã tạm ẩn quán ăn!', 'success')
       await loadGlobalData()
+      if (activeTab === 'admin') await loadAdminPendingStores()
     } else {
-      showToast(res.error?.message || 'Không thể ẩn quán ăn.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Không thể ẩn quán ăn.'), 'error')
     }
   }
 
@@ -1277,8 +1351,9 @@ export default function App() {
     if (res.success) {
       showToast('Đã khôi phục quán ăn!', 'success')
       await loadGlobalData()
+      if (activeTab === 'admin') await loadAdminPendingStores()
     } else {
-      showToast(res.error?.message || 'Không thể khôi phục quán ăn.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Không thể khôi phục quán ăn.'), 'error')
     }
   }
 
@@ -1289,7 +1364,7 @@ export default function App() {
       showToast('Đã gửi yêu cầu khôi phục quán ăn!', 'success')
       await loadGlobalData()
     } else {
-      showToast(res.error?.message || 'Không thể gửi yêu cầu khôi phục.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Không thể gửi yêu cầu khôi phục.'), 'error')
     }
   }
 
@@ -1305,7 +1380,7 @@ export default function App() {
       if (activeTab === 'admin' && typeof loadAdminPendingStores === 'function') loadAdminPendingStores()
       return res.data || true
     } else {
-      showToast(res.error?.message || 'Không thể từ chối yêu cầu khôi phục.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Không thể từ chối yêu cầu khôi phục.'), 'error')
       return false
     }
   }
@@ -1319,7 +1394,7 @@ export default function App() {
       showToast('Quán ăn đã bị từ chối/xóa.', 'info')
       await loadGlobalData()
     } else {
-      showToast(res.error?.message || 'Không thể xóa quán ăn.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Không thể xóa quán ăn.'), 'error')
     }
   }
 
@@ -1336,7 +1411,7 @@ export default function App() {
       if (activeTab === 'admin' && typeof loadAdminPendingStores === 'function') loadAdminPendingStores()
       return true
     } else {
-      showToast(res.error?.message || 'Không thể xóa vĩnh viễn quán ăn.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Không thể xóa vĩnh viễn quán ăn.'), 'error')
       return false
     }
   }
@@ -1352,19 +1427,23 @@ export default function App() {
     const res = await makeRequest('POST', `/v1/food-items/store/${foodStoreId}`, {
       name: foodName,
       price: parseFloat(foodPrice) || 0,
-      imageUrl: foodImage,
       description: foodDesc
     })
 
     if (res.success) {
+      const createdFood = res.data.result
       showToast(`Món "${foodName}" đã được thêm vào thực đơn thành công!`, 'success')
       setFoodName('')
       setFoodPrice(0)
       setFoodImage('')
       setFoodDesc('')
       loadGlobalData()
+      setLoading(false)
+      return createdFood
     } else {
-      showToast(res.error?.message || 'Thêm món ăn thất bại.', 'error')
+      setLoading(false)
+      showToast(getVietnameseApiError(res.error, 'Thêm món ăn thất bại.'), 'error')
+      return null
     }
   }
 
@@ -1374,7 +1453,6 @@ export default function App() {
     const res = await makeRequest('PUT', `/v1/food-items/${foodId}`, {
       name: foodData.name,
       price: parseFloat(foodData.price) || 0,
-      imageUrl: foodData.imageUrl,
       description: foodData.description
     })
     setLoading(false)
@@ -1384,7 +1462,7 @@ export default function App() {
       loadGlobalData()
       return true
     } else {
-      showToast(res.error?.message || 'Không thể cập nhật món ăn.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Không thể cập nhật món ăn.'), 'error')
       return false
     }
   }
@@ -1400,7 +1478,7 @@ export default function App() {
       showToast('Món ăn đã được xóa thành công!', 'success')
       loadGlobalData()
     } else {
-      showToast(res.error?.message || 'Không thể xóa món ăn.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Không thể xóa món ăn.'), 'error')
     }
   }
 
@@ -1430,7 +1508,7 @@ export default function App() {
         }
       }
     } else {
-      showToast(res.error?.message || 'Đánh giá thất bại.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Đánh giá thất bại.'), 'error')
     }
   }
 
@@ -1453,7 +1531,7 @@ export default function App() {
       showToast(`Đã gửi báo cáo đóng cửa! Trạng thái: ${closedState}`, 'success')
       loadGlobalData()
     } else {
-      showToast(res.error?.message || 'Xác thực khoảng cách GPS thất bại (Bạn cần ở vị trí cách quán dưới 100m).', 'error')
+      showToast(getVietnameseApiError(res.error, 'Xác thực khoảng cách GPS thất bại (Bạn cần ở vị trí cách quán dưới 100m).'), 'error')
     }
   }
 
@@ -1500,8 +1578,9 @@ export default function App() {
 
   // Admin View - Pending stores retrieve
   async function loadAdminPendingStores() {
-    const res = await makeRequest('GET', '/v1/stores')
+    const res = await makeRequest('GET', '/v1/stores/admin')
     if (res.success && res.data.result) {
+      setAdminStores(res.data.result)
       // filter only PENDING submissions
       setAdminPendingStores(res.data.result.filter((s) => s.status === 'PENDING'))
     }
@@ -1519,7 +1598,7 @@ export default function App() {
       loadGlobalData()
       return res.data || true
     } else {
-      showToast(res.error?.message || 'Duyệt quán ăn thất bại.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Duyệt quán ăn thất bại.'), 'error')
       return false
     }
   }
@@ -1541,23 +1620,54 @@ export default function App() {
       loadGlobalData()
       return res.data || true
     } else {
-      showToast(res.error?.message || 'Từ chối quán ăn thất bại.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Từ chối quán ăn thất bại.'), 'error')
       return false
     }
   }
 
   // Admin View - Delete user account
-  async function handleAdminDeleteUser(userId) {
-    if (!window.confirm('Xóa tài khoản người dùng hoàn toàn? Hành động này sẽ xóa mọi thông tin và dữ liệu liên quan.')) return
+  async function handleAdminDeleteUser(user) {
+    const confirmation = window.prompt(`Nhập chính xác username "${user.username}" để xác nhận xóa toàn bộ tài khoản và dữ liệu liên quan:`)
+    if (confirmation === null) return
+    const reason = window.prompt('Nhập lý do xóa tài khoản:')
+    if (!reason?.trim()) {
+      showToast('Lý do xóa tài khoản không được để trống.', 'error')
+      return
+    }
     setLoading(true)
-    const res = await makeRequest('DELETE', `/users/${userId}`)
+    const res = await makeRequest('DELETE', `/users/${user.id}`, { confirmation, reason: reason.trim() })
     setLoading(false)
 
     if (res.success) {
       showToast('Xóa tài khoản người dùng thành công.', 'success')
       loadAdminUsers()
     } else {
-      showToast(res.error?.message || 'Xóa tài khoản thất bại.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Xóa tài khoản thất bại.'), 'error')
+    }
+  }
+
+  async function handleAdminDisableUser(user, reason) {
+    if (!reason?.trim()) return false
+    const res = await makeRequest('POST', `/users/${user.id}/disable`, { reason: reason.trim() })
+    if (res.success) {
+      showToast('Đã khóa tài khoản và thu hồi toàn bộ phiên đăng nhập.', 'success')
+      await Promise.all([loadAdminUsers(), loadAdminPendingStores(), loadGlobalData()])
+      return true
+    } else {
+      showToast(getVietnameseApiError(res.error, 'Không thể khóa tài khoản.'), 'error')
+      return false
+    }
+  }
+
+  async function handleAdminEnableUser(user) {
+    const res = await makeRequest('POST', `/users/${user.id}/enable`, {})
+    if (res.success) {
+      showToast('Đã mở khóa tài khoản.', 'success')
+      await Promise.all([loadAdminUsers(), loadAdminPendingStores(), loadGlobalData()])
+      return true
+    } else {
+      showToast(getVietnameseApiError(res.error, 'Không thể mở khóa tài khoản.'), 'error')
+      return false
     }
   }
 
@@ -1589,6 +1699,19 @@ export default function App() {
     if (adminUserRoles.USER) rolesArray.push('USER')
     if (adminUserRoles.ADMIN) rolesArray.push('ADMIN')
 
+    if (rolesArray.length === 0) {
+      showToast('Người dùng phải có ít nhất một vai trò.', 'error')
+      return
+    }
+    if (!adminUserUsername.trim() || !adminUserFirst.trim() || !adminUserLast.trim()) {
+      showToast('Thông tin người dùng không được để trống.', 'error')
+      return
+    }
+    if (!isAtLeast18(adminUserDob)) {
+      showToast('Ngày sinh phải tương ứng độ tuổi từ 18 trở lên.', 'error')
+      return
+    }
+
     const res = await makeRequest('PUT', `/users/${editingUser.id}`, {
       username: adminUserUsername,
       firstname: adminUserFirst,
@@ -1603,7 +1726,7 @@ export default function App() {
       setEditingUser(null)
       loadAdminUsers()
     } else {
-      showToast(res.error?.message || 'Cập nhật thất bại.', 'error')
+      showToast(getVietnameseApiError(res.error, 'Cập nhật thất bại.'), 'error')
     }
   }
 
@@ -1631,13 +1754,7 @@ export default function App() {
 
 
   // Get user's own stores
-  const myStores = stores.filter((st) => {
-    if (!currentUser) return false
-    return (
-      (st.ownerId && currentUser.id && st.ownerId.toString() === currentUser.id.toString()) ||
-      (st.ownerEmail && currentUser.email && st.ownerEmail.toLowerCase() === currentUser.email.toLowerCase())
-    )
-  })
+  const myStores = ownedStores
 
   return (
     <div className={`min-h-[100dvh] relative bg-[#f7f6f2] text-black overflow-x-hidden ${activeTab === 'admin' ? 'h-screen overflow-hidden pb-0' : 'pb-24'}`}>
@@ -1824,7 +1941,8 @@ export default function App() {
               handleCreateFoodItem={handleCreateFoodItem}
               handleUpdateFoodItem={handleUpdateFoodItem}
               handleDeleteFoodItem={handleDeleteFoodItem}
-              handleUploadImage={handleUploadImage}
+              handleUploadStoreBanner={handleUploadStoreBanner}
+              handleUploadFoodImage={handleUploadFoodImage}
               loadGlobalData={loadGlobalData}
             />
           </Suspense>
@@ -1847,7 +1965,7 @@ export default function App() {
               handleCreateCategory={handleCreateCategory}
               foodStoreId={foodStoreId}
               setFoodStoreId={setFoodStoreId}
-              stores={stores}
+              stores={adminStores}
               foodName={foodName}
               setFoodName={setFoodName}
               foodPrice={foodPrice}
@@ -1857,7 +1975,6 @@ export default function App() {
               foodDesc={foodDesc}
               setFoodDesc={setFoodDesc}
               handleCreateFoodItem={handleCreateFoodItem}
-              handleUploadImage={handleUploadImage}
               adminPendingStores={adminPendingStores}
               handleAdminApprove={handleAdminApprove}
               handleAdminReject={handleAdminReject}
@@ -1868,6 +1985,8 @@ export default function App() {
               adminUsersList={adminUsersList}
               handleOpenAdminEditUser={handleOpenAdminEditUser}
               handleAdminDeleteUser={handleAdminDeleteUser}
+              handleAdminDisableUser={handleAdminDisableUser}
+              handleAdminEnableUser={handleAdminEnableUser}
               editingUser={editingUser}
               setEditingUser={setEditingUser}
               adminUserUsername={adminUserUsername}
@@ -1951,6 +2070,7 @@ export default function App() {
         resendEmail={resendEmail}
         setResendEmail={setResendEmail}
         handleResendVerification={handleResendVerification}
+        loading={loading}
         showToast={showToast}
       />
 
@@ -1966,7 +2086,7 @@ export default function App() {
         setGpsLng={setGpsLng}
       />
 
-      {isAdmin() && (
+      {import.meta.env.DEV && DevConsole && isAdmin() && (
         <Suspense fallback={null}>
           <DevConsole
             isConsoleOpen={isConsoleOpen}

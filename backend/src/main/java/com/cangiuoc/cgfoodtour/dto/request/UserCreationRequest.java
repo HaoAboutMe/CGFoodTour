@@ -21,7 +21,9 @@ public class UserCreationRequest
     @NotBlank(message = "USERNAME_INVALID")
     @Size(min = 3, max = 20, message = "USERNAME_INVALID")
     String username;
+    @NotBlank(message = "REQUIRED_FIELD_MISSING")
     String firstname;
+    @NotBlank(message = "REQUIRED_FIELD_MISSING")
     String lastname;
 
     @Email(message = "EMAIL_INVALID")
@@ -32,6 +34,6 @@ public class UserCreationRequest
     @Size(min = 8, max = 72, message = "PASSWORD_INVALID")
     String password;
 
-    @DateOfBirthConstraint(min = 5, message = "INVALID_DATE_OF_BIRTH")
+    @DateOfBirthConstraint(min = 18, message = "INVALID_DATE_OF_BIRTH")
     LocalDate dateOfBirth;
 }

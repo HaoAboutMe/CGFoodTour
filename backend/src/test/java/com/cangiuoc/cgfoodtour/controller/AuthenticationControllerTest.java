@@ -45,7 +45,7 @@ class AuthenticationControllerTest {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"username":"foodlover","email":"user@example.com",
+                                {"username":"foodlover","firstname":"Food","lastname":"Lover","email":"user@example.com",
                                  "password":"password123","dateOfBirth":"2000-01-20"}
                                 """))
                 .andExpect(status().isCreated())
@@ -54,7 +54,7 @@ class AuthenticationControllerTest {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"username":"foodlover","email":"user@example.com",
+                                {"username":"foodlover","firstname":"Food","lastname":"Lover","email":"user@example.com",
                                  "password":"password123"}
                                 """))
                 .andExpect(status().isBadRequest());

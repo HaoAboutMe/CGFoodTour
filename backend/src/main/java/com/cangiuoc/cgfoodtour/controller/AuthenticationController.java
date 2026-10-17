@@ -47,8 +47,9 @@ public class AuthenticationController {
     }
 
     @PostMapping("/token")
-    ApiResponse<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
-        var result = authenticationService.authenticate(request);
+    ApiResponse<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest request,
+                                                      HttpServletRequest httpRequest) {
+        var result = authenticationService.authenticate(request, httpRequest.getRemoteAddr());
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(result)
                 .message(SuccessMessage.LOGIN_SUCCESS)
@@ -56,8 +57,9 @@ public class AuthenticationController {
     }
 
     @PostMapping("/google-login")
-    ApiResponse<AuthenticationResponse> googleLogin(@RequestBody @Valid GoogleLoginRequest request) {
-        var result = authenticationService.googleAuthenticate(request);
+    ApiResponse<AuthenticationResponse> googleLogin(@RequestBody @Valid GoogleLoginRequest request,
+                                                     HttpServletRequest httpRequest) {
+        var result = authenticationService.googleAuthenticate(request, httpRequest.getRemoteAddr());
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(result)
                 .message(SuccessMessage.GOOGLE_LOGIN_SUCCESS)
@@ -65,8 +67,9 @@ public class AuthenticationController {
     }
 
     @PostMapping("/facebook-login")
-    ApiResponse<AuthenticationResponse> facebookLogin(@RequestBody @Valid com.cangiuoc.cgfoodtour.dto.request.FacebookLoginRequest request) {
-        var result = authenticationService.facebookAuthenticate(request);
+    ApiResponse<AuthenticationResponse> facebookLogin(@RequestBody @Valid com.cangiuoc.cgfoodtour.dto.request.FacebookLoginRequest request,
+                                                       HttpServletRequest httpRequest) {
+        var result = authenticationService.facebookAuthenticate(request, httpRequest.getRemoteAddr());
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(result)
                 .message(SuccessMessage.FACEBOOK_LOGIN_SUCCESS)
@@ -395,7 +398,6 @@ public class AuthenticationController {
     }
 
     @PostMapping("/resend-verification")
-    @ResponseStatus(HttpStatus.ACCEPTED)
     ApiResponse<String> resendVerificationEmail(@RequestParam String email,
                                                 HttpServletRequest httpRequest) {
         String normalizedEmail = email.trim().toLowerCase(java.util.Locale.ROOT);
@@ -410,7 +412,6 @@ public class AuthenticationController {
     // ========== FORGOT PASSWORD ==========
 
     @PostMapping("/forgot-password")
-    @ResponseStatus(HttpStatus.ACCEPTED)
     ApiResponse<String> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request,
                                        HttpServletRequest httpRequest) {
         authenticationService.forgotPassword(request, httpRequest.getRemoteAddr());

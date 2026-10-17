@@ -63,6 +63,9 @@ public class Store {
     @Column(name = "banner_image_url")
     String bannerImageUrl;
 
+    @Column(name = "banner_image_public_id")
+    String bannerImagePublicId;
+
     @Column(name = "is_verified")
     @Builder.Default
     Boolean isVerified = false;

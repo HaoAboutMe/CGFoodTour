@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { X, Trophy, MapPin, Phone, DollarSign, ThumbsUp, Meh, ThumbsDown, ZoomIn, Bookmark } from 'lucide-react'
 import { checkStoreOpenStatus } from '@/utils/timeUtils'
 import ImageViewerModal from '@/components/modals/ImageViewerModal'
+import { getSafeGoogleMapsUrl } from '@/utils/googleMapsUrl'
 
 export default function StoreDetailDrawer({
   activeStore,
@@ -32,6 +33,7 @@ export default function StoreDetailDrawer({
   if (!activeStore) return null
 
   const statusInfo = checkStoreOpenStatus(activeStore)
+  const safeMapUrl = getSafeGoogleMapsUrl(activeStore.mapUrl, activeStore.latitude, activeStore.longitude)
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] bg-black/60 flex justify-end items-end sm:items-stretch">
@@ -130,11 +132,11 @@ export default function StoreDetailDrawer({
                 <MapPin className="w-4 h-4 text-[#ff3e3e] shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="font-extrabold text-sm uppercase">Địa Chỉ Chi Tiết</p>
-                  {activeStore.mapUrl || (activeStore.latitude && activeStore.longitude) ? (
+                  {safeMapUrl ? (
                     <a
-                      href={activeStore.mapUrl || `https://www.google.com/maps/search/?api=1&query=${activeStore.latitude},${activeStore.longitude}`}
+                      href={safeMapUrl}
                       target="_blank"
-                      rel="noreferrer"
+                      rel="noopener noreferrer"
                       className="font-bold text-neutral-800 hover:text-[#ff3e3e] underline block transition-colors leading-snug"
                       title="Bấm để mở địa chỉ chi tiết trên Google Maps"
                     >
@@ -146,11 +148,11 @@ export default function StoreDetailDrawer({
                   {activeStore.landmarkNote && (
                     <p className="text-[#ff3e3e] italic font-black">“ {activeStore.landmarkNote} ”</p>
                   )}
-                  {(activeStore.mapUrl || (activeStore.latitude && activeStore.longitude)) && (
+                  {safeMapUrl && (
                     <a
-                      href={activeStore.mapUrl || `https://www.google.com/maps/search/?api=1&query=${activeStore.latitude},${activeStore.longitude}`}
+                      href={safeMapUrl}
                       target="_blank"
-                      rel="noreferrer"
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-300 px-2.5 py-1 rounded mt-1 shadow-xs transition-colors cursor-pointer"
                     >
                       Xem địa chỉ chi tiết trên Google Maps

@@ -51,6 +51,13 @@ jwt:
   refreshable-duration: 1200 # seconds
 
 security:
+  auth-rate-limit:
+    login-email-limit: 10
+    login-ip-limit: 30
+    login-window: 15m
+    social-ip-limit: 20
+    social-window: 5m
+    maximum-keys: 10000
   otp:
     pepper: YOUR_DEVELOPMENT_OTP_PEPPER
 

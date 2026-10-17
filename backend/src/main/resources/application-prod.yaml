@@ -59,6 +59,13 @@ jwt:
   refreshable-duration: ${JWT_REFRESHABLE_DURATION:2592000} # 30 days in seconds
 
 security:
+  auth-rate-limit:
+    login-email-limit: ${AUTH_LOGIN_EMAIL_LIMIT:10}
+    login-ip-limit: ${AUTH_LOGIN_IP_LIMIT:30}
+    login-window: ${AUTH_LOGIN_WINDOW:15m}
+    social-ip-limit: ${AUTH_SOCIAL_IP_LIMIT:20}
+    social-window: ${AUTH_SOCIAL_WINDOW:5m}
+    maximum-keys: ${AUTH_RATE_LIMIT_MAXIMUM_KEYS:10000}
   otp:
     # Use a dedicated high-entropy secret in production; do not reuse or commit real values.
     pepper: ${OTP_PEPPER:${JWT_SIGNER_KEY}}

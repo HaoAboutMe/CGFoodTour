@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Data
@@ -26,5 +27,7 @@ public class UserResponse
     String facebookId;
     Boolean enabled;
     Boolean emailVerified;
+    String disabledReason;
+    LocalDateTime disabledAt;
     Set<RoleResponse> roles;
 }

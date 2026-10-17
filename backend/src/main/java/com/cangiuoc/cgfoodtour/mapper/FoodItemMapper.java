@@ -13,6 +13,8 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface FoodItemMapper {
     @Mapping(target = "store", ignore = true)
+    @Mapping(target = "imageUrl", ignore = true)
+    @Mapping(target = "imagePublicId", ignore = true)
     FoodItem toFoodItem(FoodItemRequest request);
 
     @Mapping(target = "storeId", source = "store.id")
@@ -21,5 +23,7 @@ public interface FoodItemMapper {
     List<FoodItemResponse> toFoodItemResponseList(List<FoodItem> foodItems);
 
     @Mapping(target = "store", ignore = true)
+    @Mapping(target = "imageUrl", ignore = true)
+    @Mapping(target = "imagePublicId", ignore = true)
     void updateFoodItem(@MappingTarget FoodItem foodItem, FoodItemRequest request);
 }

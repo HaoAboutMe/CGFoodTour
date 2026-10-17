@@ -14,10 +14,12 @@ public interface UserSavedStoreRepository extends JpaRepository<UserSavedStore, 
     Optional<UserSavedStore> findByUserIdAndStoreId(String userId, String storeId);
 
     List<UserSavedStore> findByUserIdOrderBySavedAtDesc(String userId);
+    List<UserSavedStore> findByUserId(String userId);
 
     void deleteByStoreId(String storeId);
 
     void deleteByUserIdAndStoreId(String userId, String storeId);
+    void deleteByUserId(String userId);
 
     int countByStoreId(String storeId);
 }

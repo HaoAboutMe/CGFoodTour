@@ -3,11 +3,15 @@ package com.cangiuoc.cgfoodtour.service;
 import com.cangiuoc.cgfoodtour.dto.request.AuthenticationRequest;
 import com.cangiuoc.cgfoodtour.dto.request.ForgotPasswordRequest;
 import com.cangiuoc.cgfoodtour.dto.request.LogOutRequest;
+import com.cangiuoc.cgfoodtour.dto.request.IntrospectRequest;
 import com.cangiuoc.cgfoodtour.dto.request.RefreshRequest;
+import com.cangiuoc.cgfoodtour.dto.request.ResetPasswordRequest;
 import com.cangiuoc.cgfoodtour.dto.request.VerifyOtpRequest;
 import com.cangiuoc.cgfoodtour.entity.InvalidatedToken;
 import com.cangiuoc.cgfoodtour.entity.PasswordResetOtp;
 import com.cangiuoc.cgfoodtour.entity.User;
+import com.cangiuoc.cgfoodtour.exception.AppException;
+import com.cangiuoc.cgfoodtour.exception.ErrorCode;
 import com.cangiuoc.cgfoodtour.repository.InvalidatedTokenRepository;
 import com.cangiuoc.cgfoodtour.repository.PasswordResetOtpRepository;
 import com.cangiuoc.cgfoodtour.repository.RoleRepository;
@@ -26,6 +30,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.HashSet;
 import java.util.Optional;
 import java.time.LocalDateTime;
+import java.nio.charset.StandardCharsets;
+import java.util.HexFormat;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -71,7 +79,10 @@ class AuthenticationServiceTest {
         AuthenticationRequest login = new AuthenticationRequest();
         login.setEmail(user.getEmail());
         login.setPassword("password123");
-        var pair = authenticationService.authenticate(login);
+        var pair = authenticationService.authenticate(login, "192.0.2.1");
+
+        verify(authAbuseProtectionService).checkLoginAttempt(user.getEmail(), "192.0.2.1");
+        verify(authAbuseProtectionService).recordLoginSuccess(user.getEmail());
 
         assertThat(pair.getAccessToken()).isNotBlank();
         assertThat(pair.getRefreshToken()).isNotBlank().isNotEqualTo(pair.getAccessToken());
@@ -79,12 +90,35 @@ class AuthenticationServiceTest {
                 .isEqualTo("access");
         assertThat(SignedJWT.parse(pair.getRefreshToken()).getJWTClaimsSet().getStringClaim("typ"))
                 .isEqualTo("refresh");
+        assertThat(SignedJWT.parse(pair.getAccessToken()).getJWTClaimsSet().getLongClaim("ver"))
+                .isZero();
 
         var rotated = authenticationService.refreshToken(
                 RefreshRequest.builder().refreshToken(pair.getRefreshToken()).build());
 
         assertThat(rotated.getRefreshToken()).isNotEqualTo(pair.getRefreshToken());
         verify(invalidatedTokenRepository).save(any(InvalidatedToken.class));
+    }
+
+    @Test
+    void unknownEmailAndWrongPasswordUseTheSamePublicError() {
+        AuthenticationRequest unknown = new AuthenticationRequest("missing@example.com", "password123");
+        when(userRepository.findByEmail("missing@example.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authenticationService.authenticate(unknown, "192.0.2.2"))
+                .isInstanceOfSatisfying(AppException.class,
+                        exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_CREDENTIALS));
+        verify(passwordEncoder).matches(eq("password123"), anyString());
+        verify(authAbuseProtectionService).recordLoginFailure("missing@example.com");
+
+        AuthenticationRequest wrong = new AuthenticationRequest(user.getEmail(), "wrong-password");
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrong-password", "encoded")).thenReturn(false);
+
+        assertThatThrownBy(() -> authenticationService.authenticate(wrong, "192.0.2.3"))
+                .isInstanceOfSatisfying(AppException.class,
+                        exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_CREDENTIALS));
+        verify(authAbuseProtectionService).recordLoginFailure(user.getEmail());
     }
 
     @Test
@@ -96,7 +130,7 @@ class AuthenticationServiceTest {
         AuthenticationRequest login = new AuthenticationRequest();
         login.setEmail(user.getEmail());
         login.setPassword("password123");
-        var pair = authenticationService.authenticate(login);
+        var pair = authenticationService.authenticate(login, "192.0.2.1");
 
         authenticationService.logout(LogOutRequest.builder()
                 .accessToken(pair.getAccessToken())
@@ -121,7 +155,7 @@ class AuthenticationServiceTest {
         AuthenticationRequest login = new AuthenticationRequest();
         login.setEmail(user.getEmail());
         login.setPassword("password123");
-        var pair = authenticationService.authenticate(login);
+        var pair = authenticationService.authenticate(login, "192.0.2.1");
 
         authenticationService.logout(LogOutRequest.builder()
                 .accessToken("malformed-access-token")
@@ -152,6 +186,24 @@ class AuthenticationServiceTest {
     }
 
     @Test
+    void forgotPasswordDoesNotReportSuccessWhenSmtpFails() {
+        ForgotPasswordRequest request = new ForgotPasswordRequest();
+        request.setEmail("user@example.com");
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(passwordResetOtpRepository.findFirstByEmailAndIsUsedFalseOrderByCreatedAtDesc(user.getEmail()))
+                .thenReturn(Optional.empty());
+        when(passwordResetOtpRepository.countByEmailAndCreatedAtAfter(any(), any())).thenReturn(0L);
+        doThrow(new com.cangiuoc.cgfoodtour.exception.AppException(
+                com.cangiuoc.cgfoodtour.exception.ErrorCode.EMAIL_SEND_FAILED))
+                .when(emailService).sendOtpEmail(eq(user.getEmail()), any());
+
+        assertThatThrownBy(() -> authenticationService.forgotPassword(request, "127.0.0.1"))
+                .isInstanceOf(com.cangiuoc.cgfoodtour.exception.AppException.class)
+                .satisfies(exception -> assertThat(((com.cangiuoc.cgfoodtour.exception.AppException) exception)
+                        .getErrorCode()).isEqualTo(com.cangiuoc.cgfoodtour.exception.ErrorCode.EMAIL_SEND_FAILED));
+    }
+
+    @Test
     void fifthInvalidOtpAttemptLocksChallenge() {
         PasswordResetOtp challenge = PasswordResetOtp.builder()
                 .email("user@example.com")
@@ -174,5 +226,61 @@ class AuthenticationServiceTest {
 
         assertThat(challenge.getFailedAttempts()).isEqualTo(5);
         assertThat(challenge.getIsUsed()).isTrue();
+    }
+
+    @Test
+    void resetPasswordIncrementsVersionAndRejectsPreviouslyIssuedTokens() throws Exception {
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password123", "encoded")).thenReturn(true);
+        when(passwordEncoder.encode("new-password")).thenReturn("new-encoded");
+        when(invalidatedTokenRepository.existsById(any())).thenReturn(false);
+
+        AuthenticationRequest login = new AuthenticationRequest();
+        login.setEmail(user.getEmail());
+        login.setPassword("password123");
+        String oldAccessToken = authenticationService.authenticate(login, "192.0.2.1").getAccessToken();
+
+        String otp = "123456";
+        PasswordResetOtp challenge = PasswordResetOtp.builder()
+                .email(user.getEmail())
+                .otpHash(hashOtp(user.getEmail(), otp))
+                .failedAttempts(0)
+                .isUsed(false)
+                .expiryDate(LocalDateTime.now().plusMinutes(5))
+                .build();
+        when(passwordResetOtpRepository.findFirstByEmailAndIsUsedFalseOrderByCreatedAtDesc(user.getEmail()))
+                .thenReturn(Optional.of(challenge));
+
+        ResetPasswordRequest reset = new ResetPasswordRequest();
+        reset.setEmail(user.getEmail());
+        reset.setOtp(otp);
+        reset.setNewPassword("new-password");
+        authenticationService.resetPassword(reset, "127.0.0.1");
+
+        assertThat(user.getTokenVersion()).isEqualTo(1L);
+        assertThat(authenticationService.introspect(
+                IntrospectRequest.builder().token(oldAccessToken).build()).isValid()).isFalse();
+    }
+
+    @Test
+    void socialLoginCanActivatePendingButRejectsAdminDisabledAccount() {
+        User pending = User.builder().enabled(false).emailVerified(false).build();
+        authenticationService.activatePendingAccount(pending);
+        assertThat(pending.getEnabled()).isTrue();
+        assertThat(pending.getEmailVerified()).isTrue();
+
+        User disabledByAdmin = User.builder().enabled(false).emailVerified(true).build();
+        assertThatThrownBy(() -> authenticationService.activatePendingAccount(disabledByAdmin))
+                .isInstanceOf(com.cangiuoc.cgfoodtour.exception.AppException.class)
+                .satisfies(exception -> assertThat(((com.cangiuoc.cgfoodtour.exception.AppException) exception)
+                        .getErrorCode()).isEqualTo(com.cangiuoc.cgfoodtour.exception.ErrorCode.ACCOUNT_DISABLED));
+        assertThat(disabledByAdmin.getEnabled()).isFalse();
+        assertThat(disabledByAdmin.getEmailVerified()).isTrue();
+    }
+
+    private String hashOtp(String email, String otp) throws Exception {
+        Mac mac = Mac.getInstance("HmacSHA256");
+        mac.init(new SecretKeySpec("test-only-otp-pepper".getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+        return HexFormat.of().formatHex(mac.doFinal((email + ":" + otp).getBytes(StandardCharsets.UTF_8)));
     }
 }

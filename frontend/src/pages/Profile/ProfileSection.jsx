@@ -97,7 +97,7 @@ export default function ProfileSection({
               {!uploadingAvatar && (
                 <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer border border-black rounded-lg">
                   <Camera className="w-6 h-6 text-white" />
-                  <input type="file" accept="image/*" onChange={onAvatarFileChange} className="hidden" />
+                  <input type="file" accept="image/jpeg,image/png,image/gif" onChange={onAvatarFileChange} className="hidden" />
                 </label>
               )}
             </div>
@@ -194,6 +194,7 @@ export default function ProfileSection({
                 type="date"
                 required
                 value={upDob}
+                max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().slice(0, 10)}
                 onChange={(e) => setUpDob(e.target.value)}
                 className="brutalist-input"
               />
@@ -238,12 +239,13 @@ export default function ProfileSection({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs uppercase font-extrabold tracking-wider block text-black">Mật Khẩu Mới (Tối thiểu 6 ký tự)</label>
+              <label className="text-xs uppercase font-extrabold tracking-wider block text-black">Mật Khẩu Mới (8–72 ký tự)</label>
               <div className="relative">
                 <input
                   type={showPwdNew ? 'text' : 'password'}
                   required
-                  minLength={6}
+                  minLength={8}
+                  maxLength={72}
                   value={pwdNew}
                   onChange={(e) => setPwdNew(e.target.value)}
                   className="brutalist-input pr-10"
@@ -261,10 +263,10 @@ export default function ProfileSection({
 
             <button
               type="submit"
-              disabled={!pwdOld || !pwdNew || pwdNew.length < 6}
+              disabled={loading || !pwdOld || !pwdNew || pwdNew.length < 8 || pwdNew.length > 72}
               className="w-full brutalist-btn-red py-3 text-sm font-black disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
-              Cập Nhật Mật Khẩu Mới ↗
+              {loading ? 'Đang cập nhật...' : 'Cập Nhật Mật Khẩu Mới ↗'}
             </button>
           </form>
         </div>

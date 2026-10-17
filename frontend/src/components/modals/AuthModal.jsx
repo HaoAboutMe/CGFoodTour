@@ -59,6 +59,7 @@ export default function AuthModal({
   resendEmail,
   setResendEmail,
   handleResendVerification,
+  loading,
   showToast
 }) {
   if (!showAuthModal) return null
@@ -418,6 +419,7 @@ export default function AuthModal({
                     type="date"
                     required
                     value={regDob}
+                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().slice(0, 10)}
                     onChange={(e) => setRegDob(e.target.value)}
                     className="brutalist-input"
                   />
@@ -425,10 +427,10 @@ export default function AuthModal({
 
                 <button
                   type="submit"
-                  disabled={!regPassword || regPassword !== regConfirmPassword || regUsername.length < 3}
+                  disabled={loading || !regPassword || regPassword !== regConfirmPassword || regUsername.length < 3}
                   className="w-full brutalist-btn-red py-3 text-sm font-black disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                 >
-                  Hoàn Tất Đăng Ký ↗
+                  {loading ? 'Đang gửi email xác thực...' : 'Hoàn Tất Đăng Ký ↗'}
                 </button>
               </form>
 
@@ -534,9 +536,10 @@ export default function AuthModal({
                   </div>
                   <button
                     type="submit"
-                    className="w-full brutalist-btn-red py-3 text-sm font-black"
+                    disabled={loading}
+                    className="w-full brutalist-btn-red py-3 text-sm font-black disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Gửi OTP Đặt Lại Mật Khẩu ↗
+                    {loading ? 'Đang gửi OTP...' : 'Gửi OTP Đặt Lại Mật Khẩu ↗'}
                   </button>
 
                   <button
@@ -595,10 +598,11 @@ export default function AuthModal({
                     </button>
                     <button
                       type="button"
+                      disabled={loading}
                       onClick={() => handleForgotPassword()}
-                      className="text-[#ff3e3e] hover:underline uppercase"
+                      className="text-[#ff3e3e] hover:underline uppercase disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Gửi Lại Mã OTP
+                      {loading ? 'Đang gửi...' : 'Gửi Lại Mã OTP'}
                     </button>
                   </div>
                 </form>
@@ -672,14 +676,14 @@ export default function AuthModal({
             <div className="space-y-6">
               <form onSubmit={handleVerifyEmail} className="space-y-4">
                 <p className="text-xs font-semibold text-neutral-600 leading-relaxed">
-                  Nhập mã UUID kích hoạt tài khoản được gửi trong email hoặc ghi trong terminal log bên dưới.
+                  Mở liên kết được gửi trong email, hoặc dán token xác thực từ liên kết đó vào bên dưới.
                 </p>
                 <div className="space-y-2">
                   <label className="text-xs uppercase font-extrabold tracking-wider block">Token Kích Hoạt (UUID)</label>
                   <input
                     type="text"
                     required
-                    placeholder="Paste UUID token from logs"
+                    placeholder="Dán token xác thực từ email"
                     value={verifyTokenVal}
                     onChange={(e) => setVerifyTokenVal(e.target.value)}
                     className="brutalist-input"
@@ -694,7 +698,7 @@ export default function AuthModal({
               </form>
 
               {/* Resend Link form container */}
-              <details className="text-[10px] text-neutral-600 font-extrabold cursor-pointer">
+              <details open className="text-[10px] text-neutral-600 font-extrabold cursor-pointer">
                 <summary className="hover:text-black">Bạn cần gửi lại liên kết kích hoạt?</summary>
                 <div className="mt-3 space-y-3 bg-[#f7f6f2] p-4 border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                   <div className="space-y-2">
@@ -709,9 +713,10 @@ export default function AuthModal({
                   </div>
                   <button
                     onClick={handleResendVerification}
-                    className="w-full brutalist-btn-red py-1.5 px-3 text-[9px] font-black"
+                    disabled={loading}
+                    className="w-full brutalist-btn-red py-1.5 px-3 text-[9px] font-black disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Gửi Lại Kích Hoạt
+                    {loading ? 'Đang gửi email...' : 'Gửi Lại Kích Hoạt'}
                   </button>
                 </div>
               </details>

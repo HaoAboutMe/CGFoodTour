@@ -17,6 +17,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -29,6 +30,8 @@ public class FoodItemService {
     StoreRepository storeRepository;
     UserRepository userRepository;
     FoodItemMapper foodItemMapper;
+    StoreVisibilityPolicy storeVisibilityPolicy;
+    ManagedImageService managedImageService;
 
     private boolean isAdmin(User user) {
         if (user == null || user.getRoles() == null) return false;
@@ -55,16 +58,23 @@ public class FoodItemService {
         return foodItemMapper.toFoodItemResponse(foodItemRepository.save(foodItem));
     }
 
-    public List<FoodItemResponse> getFoodItemsByStore(String storeId) {
-        if (!storeRepository.existsById(storeId)) {
-            throw new AppException(ErrorCode.STORE_NOT_FOUND);
-        }
+    public List<FoodItemResponse> getFoodItemsByStore(String storeId, String email) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+        User user = email == null ? null : userRepository.findByEmail(email).orElse(null);
+        storeVisibilityPolicy.requireReadable(store, user);
         return foodItemMapper.toFoodItemResponseList(foodItemRepository.findByStoreId(storeId));
     }
 
-    public FoodItemResponse getFoodItem(Long id) {
+    public FoodItemResponse getFoodItem(Long id, String email) {
         FoodItem foodItem = foodItemRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.FOOD_ITEM_NOT_FOUND));
+        User user = email == null ? null : userRepository.findByEmail(email).orElse(null);
+        try {
+            storeVisibilityPolicy.requireReadable(foodItem.getStore(), user);
+        } catch (AppException exception) {
+            throw new AppException(ErrorCode.FOOD_ITEM_NOT_FOUND);
+        }
         return foodItemMapper.toFoodItemResponse(foodItem);
     }
 
@@ -112,6 +122,30 @@ public class FoodItemService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
+        String publicId = foodItem.getImagePublicId();
         foodItemRepository.deleteById(id);
+        managedImageService.deleteAfterCommit(publicId);
+    }
+
+    @Transactional
+    public FoodItemResponse updateFoodItemImage(Long id, MultipartFile file, String email) {
+        FoodItem foodItem = foodItemRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.FOOD_ITEM_NOT_FOUND));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        if (!storeVisibilityPolicy.canManage(foodItem.getStore(), user)) throw new AppException(ErrorCode.UNAUTHORIZED);
+
+        String oldPublicId = foodItem.getImagePublicId();
+        var uploaded = managedImageService.upload(file, "foods", 2L * 1024 * 1024);
+        try {
+            foodItem.setImageUrl(uploaded.url());
+            foodItem.setImagePublicId(uploaded.publicId());
+            FoodItem saved = foodItemRepository.saveAndFlush(foodItem);
+            managedImageService.deleteAfterCommit(oldPublicId);
+            return foodItemMapper.toFoodItemResponse(saved);
+        } catch (RuntimeException exception) {
+            managedImageService.deleteBestEffort(uploaded.publicId());
+            throw exception;
+        }
     }
 }

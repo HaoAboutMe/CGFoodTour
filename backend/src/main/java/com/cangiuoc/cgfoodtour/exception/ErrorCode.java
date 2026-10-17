@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatusCode;
 
 @Getter
 public enum ErrorCode {
-    UNCATEGORIZED_EXCEPTION(9999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR),
+    UNCATEGORIZED_EXCEPTION(9999, "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_KEY(1001, "Invalid message key", HttpStatus.BAD_REQUEST),
     USER_EXISTED(1002, "User already exists", HttpStatus.BAD_REQUEST),
     USERNAME_INVALID(1003, "Username must be at {min} charactors", HttpStatus.BAD_REQUEST),
@@ -30,6 +30,12 @@ public enum ErrorCode {
     UPLOAD_FAILED(1021, "Upload failed", HttpStatus.INTERNAL_SERVER_ERROR),
     FACEBOOK_TOKEN_INVALID(1022, "Facebook access token is invalid or expired", HttpStatus.BAD_REQUEST),
     AUTH_RATE_LIMITED(1023, "Too many authentication attempts. Please try again later.", HttpStatus.TOO_MANY_REQUESTS),
+    SOCIAL_ACCOUNT_CONFLICT(1024, "This social account is already linked to another user", HttpStatus.CONFLICT),
+    INVALID_ACCOUNT_STATE(1025, "Account state is inconsistent. Please contact support", HttpStatus.CONFLICT),
+    INVALID_CREDENTIALS(1026, "Email or password is incorrect", HttpStatus.UNAUTHORIZED),
+    DATA_CONFLICT(1027, "Request conflicts with existing data", HttpStatus.CONFLICT),
+    REQUIRED_FIELD_MISSING(1028, "Required field is missing", HttpStatus.BAD_REQUEST),
+    ROLE_INVALID(1029, "One or more roles are invalid", HttpStatus.BAD_REQUEST),
     CATEGORY_NOT_FOUND(1030, "Category not found", HttpStatus.NOT_FOUND),
     STORE_NOT_FOUND(1031, "Store not found", HttpStatus.NOT_FOUND),
     FOOD_ITEM_NOT_FOUND(1032, "Food item not found", HttpStatus.NOT_FOUND),
@@ -44,7 +50,15 @@ public enum ErrorCode {
     USERNAME_EXISTED(1041, "Tên đăng nhập (username) đã được sử dụng", HttpStatus.BAD_REQUEST),
     CATEGORY_EXISTED(1042, "Tên danh mục đã tồn tại trong hệ thống", HttpStatus.BAD_REQUEST),
     CATEGORY_NAME_INVALID(1043, "Tên danh mục phải từ {min} đến {max} ký tự", HttpStatus.BAD_REQUEST),
-    CATEGORY_NAME_BLANK(1044, "Tên danh mục không được để trống", HttpStatus.BAD_REQUEST);
+    CATEGORY_NAME_BLANK(1044, "Tên danh mục không được để trống", HttpStatus.BAD_REQUEST),
+    ACCOUNT_ACTION_REASON_REQUIRED(1045, "Account action reason is required", HttpStatus.BAD_REQUEST),
+    ACCOUNT_SELF_ACTION_FORBIDDEN(1046, "You cannot disable or delete your own account", HttpStatus.BAD_REQUEST),
+    LAST_ADMIN_PROTECTED(1047, "The last active administrator cannot be disabled, deleted, or demoted", HttpStatus.CONFLICT),
+    ACCOUNT_NOT_VERIFIED(1048, "An unverified account cannot be enabled by an administrator", HttpStatus.CONFLICT),
+    INVALID_MAP_URL(1049, "Google Maps URL is invalid or unsupported", HttpStatus.BAD_REQUEST),
+    DELETE_CONFIRMATION_INVALID(1050, "Account deletion confirmation is invalid", HttpStatus.BAD_REQUEST),
+    MEDIA_DELETE_PENDING(1051, "Media cleanup has been queued", HttpStatus.ACCEPTED),
+    IMAGE_NOT_OWNED(1052, "Image does not belong to this resource", HttpStatus.FORBIDDEN);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;
