@@ -41,16 +41,18 @@ public class FoodItemController {
 
     @GetMapping("/store/{storeId}")
     public ApiResponse<List<FoodItemResponse>> getFoodItemsByStore(@PathVariable String storeId) {
+        String email = getCurrentUserEmail();
         return ApiResponse.<List<FoodItemResponse>>builder()
-                .result(foodItemService.getFoodItemsByStore(storeId))
+                .result(foodItemService.getFoodItemsByStore(storeId, email))
                 .message("Food items retrieved successfully")
                 .build();
     }
 
     @GetMapping("/{id}")
     public ApiResponse<FoodItemResponse> getFoodItem(@PathVariable Long id) {
+        String email = getCurrentUserEmail();
         return ApiResponse.<FoodItemResponse>builder()
-                .result(foodItemService.getFoodItem(id))
+                .result(foodItemService.getFoodItem(id, email))
                 .message("Food item retrieved successfully")
                 .build();
     }

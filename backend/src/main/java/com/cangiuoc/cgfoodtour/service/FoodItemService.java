@@ -29,6 +29,7 @@ public class FoodItemService {
     StoreRepository storeRepository;
     UserRepository userRepository;
     FoodItemMapper foodItemMapper;
+    StoreVisibilityPolicy storeVisibilityPolicy;
 
     private boolean isAdmin(User user) {
         if (user == null || user.getRoles() == null) return false;
@@ -55,16 +56,23 @@ public class FoodItemService {
         return foodItemMapper.toFoodItemResponse(foodItemRepository.save(foodItem));
     }
 
-    public List<FoodItemResponse> getFoodItemsByStore(String storeId) {
-        if (!storeRepository.existsById(storeId)) {
-            throw new AppException(ErrorCode.STORE_NOT_FOUND);
-        }
+    public List<FoodItemResponse> getFoodItemsByStore(String storeId, String email) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+        User user = email == null ? null : userRepository.findByEmail(email).orElse(null);
+        storeVisibilityPolicy.requireReadable(store, user);
         return foodItemMapper.toFoodItemResponseList(foodItemRepository.findByStoreId(storeId));
     }
 
-    public FoodItemResponse getFoodItem(Long id) {
+    public FoodItemResponse getFoodItem(Long id, String email) {
         FoodItem foodItem = foodItemRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.FOOD_ITEM_NOT_FOUND));
+        User user = email == null ? null : userRepository.findByEmail(email).orElse(null);
+        try {
+            storeVisibilityPolicy.requireReadable(foodItem.getStore(), user);
+        } catch (AppException exception) {
+            throw new AppException(ErrorCode.FOOD_ITEM_NOT_FOUND);
+        }
         return foodItemMapper.toFoodItemResponse(foodItem);
     }
 

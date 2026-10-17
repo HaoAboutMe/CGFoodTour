@@ -7,6 +7,7 @@ import com.cangiuoc.cgfoodtour.dto.request.StoreActionRequest;
 import com.cangiuoc.cgfoodtour.dto.request.StoreRequest;
 import com.cangiuoc.cgfoodtour.dto.request.RejectStoreRequest;
 import com.cangiuoc.cgfoodtour.dto.response.StoreResponse;
+import com.cangiuoc.cgfoodtour.dto.response.PublicStoreResponse;
 import com.cangiuoc.cgfoodtour.service.StoreService;
 import com.cangiuoc.cgfoodtour.service.SseNotificationService;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -63,36 +64,58 @@ public class StoreController {
     }
 
     @GetMapping
-    public ApiResponse<List<StoreResponse>> getStores(@RequestParam(value = "categoryId", required = false) Integer categoryId) {
+    public ApiResponse<List<PublicStoreResponse>> getStores(@RequestParam(value = "categoryId", required = false) Integer categoryId) {
         String email = getCurrentUserEmail();
-        return ApiResponse.<List<StoreResponse>>builder()
+        return ApiResponse.<List<PublicStoreResponse>>builder()
                 .result(storeService.getStores(categoryId, email))
                 .message("Stores retrieved successfully")
                 .build();
     }
 
     @GetMapping("/ranking")
-    public ApiResponse<List<StoreResponse>> getRanking() {
-        return ApiResponse.<List<StoreResponse>>builder()
-                .result(storeService.getRanking())
+    public ApiResponse<List<PublicStoreResponse>> getRanking() {
+        String email = getCurrentUserEmail();
+        return ApiResponse.<List<PublicStoreResponse>>builder()
+                .result(storeService.getRanking(email))
                 .message("Ranking retrieved successfully")
                 .build();
     }
 
     @GetMapping("/random")
-    public ApiResponse<StoreResponse> getRandomStore(@RequestParam(value = "categoryId", required = false) Integer categoryId) {
-        return ApiResponse.<StoreResponse>builder()
-                .result(storeService.getRandomStore(categoryId))
+    public ApiResponse<PublicStoreResponse> getRandomStore(@RequestParam(value = "categoryId", required = false) Integer categoryId) {
+        String email = getCurrentUserEmail();
+        return ApiResponse.<PublicStoreResponse>builder()
+                .result(storeService.getRandomStore(categoryId, email))
                 .message("Random store selected successfully")
                 .build();
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<StoreResponse> getStore(@PathVariable String id) {
+    public ApiResponse<PublicStoreResponse> getStore(@PathVariable String id) {
         String email = getCurrentUserEmail();
-        return ApiResponse.<StoreResponse>builder()
+        return ApiResponse.<PublicStoreResponse>builder()
                 .result(storeService.getStore(id, email))
                 .message("Store retrieved successfully")
+                .build();
+    }
+
+    @GetMapping("/mine")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<List<StoreResponse>> getMyStores() {
+        String email = getCurrentUserEmail();
+        return ApiResponse.<List<StoreResponse>>builder()
+                .result(storeService.getMyStores(email))
+                .message("Owned stores retrieved successfully")
+                .build();
+    }
+
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<List<StoreResponse>> getAdminStores() {
+        String email = getCurrentUserEmail();
+        return ApiResponse.<List<StoreResponse>>builder()
+                .result(storeService.getAdminStores(email))
+                .message("Administrative stores retrieved successfully")
                 .build();
     }
 
@@ -211,10 +234,10 @@ public class StoreController {
 
     @PostMapping("/{id}/save")
     @PreAuthorize("isAuthenticated()")
-    public ApiResponse<StoreResponse> toggleSaveStore(@PathVariable String id) {
+    public ApiResponse<PublicStoreResponse> toggleSaveStore(@PathVariable String id) {
         String email = getCurrentUserEmail();
-        StoreResponse response = storeService.toggleSaveStore(id, email);
-        return ApiResponse.<StoreResponse>builder()
+        PublicStoreResponse response = storeService.toggleSaveStore(id, email);
+        return ApiResponse.<PublicStoreResponse>builder()
                 .result(response)
                 .message(Boolean.TRUE.equals(response.getIsSaved()) ? "Đã lưu quán ăn" : "Đã bỏ lưu quán ăn")
                 .build();
@@ -222,10 +245,10 @@ public class StoreController {
 
     @GetMapping("/saved")
     @PreAuthorize("isAuthenticated()")
-    public ApiResponse<List<StoreResponse>> getSavedStores() {
+    public ApiResponse<List<PublicStoreResponse>> getSavedStores() {
         String email = getCurrentUserEmail();
-        List<StoreResponse> responses = storeService.getSavedStoresForUser(email);
-        return ApiResponse.<List<StoreResponse>>builder()
+        List<PublicStoreResponse> responses = storeService.getSavedStoresForUser(email);
+        return ApiResponse.<List<PublicStoreResponse>>builder()
                 .result(responses)
                 .message("Fetched saved stores successfully")
                 .build();
