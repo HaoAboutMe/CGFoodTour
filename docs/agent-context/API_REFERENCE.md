@@ -29,6 +29,20 @@ Lỗi chính: `USER_NOT_EXISTED`, `PASSWORD_INCORRECT`, `EMAIL_NOT_VERIFIED`, `A
 
 **Contract quan trọng:** không có refresh token riêng; `AuthenticationResponse` không có `refreshToken`. Không có `POST /auth/register`.
 
+### Cập nhật contract auth/session (2026-10-17)
+
+- `AuthenticationResponse` hiện trả `accessToken`, `refreshToken`, `expiresIn` và `refreshExpiresIn`.
+- Access/refresh JWT có claim `typ` và `ver`; introspect/refresh/protected API từ chối token nếu user bị disable hoặc `ver` khác `User.tokenVersion`.
+- `POST /auth/logout` nhận `{accessToken,refreshToken}` và revoke cả hai token theo kiểu idempotent.
+- `POST /auth/reset-password` consume OTP, đổi mật khẩu và tăng `tokenVersion`, vì vậy mọi JWT cũ của user mất hiệu lực.
+- Google login kiểm tra issuer/audience/`email_verified`/`sub`; Facebook login kiểm tra `debug_token`, App ID và provider user ID.
+- Social login chỉ kích hoạt trạng thái pending (`enabled=false,emailVerified=false`); trạng thái admin-disabled (`false,true`) trả `ACCOUNT_DISABLED` mà không mutate user.
+- Lỗi social linking mới: `SOCIAL_ACCOUNT_CONFLICT` (1024), `INVALID_ACCOUNT_STATE` (1025).
+- Registration public hiện dùng `POST /auth/register`; verify JSON dùng `POST /auth/verify-email` với `{token}`.
+- Registration, resend verification và forgot-password hiện chờ SMTP xác nhận gửi; chỉ trả success sau khi hoàn tất. Lỗi SMTP trả `EMAIL_SEND_FAILED`, frontend không chuyển bước.
+- Resend verification và forgot-password trả HTTP 200 thay vì 202 vì không còn xử lý email nền.
+- `PUT /users/me/change-password`: sai mật khẩu hiện tại trả `PASSWORD_INCORRECT` (1017/400), không trả `UNAUTHENTICATED`; success chỉ được trả sau khi password hash và `tokenVersion` đã `saveAndFlush`.
+
 ## 3. User
 
 | Method/path | Access | Input | Result / rules |
