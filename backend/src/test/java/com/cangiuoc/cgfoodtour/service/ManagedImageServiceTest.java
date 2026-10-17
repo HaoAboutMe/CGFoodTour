@@ -8,6 +8,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -58,5 +60,51 @@ class ManagedImageServiceTest {
         managedImageService.deleteBestEffort("stores/banner");
 
         verify(cleanupQueueService).enqueue("stores/banner", failure);
+    }
+
+    @Test
+    void newlyUploadedImageIsDeletedWhenDatabaseTransactionRollsBack() throws IOException {
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            managedImageService.deleteAfterRollback("stores/new-banner");
+
+            TransactionSynchronizationManager.getSynchronizations().forEach(synchronization ->
+                    synchronization.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK));
+
+            verify(cloudinaryService).deleteImage("stores/new-banner");
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    @Test
+    void newlyUploadedImageIsKeptWhenDatabaseTransactionCommits() throws IOException {
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            managedImageService.deleteAfterRollback("stores/new-banner");
+
+            TransactionSynchronizationManager.getSynchronizations().forEach(synchronization ->
+                    synchronization.afterCompletion(TransactionSynchronization.STATUS_COMMITTED));
+
+            verify(cloudinaryService, never()).deleteImage("stores/new-banner");
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    @Test
+    void replacedImageIsDeletedOnlyAfterDatabaseCommit() throws IOException {
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            managedImageService.deleteAfterCommit("stores/old-banner");
+            verify(cloudinaryService, never()).deleteImage("stores/old-banner");
+
+            TransactionSynchronizationManager.getSynchronizations()
+                    .forEach(TransactionSynchronization::afterCommit);
+
+            verify(cloudinaryService).deleteImage("stores/old-banner");
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 }

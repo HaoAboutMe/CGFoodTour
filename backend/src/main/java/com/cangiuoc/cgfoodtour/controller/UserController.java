@@ -3,6 +3,7 @@ package com.cangiuoc.cgfoodtour.controller;
 import com.cangiuoc.cgfoodtour.constant.SuccessMessage;
 import com.cangiuoc.cgfoodtour.dto.request.*;
 import com.cangiuoc.cgfoodtour.dto.response.UserResponse;
+import com.cangiuoc.cgfoodtour.dto.response.PageResponse;
 import com.cangiuoc.cgfoodtour.service.UserService;
 import com.cangiuoc.cgfoodtour.service.UserDeletionService;
 import jakarta.validation.Valid;
@@ -26,14 +27,20 @@ public class UserController
     UserDeletionService userDeletionService;
 
     @GetMapping("/users")
-    public ApiResponse<List<UserResponse>> getUsers()
+    public ApiResponse<PageResponse<UserResponse>> getUsers(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "enabled", required = false) Boolean enabled,
+            @RequestParam(value = "role", required = false) String role,
+            @RequestParam(value = "sort", defaultValue = "newest") String sort)
     {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         log.info("Username: {}", authentication.getName());
         log.info("Roles: {}", authentication.getAuthorities());
 
-        ApiResponse<List<UserResponse>> apiResponse = new ApiResponse<>();
-        apiResponse.setResult(userService.getUsers());
+        ApiResponse<PageResponse<UserResponse>> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(userService.getUsers(page, size, query, enabled, role, sort));
         apiResponse.setMessage(SuccessMessage.GET_ALL_USERS_SUCCESS);
         return apiResponse;
     }

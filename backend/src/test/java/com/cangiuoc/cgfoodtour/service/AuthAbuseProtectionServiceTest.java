@@ -58,6 +58,19 @@ class AuthAbuseProtectionServiceTest {
         assertThat(service.trackedKeyCount()).isEqualTo(2);
     }
 
+    @Test
+    void limitsRegistrationByNormalizedEmailAndIp() {
+        AuthRateLimitProperties properties = defaultProperties();
+        properties.setRegistrationEmailLimit(2);
+        AuthAbuseProtectionService service = service(properties, Clock.systemUTC());
+
+        service.checkRegistrationAttempt("user@example.com", "192.0.2.1");
+        service.checkRegistrationAttempt("user@example.com", "192.0.2.2");
+
+        assertThatThrownBy(() -> service.checkRegistrationAttempt("user@example.com", "192.0.2.3"))
+                .isInstanceOf(AppException.class);
+    }
+
     private AuthRateLimitProperties defaultProperties() {
         return new AuthRateLimitProperties();
     }

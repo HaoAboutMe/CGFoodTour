@@ -7,6 +7,7 @@ import com.cangiuoc.cgfoodtour.dto.request.StoreRequest;
 import com.cangiuoc.cgfoodtour.dto.response.FoodItemResponse;
 import com.cangiuoc.cgfoodtour.dto.response.PublicStoreResponse;
 import com.cangiuoc.cgfoodtour.dto.response.StoreResponse;
+import com.cangiuoc.cgfoodtour.dto.response.PageResponse;
 import com.cangiuoc.cgfoodtour.entity.*;
 import com.cangiuoc.cgfoodtour.enums.RatingLevel;
 import com.cangiuoc.cgfoodtour.enums.StoreStatus;
@@ -24,6 +25,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import java.text.Normalizer;
@@ -33,8 +37,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.UUID;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -55,6 +60,7 @@ public class StoreService {
     GoogleMapsUrlResolver googleMapsUrlResolver;
     StoreVisibilityPolicy storeVisibilityPolicy;
     ManagedImageService managedImageService;
+    GoogleMapsAbuseProtectionService googleMapsAbuseProtectionService;
 
     StoreMapper storeMapper;
     FoodItemMapper foodItemMapper;
@@ -98,14 +104,16 @@ public class StoreService {
         return toStoreResponse(store);
     }
 
-    public List<PublicStoreResponse> getStores(Integer categoryId, String email) {
-        List<Store> publicStores;
-        if (categoryId != null) {
-            publicStores = storeRepository.findByCategoryIdAndStatusAndOwnerEnabledTrue(categoryId, StoreStatus.APPROVED);
-        } else {
-            publicStores = storeRepository.findByStatusAndOwnerEnabledTrue(StoreStatus.APPROVED);
-        }
-        return publicStores.stream().map(store -> toPublicStoreResponse(store, email)).toList();
+    @Transactional(readOnly = true)
+    public PageResponse<PublicStoreResponse> getStores(Integer categoryId, String query, String sort,
+                                                       int page, int size, String email) {
+        Page<Store> storePage = storeRepository.searchPublic(StoreStatus.APPROVED, categoryId,
+                normalizeSearch(query), pageRequest(page, size, sort, false));
+        BatchStoreData batch = loadBatchData(storePage.getContent(), email);
+        List<PublicStoreResponse> content = storePage.getContent().stream()
+                .map(store -> toPublicStoreResponse(store, batch))
+                .toList();
+        return PageResponse.from(storePage, content);
     }
 
     public PublicStoreResponse getStore(String id, String email) {
@@ -117,23 +125,44 @@ public class StoreService {
         return toPublicStoreResponse(store, email);
     }
 
-    public List<StoreResponse> getMyStores(String email) {
+    @Transactional(readOnly = true)
+    public PageResponse<StoreResponse> getMyStores(String email, String status, String sort, int page, int size) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        return storeRepository.findByOwnerId(user.getId()).stream()
-                .map(store -> toStoreResponse(store, email))
+        StoreStatus parsedStatus = parseStatus(status);
+        Page<Store> storePage = parsedStatus == null
+                ? storeRepository.findByOwnerId(user.getId(), pageRequest(page, size, sort, true))
+                : storeRepository.findByOwnerIdAndStatus(user.getId(), parsedStatus, pageRequest(page, size, sort, true));
+        BatchStoreData batch = loadBatchData(storePage.getContent(), email);
+        List<StoreResponse> content = storePage.getContent().stream()
+                .map(store -> toStoreResponse(store, batch))
                 .toList();
+        return PageResponse.from(storePage, content);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    public List<StoreResponse> getAdminStores(String email) {
-        return storeRepository.findAll().stream()
-                .map(store -> toStoreResponse(store, email))
+    @Transactional(readOnly = true)
+    public PageResponse<StoreResponse> getAdminStores(String email, String status, Integer categoryId,
+                                                       String query, String sort,
+                                                       int page, int size) {
+        boolean recoveryRequested = "RECOVERY_REQUESTED".equalsIgnoreCase(status);
+        StoreStatus parsedStatus = recoveryRequested ? null : parseStatus(status);
+        Page<Store> storePage = storeRepository.searchAdmin(parsedStatus, categoryId, normalizeSearch(query),
+                recoveryRequested, pageRequest(page, size, sort, true));
+        BatchStoreData batch = loadBatchData(storePage.getContent(), email);
+        List<StoreResponse> content = storePage.getContent().stream()
+                .map(store -> toStoreResponse(store, batch))
                 .toList();
+        return PageResponse.from(storePage, content);
     }
 
     @Transactional
     public StoreResponse updateStore(String id, StoreRequest request, String email) {
+        return updateStore(id, request, null, email);
+    }
+
+    @Transactional
+    public StoreResponse updateStore(String id, StoreRequest request, MultipartFile banner, String email) {
         Store store = storeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
 
@@ -149,20 +178,39 @@ public class StoreService {
 
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
-        
+
         storeMapper.updateStore(store, request);
         applyValidatedLocation(store, request);
         store.setCategory(category);
 
-        // If updated by owner, reset verification & status to pending for Admin review (unless store is currently HIDDEN)
-        if (!userIsAdmin && store.getStatus() != StoreStatus.HIDDEN) {
-            store.setStatus(StoreStatus.PENDING);
-            store.setIsVerified(false);
-            store.setRejectionReason(null);
-        }
+        ManagedImageService.ManagedImage uploaded = null;
+        boolean rollbackCleanupRegistered = false;
+        String oldPublicId = store.getBannerImagePublicId();
+        try {
+            if (banner != null && !banner.isEmpty()) {
+                uploaded = managedImageService.upload(banner, "stores", 2L * 1024 * 1024);
+            }
 
-        store = storeRepository.save(store);
-        return toStoreResponse(store);
+            if (uploaded != null) {
+                store.setBannerImageUrl(uploaded.url());
+                store.setBannerImagePublicId(uploaded.publicId());
+            }
+
+            applyOwnerEditModerationState(store, userIsAdmin);
+
+            Store saved = storeRepository.saveAndFlush(store);
+            if (uploaded != null) {
+                managedImageService.deleteAfterRollback(uploaded.publicId());
+                rollbackCleanupRegistered = true;
+                managedImageService.deleteAfterCommit(oldPublicId);
+            }
+            return toStoreResponse(saved, email);
+        } catch (RuntimeException exception) {
+            if (uploaded != null && !rollbackCleanupRegistered) {
+                managedImageService.deleteBestEffort(uploaded.publicId());
+            }
+            throw exception;
+        }
     }
 
     @Transactional
@@ -172,18 +220,31 @@ public class StoreService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         if (!storeVisibilityPolicy.canManage(store, user)) throw new AppException(ErrorCode.UNAUTHORIZED);
+        boolean userIsAdmin = isAdmin(user);
 
         String oldPublicId = store.getBannerImagePublicId();
         var uploaded = managedImageService.upload(file, "stores", 2L * 1024 * 1024);
+        boolean rollbackCleanupRegistered = false;
         try {
             store.setBannerImageUrl(uploaded.url());
             store.setBannerImagePublicId(uploaded.publicId());
+            applyOwnerEditModerationState(store, userIsAdmin);
             Store saved = storeRepository.saveAndFlush(store);
+            managedImageService.deleteAfterRollback(uploaded.publicId());
+            rollbackCleanupRegistered = true;
             managedImageService.deleteAfterCommit(oldPublicId);
             return toStoreResponse(saved, email);
         } catch (RuntimeException exception) {
-            managedImageService.deleteBestEffort(uploaded.publicId());
+            if (!rollbackCleanupRegistered) managedImageService.deleteBestEffort(uploaded.publicId());
             throw exception;
+        }
+    }
+
+    private void applyOwnerEditModerationState(Store store, boolean userIsAdmin) {
+        if (!userIsAdmin && store.getStatus() != StoreStatus.HIDDEN) {
+            store.setStatus(StoreStatus.PENDING);
+            store.setIsVerified(false);
+            store.setRejectionReason(null);
         }
     }
 
@@ -534,36 +595,21 @@ public class StoreService {
 
     // Random store
     public PublicStoreResponse getRandomStore(Integer categoryId, String email) {
-        List<Store> stores;
-        if (categoryId != null) {
-            stores = storeRepository.findByCategoryId(categoryId);
-        } else {
-            stores = storeRepository.findAll();
-        }
-
-        stores = stores.stream()
-                .filter(storeVisibilityPolicy::canViewPublicly)
-                .collect(Collectors.toList());
-
+        List<Store> stores = storeRepository.findRandomPublic(StoreStatus.APPROVED, categoryId,
+                PageRequest.of(0, 1));
         if (stores.isEmpty()) {
             throw new AppException(ErrorCode.STORE_NOT_FOUND);
         }
-
-        Store randomStore = stores.get(new Random().nextInt(stores.size()));
-        return toPublicStoreResponse(randomStore, email);
+        return toPublicStoreResponse(stores.get(0), email);
     }
 
-    // Ranking API
-    public List<PublicStoreResponse> getRanking(String email) {
-        // Minimum 10 votes to enter ranking
-        List<Store> stores = storeRepository.findByTotalVotesGreaterThanEqualOrderBySatisfactionRateDescTotalVotesDesc(10);
-        List<PublicStoreResponse> responses = new ArrayList<>();
-        for (Store store : stores) {
-            if (storeVisibilityPolicy.canViewPublicly(store)) {
-                responses.add(toPublicStoreResponse(store, email));
-            }
-        }
-        return responses;
+    @Transactional(readOnly = true)
+    public List<PublicStoreResponse> getRanking(String email, int limit) {
+        if (limit < 1 || limit > 100) throw new AppException(ErrorCode.INVALID_PAGE_REQUEST);
+        List<Store> stores = storeRepository.findRanking(StoreStatus.APPROVED, 10,
+                PageRequest.of(0, limit));
+        BatchStoreData batch = loadBatchData(stores, email);
+        return stores.stream().map(store -> toPublicStoreResponse(store, batch)).toList();
     }
 
     // Scheduled Cron Job to clear reports at 00:00 daily
@@ -613,20 +659,21 @@ public class StoreService {
         }
     }
 
-    public List<PublicStoreResponse> getSavedStoresForUser(String email) {
+    @Transactional(readOnly = true)
+    public PageResponse<PublicStoreResponse> getSavedStoresForUser(String email, int page, int size) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        List<UserSavedStore> savedStores = userSavedStoreRepository.findByUserIdOrderBySavedAtDesc(user.getId());
-        List<PublicStoreResponse> responses = new ArrayList<>();
-        for (UserSavedStore uss : savedStores) {
-            if (uss.getStore() != null && storeVisibilityPolicy.canViewPublicly(uss.getStore())) {
-                PublicStoreResponse resp = toPublicStoreResponse(uss.getStore(), email);
-                resp.setIsSaved(true);
-                responses.add(resp);
-            }
-        }
-        return responses;
+        var savedPage = userSavedStoreRepository.findPublicSavedStores(user.getId(),
+                savedPageRequest(page, size));
+        List<Store> stores = savedPage.getContent().stream().map(UserSavedStore::getStore).toList();
+        BatchStoreData batch = loadBatchData(stores, email);
+        List<PublicStoreResponse> content = stores.stream()
+                .map(store -> {
+                    PublicStoreResponse response = toPublicStoreResponse(store, batch);
+                    response.setIsSaved(true);
+                    return response;
+                }).toList();
+        return PageResponse.from(savedPage, content);
     }
 
     // Helper: Map Store Entity to StoreResponse DTO including food items, reported status, savedCount & isSaved
@@ -687,6 +734,89 @@ public class StoreService {
         return response;
     }
 
+    private BatchStoreData loadBatchData(List<Store> stores, String userEmail) {
+        if (stores.isEmpty()) return new BatchStoreData(Map.of(), Map.of(), Set.of());
+        List<String> storeIds = stores.stream().map(Store::getId).toList();
+
+        Map<String, List<FoodItem>> foodByStore = foodItemRepository.findByStoreIdIn(storeIds).stream()
+                .collect(Collectors.groupingBy(item -> item.getStore().getId()));
+        Map<String, Long> reportCounts = storeDailyReportRepository
+                .countForStores(storeIds, LocalDate.now()).stream()
+                .collect(Collectors.toMap(StoreDailyReportRepository.StoreReportCount::getStoreId,
+                        StoreDailyReportRepository.StoreReportCount::getReportCount));
+
+        Set<String> savedStoreIds = Set.of();
+        if (userEmail != null) {
+            User user = userRepository.findByEmail(userEmail).orElse(null);
+            if (user != null) {
+                savedStoreIds = new HashSet<>(userSavedStoreRepository.findSavedStoreIds(user.getId(), storeIds));
+            }
+        }
+        return new BatchStoreData(foodByStore, reportCounts, savedStoreIds);
+    }
+
+    private PublicStoreResponse toPublicStoreResponse(Store store, BatchStoreData batch) {
+        PublicStoreResponse response = storeMapper.toPublicStoreResponse(store);
+        response.setFoodItems(foodItemMapper.toFoodItemResponseList(
+                batch.foodByStore().getOrDefault(store.getId(), List.of())));
+        response.setIsReportedClosed(batch.reportCounts().getOrDefault(store.getId(), 0L) >= 3);
+        response.setSavedCount(store.getSavedCount() == null ? 0 : store.getSavedCount());
+        response.setIsSaved(batch.savedStoreIds().contains(store.getId()));
+        return response;
+    }
+
+    private StoreResponse toStoreResponse(Store store, BatchStoreData batch) {
+        StoreResponse response = storeMapper.toStoreResponse(store);
+        response.setFoodItems(foodItemMapper.toFoodItemResponseList(
+                batch.foodByStore().getOrDefault(store.getId(), List.of())));
+        response.setIsReportedClosed(batch.reportCounts().getOrDefault(store.getId(), 0L) >= 3);
+        response.setSavedCount(store.getSavedCount() == null ? 0 : store.getSavedCount());
+        response.setIsSaved(batch.savedStoreIds().contains(store.getId()));
+        return response;
+    }
+
+    private PageRequest pageRequest(int page, int size, String sort, boolean management) {
+        if (page < 0 || size < 1 || size > 100) throw new AppException(ErrorCode.INVALID_PAGE_REQUEST);
+        String value = sort == null || sort.isBlank() ? "newest" : sort;
+        Sort sorting = switch (value) {
+            case "newest" -> Sort.by(Sort.Direction.DESC, "createdAt");
+            case "nameAsc" -> Sort.by(Sort.Direction.ASC, "name");
+            case "ratingDesc" -> Sort.by(Sort.Direction.DESC, "satisfactionRate");
+            case "savedDesc" -> Sort.by(Sort.Direction.DESC, "savedCount");
+            case "statusAsc" -> {
+                if (!management) throw new AppException(ErrorCode.INVALID_PAGE_REQUEST);
+                yield Sort.by(Sort.Direction.ASC, "status").and(Sort.by(Sort.Direction.DESC, "createdAt"));
+            }
+            default -> throw new AppException(ErrorCode.INVALID_PAGE_REQUEST);
+        };
+        return PageRequest.of(page, size, sorting);
+    }
+
+    private PageRequest savedPageRequest(int page, int size) {
+        if (page < 0 || size < 1 || size > 100) throw new AppException(ErrorCode.INVALID_PAGE_REQUEST);
+        return PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "savedAt"));
+    }
+
+    private StoreStatus parseStatus(String status) {
+        if (status == null || status.isBlank()) return null;
+        try {
+            return StoreStatus.valueOf(status.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new AppException(ErrorCode.INVALID_PAGE_REQUEST);
+        }
+    }
+
+    private String normalizeSearch(String query) {
+        if (query == null || query.isBlank()) return null;
+        String normalized = query.trim();
+        if (normalized.length() > 100) throw new AppException(ErrorCode.INVALID_PAGE_REQUEST);
+        return normalized;
+    }
+
+    private record BatchStoreData(Map<String, List<FoodItem>> foodByStore,
+                                  Map<String, Long> reportCounts,
+                                  Set<String> savedStoreIds) {}
+
     // Haversine formula to compute distance in meters
     private double calculateDistanceInMeters(double lat1, double lon1, double lat2, double lon2) {
         final int R = 6371000; // Earth radius in meters
@@ -720,6 +850,13 @@ public class StoreService {
             }
         }
         return Collections.emptyMap();
+    }
+
+    public Map<String, String> parseGoogleMapsUrl(String inputUrl, String email, String clientIp) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        return googleMapsAbuseProtectionService.resolve(user.getId(), clientIp, inputUrl,
+                () -> parseGoogleMapsUrl(inputUrl));
     }
 
     private void applyValidatedLocation(Store store, StoreRequest request) {

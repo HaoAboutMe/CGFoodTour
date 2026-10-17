@@ -62,6 +62,22 @@ public class ManagedImageService {
         });
     }
 
+    public void deleteAfterRollback(String publicId) {
+        if (publicId == null || publicId.isBlank()) return;
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            deleteBestEffort(publicId);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status == TransactionSynchronization.STATUS_ROLLED_BACK) {
+                    deleteBestEffort(publicId);
+                }
+            }
+        });
+    }
+
     private void validate(MultipartFile file, long maximumBytes) {
         if (file == null || file.isEmpty()) throw new AppException(ErrorCode.INVALID_FILE);
         if (file.getSize() > maximumBytes) throw new AppException(ErrorCode.FILE_TOO_LARGE);

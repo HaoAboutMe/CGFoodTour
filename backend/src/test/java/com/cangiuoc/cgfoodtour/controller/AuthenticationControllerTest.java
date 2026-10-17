@@ -7,6 +7,7 @@ import com.cangiuoc.cgfoodtour.exception.GlobalExceptionHandler;
 import com.cangiuoc.cgfoodtour.service.AuthAbuseProtectionService;
 import com.cangiuoc.cgfoodtour.service.AuthenticationService;
 import com.cangiuoc.cgfoodtour.service.UserService;
+import com.cangiuoc.cgfoodtour.service.ClientIpResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -31,8 +32,10 @@ class AuthenticationControllerTest {
     void setUp() {
         userService = mock(UserService.class);
         authenticationService = mock(AuthenticationService.class);
+        ClientIpResolver clientIpResolver = mock(ClientIpResolver.class);
+        when(clientIpResolver.resolve(any())).thenReturn("127.0.0.1");
         AuthenticationController controller = new AuthenticationController(
-                authenticationService, mock(AuthAbuseProtectionService.class), userService);
+                authenticationService, mock(AuthAbuseProtectionService.class), userService, clientIpResolver);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -40,7 +43,7 @@ class AuthenticationControllerTest {
 
     @Test
     void registrationUsesCanonicalEndpointAndRequiresDateOfBirth() throws Exception {
-        when(userService.createUser(any())).thenReturn(UserResponse.builder().email("user@example.com").build());
+        when(userService.createUser(any(), any())).thenReturn(UserResponse.builder().email("user@example.com").build());
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

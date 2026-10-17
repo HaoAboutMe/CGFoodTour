@@ -5,6 +5,7 @@ import com.cangiuoc.cgfoodtour.dto.request.MyInfoUpdateRequest;
 import com.cangiuoc.cgfoodtour.dto.request.UserCreationRequest;
 import com.cangiuoc.cgfoodtour.dto.request.UserUpdateRequest;
 import com.cangiuoc.cgfoodtour.dto.response.UserResponse;
+import com.cangiuoc.cgfoodtour.dto.response.PageResponse;
 import com.cangiuoc.cgfoodtour.entity.Role;
 import com.cangiuoc.cgfoodtour.entity.User;
 import com.cangiuoc.cgfoodtour.entity.VerificationToken;
@@ -27,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -48,16 +51,18 @@ public class UserService
     PasswordEncoder passwordEncoder;
     EmailService emailService;
     ManagedImageService managedImageService;
+    PendingRegistrationService pendingRegistrationService;
 
     @NonFinal
     @Value("${cloudinary.default-avatar-url}")
     String defaultAvatarUrl;
 
     @Transactional
-    public UserResponse createUser(UserCreationRequest request)
+    public UserResponse createUser(UserCreationRequest request, String clientIp)
     {
         request.setUsername(request.getUsername().trim());
         request.setEmail(request.getEmail().trim().toLowerCase(java.util.Locale.ROOT));
+        var registration = pendingRegistrationService.prepare(request.getEmail(), clientIp);
         if(userRepository.existsByUsername(request.getUsername()))
         {
             throw new AppException(ErrorCode.USERNAME_EXISTED);
@@ -70,6 +75,8 @@ public class UserService
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setAvatarUrl(defaultAvatarUrl);
         user.setAvatarPublicId(null);
+        user.setRegistrationIpHash(registration.ipHash());
+        user.setPendingVerificationExpiresAt(registration.expiresAt());
         user.setEnabled(false);  // Tài khoản chưa được kích hoạt
         user.setEmailVerified(false);  // Email chưa được xác thực
 
@@ -93,6 +100,27 @@ public class UserService
     {
         log.info("In method get User");
         return userMapper.toListUserResponse(userRepository.findAll());
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public PageResponse<UserResponse> getUsers(int page, int size, String query, Boolean enabled,
+                                               String role, String sort) {
+        if (page < 0 || size < 1 || size > 100) throw new AppException(ErrorCode.INVALID_PAGE_REQUEST);
+        Sort sorting = switch (sort == null || sort.isBlank() ? "newest" : sort) {
+            case "newest" -> Sort.by(Sort.Direction.DESC, "createdAt");
+            case "usernameAsc" -> Sort.by(Sort.Direction.ASC, "username");
+            case "emailAsc" -> Sort.by(Sort.Direction.ASC, "email");
+            default -> throw new AppException(ErrorCode.INVALID_PAGE_REQUEST);
+        };
+        String normalizedQuery = query == null || query.isBlank() ? null : query.trim();
+        if (normalizedQuery != null && normalizedQuery.length() > 100) {
+            throw new AppException(ErrorCode.INVALID_PAGE_REQUEST);
+        }
+        String normalizedRole = role == null || role.isBlank() ? null : role.trim().toUpperCase(java.util.Locale.ROOT);
+        var users = userRepository.searchAdminUsers(normalizedQuery, enabled, normalizedRole,
+                PageRequest.of(page, size, sorting));
+        return PageResponse.from(users, users.getContent().stream().map(userMapper::toUserResponse).toList());
     }
 
     public UserResponse getCurrentUser()
@@ -341,6 +369,7 @@ public class UserService
         // Kích hoạt tài khoản
         user.setEmailVerified(true);
         user.setEnabled(true);
+        pendingRegistrationService.clear(user);
         userRepository.save(user);
 
         // Xóa token sau khi sử dụng
