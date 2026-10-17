@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.HashSet;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import com.cangiuoc.cgfoodtour.entity.InvalidatedToken;
 import com.cangiuoc.cgfoodtour.entity.PasswordResetOtp;
 import com.cangiuoc.cgfoodtour.entity.User;
@@ -104,6 +105,10 @@ public class AuthenticationService
     @NonFinal
     @Value("${app.facebook.app-secret}")
     protected String FACEBOOK_APP_SECRET;
+
+    @NonFinal
+    @Value("${app.facebook.app-id}")
+    protected String FACEBOOK_APP_ID;
 
     @NonFinal
     @Value("${security.otp.pepper:${jwt.signerKey}}")
@@ -227,6 +232,16 @@ public class AuthenticationService
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
+        String email = signedJWT.getJWTClaimsSet().getSubject();
+        Long tokenVersion = signedJWT.getJWTClaimsSet().getLongClaim("ver");
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+        if (!Boolean.TRUE.equals(user.getEnabled())
+                || tokenVersion == null
+                || tokenVersion.longValue() != currentTokenVersion(user)) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
         return signedJWT;
     }
 
@@ -252,6 +267,7 @@ public class AuthenticationService
                 ))
                 .jwtID(UUID.randomUUID().toString())
                 .claim("typ", tokenType)
+                .claim("ver", currentTokenVersion(user))
                 .claim("scope", ACCESS_TOKEN_TYPE.equals(tokenType) ? buildScope(user) : "")
                 .build();
 
@@ -318,12 +334,8 @@ public class AuthenticationService
                 .build();
         passwordResetOtpRepository.save(resetOtp);
 
-        try {
-            emailService.sendOtpEmail(email, otp);
-            log.info("Password reset challenge dispatched for user id {}", user.get().getId());
-        } catch (Exception e) {
-            log.error("Failed to dispatch password reset challenge for user id {}", user.get().getId());
-        }
+        emailService.sendOtpEmail(email, otp);
+        log.info("Password reset challenge dispatched for user id {}", user.get().getId());
     }
 
     @Transactional(noRollbackFor = AppException.class)
@@ -342,6 +354,7 @@ public class AuthenticationService
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setTokenVersion(currentTokenVersion(user) + 1);
         userRepository.save(user);
         resetOtp.setIsUsed(true);
         passwordResetOtpRepository.save(resetOtp);
@@ -386,15 +399,16 @@ public class AuthenticationService
         return email.trim().toLowerCase(Locale.ROOT);
     }
 
+    private long currentTokenVersion(User user) {
+        return user.getTokenVersion() == null ? 0L : user.getTokenVersion();
+    }
+
     @Transactional
     public AuthenticationResponse googleAuthenticate(GoogleLoginRequest request) {
-        String idTokenStr = request.getIdToken();
-
-        // 1. Verify the token using Google's JWKs url
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri("https://www.googleapis.com/oauth2/v3/certs").build();
         org.springframework.security.oauth2.jwt.Jwt jwt;
         try {
-            jwt = decoder.decode(idTokenStr);
+            jwt = decoder.decode(request.getIdToken());
         } catch (Exception e) {
             log.error("Failed to decode Google ID Token", e);
             throw new AppException(ErrorCode.GOOGLE_TOKEN_INVALID);
@@ -402,7 +416,7 @@ public class AuthenticationService
 
         // 2. Validate issuer
         String issuer = jwt.getIssuer() != null ? jwt.getIssuer().toString() : "";
-        if (!issuer.contains("accounts.google.com")) {
+        if (!("https://accounts.google.com".equals(issuer) || "accounts.google.com".equals(issuer))) {
             throw new AppException(ErrorCode.GOOGLE_TOKEN_INVALID);
         }
 
@@ -413,17 +427,35 @@ public class AuthenticationService
         }
 
         // 4. Validate email
-        String email = jwt.getClaimAsString("email");
-        if (email == null) {
+        String googleId = jwt.getSubject();
+        String rawEmail = jwt.getClaimAsString("email");
+        if (googleId == null || googleId.isBlank() || rawEmail == null || rawEmail.isBlank()
+                || !Boolean.TRUE.equals(jwt.getClaim("email_verified"))) {
             throw new AppException(ErrorCode.GOOGLE_TOKEN_INVALID);
         }
+        String email = normalizeEmail(rawEmail);
 
-        // 5. Look up user by email or register if not exists
-        User user = userRepository.findByEmail(email).map(existingUser -> {
+        // Prefer Google's stable subject. Fall back to a verified email only for first-time linking.
+        Optional<User> googleUser = userRepository.findByGoogleId(googleId);
+        googleUser.ifPresent(existingUser -> {
+            requireSocialLoginAllowed(existingUser);
+            if (!email.equalsIgnoreCase(existingUser.getEmail())) {
+                if (userRepository.existsByEmail(email)) {
+                    throw new AppException(ErrorCode.SOCIAL_ACCOUNT_CONFLICT);
+                }
+                existingUser.setEmail(email);
+            }
+        });
+        User user = googleUser.or(() -> userRepository.findByEmail(email)).map(existingUser -> {
+            requireSocialLoginAllowed(existingUser);
+            if (existingUser.getGoogleId() != null && !googleId.equals(existingUser.getGoogleId())) {
+                throw new AppException(ErrorCode.SOCIAL_ACCOUNT_CONFLICT);
+            }
+            existingUser.setGoogleId(googleId);
             // Tự động kích hoạt tài khoản và xác thực email nếu trước đó đăng ký bằng email/password nhưng chưa kích hoạt
-            if (!existingUser.getEnabled() || !existingUser.getEmailVerified()) {
-                existingUser.setEnabled(true);
-                existingUser.setEmailVerified(true);
+            if (!Boolean.TRUE.equals(existingUser.getEnabled())
+                    && !Boolean.TRUE.equals(existingUser.getEmailVerified())) {
+                activatePendingAccount(existingUser);
                 return userRepository.save(existingUser);
             }
             return existingUser;
@@ -443,6 +475,7 @@ public class AuthenticationService
             roleRepository.findById("USER").ifPresent(roles::add);
 
             User newUser = User.builder()
+                    .googleId(googleId)
                     .username(username)
                     .email(email)
                     .firstname(givenName)
@@ -467,6 +500,7 @@ public class AuthenticationService
     @Transactional
     public AuthenticationResponse facebookAuthenticate(FacebookLoginRequest request) {
         String accessToken = request.getAccessToken();
+        String validatedFacebookId = validateFacebookToken(accessToken);
 
         // 1. Fetch user profile from Facebook Graph API
         String fbUrl = "https://graph.facebook.com/me?fields=id,name,first_name,last_name,email,picture.type(large)&access_token=" + accessToken;
@@ -490,10 +524,16 @@ public class AuthenticationService
         }
 
         String facebookId = (String) fbResponse.get("id");
+        if (!validatedFacebookId.equals(facebookId)) {
+            throw new AppException(ErrorCode.FACEBOOK_TOKEN_INVALID);
+        }
         String name = (String) fbResponse.get("name");
         String firstName = (String) fbResponse.get("first_name");
         String lastName = (String) fbResponse.get("last_name");
-        String email = (String) fbResponse.get("email");
+        String rawFacebookEmail = (String) fbResponse.get("email");
+        String email = rawFacebookEmail == null || rawFacebookEmail.isBlank()
+                ? null
+                : normalizeEmail(rawFacebookEmail);
 
         // Extract avatar URL from Facebook picture object if present
         String avatarUrl = null;
@@ -512,6 +552,7 @@ public class AuthenticationService
         User user = null;
         if (existingUserOpt.isPresent()) {
             User existingUser = existingUserOpt.get();
+            requireSocialLoginAllowed(existingUser);
             // Check if we need to sync/update email
             if (email != null && existingUser.getEmail().startsWith("fb_")) {
                 // Check if the real email is already taken by another user
@@ -524,9 +565,9 @@ public class AuthenticationService
                 existingUser.setAvatarUrl(avatarUrl);
             }
             // Ensure enabled/verified
-            if (!existingUser.getEnabled() || !existingUser.getEmailVerified()) {
-                existingUser.setEnabled(true);
-                existingUser.setEmailVerified(true);
+            if (!Boolean.TRUE.equals(existingUser.getEnabled())
+                    && !Boolean.TRUE.equals(existingUser.getEmailVerified())) {
+                activatePendingAccount(existingUser);
             }
             user = userRepository.save(existingUser);
         }
@@ -536,14 +577,18 @@ public class AuthenticationService
             Optional<User> emailUserOpt = userRepository.findByEmail(email);
             if (emailUserOpt.isPresent()) {
                 User existingUser = emailUserOpt.get();
+                requireSocialLoginAllowed(existingUser);
+                if (existingUser.getFacebookId() != null && !facebookId.equals(existingUser.getFacebookId())) {
+                    throw new AppException(ErrorCode.SOCIAL_ACCOUNT_CONFLICT);
+                }
                 // Link this existing account to Facebook ID
                 existingUser.setFacebookId(facebookId);
                 if (avatarUrl != null && existingUser.getAvatarUrl() == null) {
                     existingUser.setAvatarUrl(avatarUrl);
                 }
-                if (!existingUser.getEnabled() || !existingUser.getEmailVerified()) {
-                    existingUser.setEnabled(true);
-                    existingUser.setEmailVerified(true);
+                if (!Boolean.TRUE.equals(existingUser.getEnabled())
+                        && !Boolean.TRUE.equals(existingUser.getEmailVerified())) {
+                    activatePendingAccount(existingUser);
                 }
                 user = userRepository.save(existingUser);
             }
@@ -589,6 +634,59 @@ public class AuthenticationService
 
         // 6. Generate application JWT token
         return buildAuthenticationResponse(user);
+    }
+
+    @SuppressWarnings("unchecked")
+    private String validateFacebookToken(String accessToken) {
+        if (FACEBOOK_APP_ID == null || FACEBOOK_APP_ID.isBlank()
+                || FACEBOOK_APP_SECRET == null || FACEBOOK_APP_SECRET.isBlank()) {
+            throw new AppException(ErrorCode.FACEBOOK_TOKEN_INVALID);
+        }
+
+        var debugUri = UriComponentsBuilder
+                .fromUriString("https://graph.facebook.com/debug_token")
+                .queryParam("input_token", accessToken)
+                .queryParam("access_token", FACEBOOK_APP_ID + "|" + FACEBOOK_APP_SECRET)
+                .build().encode().toUri();
+        try {
+            Map<String, Object> response = new RestTemplate().getForObject(debugUri, Map.class);
+            Map<String, Object> data = response == null ? null : (Map<String, Object>) response.get("data");
+            if (data == null || !Boolean.TRUE.equals(data.get("is_valid"))
+                    || !FACEBOOK_APP_ID.equals(String.valueOf(data.get("app_id")))
+                    || data.get("user_id") == null) {
+                throw new AppException(ErrorCode.FACEBOOK_TOKEN_INVALID);
+            }
+            Object expiresAt = data.get("expires_at");
+            if (expiresAt instanceof Number number && number.longValue() > 0
+                    && number.longValue() <= Instant.now().getEpochSecond()) {
+                throw new AppException(ErrorCode.FACEBOOK_TOKEN_INVALID);
+            }
+            return String.valueOf(data.get("user_id"));
+        } catch (AppException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            log.warn("Facebook access token validation failed: {}", exception.getMessage());
+            throw new AppException(ErrorCode.FACEBOOK_TOKEN_INVALID);
+        }
+    }
+
+    void requireSocialLoginAllowed(User user) {
+        boolean enabled = Boolean.TRUE.equals(user.getEnabled());
+        boolean verified = Boolean.TRUE.equals(user.getEmailVerified());
+        if (!enabled && verified) {
+            throw new AppException(ErrorCode.ACCOUNT_DISABLED);
+        }
+        if (enabled && !verified) {
+            throw new AppException(ErrorCode.INVALID_ACCOUNT_STATE);
+        }
+    }
+
+    void activatePendingAccount(User user) {
+        requireSocialLoginAllowed(user);
+        if (!Boolean.TRUE.equals(user.getEnabled()) && !Boolean.TRUE.equals(user.getEmailVerified())) {
+            user.setEnabled(true);
+            user.setEmailVerified(true);
+        }
     }
 
     private String generateAppSecretProof(String accessToken, String appSecret) {

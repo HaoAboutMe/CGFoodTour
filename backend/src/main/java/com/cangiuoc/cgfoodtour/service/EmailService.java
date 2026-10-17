@@ -26,7 +26,6 @@ public class EmailService {
     @Value("${app.base-url:http://localhost:8080/api}")
     String baseUrl;
 
-    @Async
     public void sendVerificationEmail(String toEmail, String token) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -49,7 +48,6 @@ public class EmailService {
         }
     }
 
-    @Async
     public void sendOtpEmail(String toEmail, String otp) {
         try {
             MimeMessage message = mailSender.createMimeMessage();

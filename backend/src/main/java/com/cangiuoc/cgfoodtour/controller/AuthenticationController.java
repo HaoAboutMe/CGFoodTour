@@ -395,7 +395,6 @@ public class AuthenticationController {
     }
 
     @PostMapping("/resend-verification")
-    @ResponseStatus(HttpStatus.ACCEPTED)
     ApiResponse<String> resendVerificationEmail(@RequestParam String email,
                                                 HttpServletRequest httpRequest) {
         String normalizedEmail = email.trim().toLowerCase(java.util.Locale.ROOT);
@@ -410,7 +409,6 @@ public class AuthenticationController {
     // ========== FORGOT PASSWORD ==========
 
     @PostMapping("/forgot-password")
-    @ResponseStatus(HttpStatus.ACCEPTED)
     ApiResponse<String> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request,
                                        HttpServletRequest httpRequest) {
         authenticationService.forgotPassword(request, httpRequest.getRemoteAddr());

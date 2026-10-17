@@ -53,6 +53,7 @@ public class UserService
     @Value("${cloudinary.default-avatar-url}")
     String defaultAvatarUrl;
 
+    @Transactional
     public UserResponse createUser(UserCreationRequest request)
     {
         request.setUsername(request.getUsername().trim());
@@ -81,12 +82,8 @@ public class UserService
 
         // Tạo verification token và gửi email
         String token = createVerificationToken(savedUser);
-        try {
-            emailService.sendVerificationEmail(savedUser.getEmail(), token);
-            log.info("Verification email queued for new user id {}", savedUser.getId());
-        } catch (Exception e) {
-            log.error("Failed to dispatch verification email for user id {}", savedUser.getId());
-        }
+        emailService.sendVerificationEmail(savedUser.getEmail(), token);
+        log.info("Verification email dispatched for new user id {}", savedUser.getId());
 
         return userMapper.toUserResponse(savedUser);
     }
@@ -149,6 +146,7 @@ public class UserService
         return userMapper.toUserResponse(userRepository.save(user));
     }
 
+    @Transactional
     public UserResponse changePassword(ChangePasswordRequest request)
     {
         var context = SecurityContextHolder.getContext().getAuthentication();
@@ -160,11 +158,19 @@ public class UserService
         boolean authenticated = passwordEncoder.matches(request.getOldPassword(), user.getPassword());
         if(!authenticated)
         {
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
+            // A wrong current password is a business validation error, not an invalid
+            // bearer token. Returning 401 makes the SPA revoke an otherwise valid session.
+            throw new AppException(ErrorCode.PASSWORD_INCORRECT);
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        return userMapper.toUserResponse(userRepository.save(user));
+        user.setTokenVersion(currentTokenVersion(user) + 1);
+        User savedUser = userRepository.saveAndFlush(user);
+        return userMapper.toUserResponse(savedUser);
+    }
+
+    private long currentTokenVersion(User user) {
+        return user.getTokenVersion() == null ? 0L : user.getTokenVersion();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -187,7 +193,7 @@ public class UserService
                 .user(user)
                 .build();
 
-        verificationTokenRepository.save(verificationToken);
+        verificationTokenRepository.saveAndFlush(verificationToken);
         return token;
     }
 
@@ -243,22 +249,27 @@ public class UserService
         }
 
         var existingToken = verificationTokenRepository.findByUserId(user.getId());
+        LocalDateTime now = LocalDateTime.now();
         if (existingToken.isPresent()
-                && existingToken.get().getCreatedAt().plusMinutes(1).isAfter(LocalDateTime.now())) {
+                && existingToken.get().getCreatedAt() != null
+                && existingToken.get().getCreatedAt().plusMinutes(1).isAfter(now)) {
             return;
         }
 
-        // Xóa token cũ nếu có
-        existingToken.ifPresent(verificationTokenRepository::delete);
+        // Rotate the existing row instead of scheduling DELETE + INSERT in the same
+        // transaction. The one-to-one user_id constraint permits only one row per user.
+        String token = UUID.randomUUID().toString();
+        VerificationToken verificationToken = existingToken.orElseGet(() -> VerificationToken.builder()
+                .user(user)
+                .build());
+        verificationToken.setToken(token);
+        verificationToken.setCreatedAt(now);
+        verificationToken.setExpiryDate(now.plusHours(24));
 
-        // Tạo token mới và gửi email
-        String token = createVerificationToken(user);
-        try {
-            emailService.sendVerificationEmail(user.getEmail(), token);
-            log.info("Verification email re-queued for user id {}", user.getId());
-        } catch (Exception e) {
-            log.error("Failed to dispatch verification email for user id {}", user.getId());
-        }
+        // Force the database write before dispatching an email containing this token.
+        verificationTokenRepository.saveAndFlush(verificationToken);
+        emailService.sendVerificationEmail(user.getEmail(), token);
+        log.info("Verification email re-dispatched for user id {}", user.getId());
     }
 
     @Transactional

@@ -688,6 +688,10 @@ export default function App() {
       setLoginEmail('')
       setLoginPassword('')
     } else {
+      if (res.error?.code === 1011) {
+        setResendEmail(loginEmail.trim())
+        setAuthMode('verify')
+      }
       showToast(res.error?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.', 'error')
     }
   }
@@ -785,13 +789,18 @@ export default function App() {
   // Forgot Password request OTP
   async function handleForgotPassword(e) {
     if (e && e.preventDefault) e.preventDefault()
+    const targetEmail = (forgotEmail || resetEmail).trim()
+    if (!targetEmail) {
+      showToast('Vui lòng nhập email để nhận mã OTP.', 'error')
+      return
+    }
     setLoading(true)
-    const res = await makeRequest('POST', '/auth/forgot-password', { email: forgotEmail })
+    const res = await makeRequest('POST', '/auth/forgot-password', { email: targetEmail })
     setLoading(false)
 
     if (res.success) {
       showToast('Đã gửi mã OTP đặt lại mật khẩu vào email của bạn!', 'success')
-      setResetEmail(forgotEmail)
+      setResetEmail(targetEmail)
       setForgotStep(2)
       setForgotEmail('')
     } else {
@@ -833,6 +842,12 @@ export default function App() {
     setLoading(false)
 
     if (res.success) {
+      // Reset password revokes every token that was issued before the reset.
+      setToken('')
+      setRefreshTokenVal('')
+      setCurrentUser(null)
+      localStorage.removeItem('jwtToken')
+      localStorage.removeItem('refreshToken')
       showToast('Đổi mật khẩu thành công! Hãy đăng nhập.', 'success')
       setAuthMode('login')
       setResetEmail('')
@@ -1093,7 +1108,7 @@ export default function App() {
 
     if (res.success) {
       showToast('Đổi mật khẩu thành công! Vui lòng đăng nhập lại với mật khẩu mới.', 'success')
-      handleLogout()
+      await handleLogout()
       setShowAuthModal(true)
       setAuthMode('login')
       setPwdOld('')
@@ -1951,6 +1966,7 @@ export default function App() {
         resendEmail={resendEmail}
         setResendEmail={setResendEmail}
         handleResendVerification={handleResendVerification}
+        loading={loading}
         showToast={showToast}
       />
 

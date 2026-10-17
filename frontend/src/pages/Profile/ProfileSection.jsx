@@ -238,12 +238,13 @@ export default function ProfileSection({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs uppercase font-extrabold tracking-wider block text-black">Mật Khẩu Mới (Tối thiểu 6 ký tự)</label>
+              <label className="text-xs uppercase font-extrabold tracking-wider block text-black">Mật Khẩu Mới (8–72 ký tự)</label>
               <div className="relative">
                 <input
                   type={showPwdNew ? 'text' : 'password'}
                   required
-                  minLength={6}
+                  minLength={8}
+                  maxLength={72}
                   value={pwdNew}
                   onChange={(e) => setPwdNew(e.target.value)}
                   className="brutalist-input pr-10"
@@ -261,10 +262,10 @@ export default function ProfileSection({
 
             <button
               type="submit"
-              disabled={!pwdOld || !pwdNew || pwdNew.length < 6}
+              disabled={loading || !pwdOld || !pwdNew || pwdNew.length < 8 || pwdNew.length > 72}
               className="w-full brutalist-btn-red py-3 text-sm font-black disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
-              Cập Nhật Mật Khẩu Mới ↗
+              {loading ? 'Đang cập nhật...' : 'Cập Nhật Mật Khẩu Mới ↗'}
             </button>
           </form>
         </div>

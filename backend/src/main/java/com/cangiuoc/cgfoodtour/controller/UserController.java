@@ -75,7 +75,7 @@ public class UserController
 
     // Endpoint Change Password
     @PutMapping("/users/me/change-password")
-    public ApiResponse<UserResponse> changePassword(@RequestBody ChangePasswordRequest request)
+    public ApiResponse<UserResponse> changePassword(@RequestBody @Valid ChangePasswordRequest request)
     {
         return ApiResponse.<UserResponse>builder()
                 .result(userService.changePassword(request))
