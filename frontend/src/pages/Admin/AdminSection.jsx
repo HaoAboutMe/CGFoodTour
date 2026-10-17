@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   LayoutDashboard,
@@ -93,7 +93,9 @@ export default function AdminSection({
   handleDeleteCategory,
   loadAdminUsers,
   loadAdminPendingStores,
-  loadGlobalData
+  loadGlobalData,
+  adminUsersPage = { page: 0, totalPages: 1, totalElements: 0 },
+  adminStoresPage = { page: 0, totalPages: 1, totalElements: 0 }
 }) {
   const [activeAdminTab, setActiveAdminTab] = useState('dashboard') // dashboard, stores, users, categories
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
@@ -114,10 +116,38 @@ export default function AdminSection({
   const [usersPage, setUsersPage] = useState(1)
   const [accountActionUser, setAccountActionUser] = useState(null)
   const [accountActionType, setAccountActionType] = useState(null)
-  const STORES_PER_PAGE = 12
-  const USERS_PER_PAGE = 10
-
   const [expandedUserIds, setExpandedUserIds] = useState([])
+
+  function loadStorePage(page) {
+    loadAdminPendingStores({
+      page,
+      status: storeStatusFilter,
+      categoryId: storeCategoryFilter,
+      query: storeSearchQuery.trim()
+    })
+  }
+
+  function loadUserPage(page) {
+    loadAdminUsers({ page, role: userRoleFilter, query: userSearchQuery.trim() })
+  }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setStoresPage(1)
+      loadStorePage(0)
+    }, 350)
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeStatusFilter, storeCategoryFilter, storeSearchQuery])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setUsersPage(1)
+      loadUserPage(0)
+    }, 350)
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userRoleFilter, userSearchQuery])
 
   const toggleExpandUser = (userId) => {
     setExpandedUserIds((prev) =>
@@ -739,7 +769,7 @@ export default function AdminSection({
                   onChange={(val) => setStoreCategoryFilter(val)}
                   options={[
                     { value: 'ALL', label: 'Tất Cả Danh Mục' },
-                    ...categories.map((c) => ({ value: c.name, label: c.name }))
+                    ...categories.map((c) => ({ value: String(c.id), label: c.name }))
                   ]}
                   dropdownAlign="right"
                   width="w-44 sm:w-52"
@@ -752,7 +782,7 @@ export default function AdminSection({
               const filteredStores = stores.filter((s) => {
                 if (storeStatusFilter === 'RECOVERY_REQUESTED') return s.recoveryRequested
                 if (storeStatusFilter !== 'ALL' && s.status !== storeStatusFilter) return false
-                if (storeCategoryFilter !== 'ALL' && s.categoryName !== storeCategoryFilter) return false
+                if (storeCategoryFilter !== 'ALL' && String(s.categoryId) !== storeCategoryFilter) return false
                 if (!storeSearchQuery.trim()) return true
                 const q = storeSearchQuery.toLowerCase()
                 return (
@@ -761,8 +791,8 @@ export default function AdminSection({
                   (s.ownerUsername && s.ownerUsername.toLowerCase().includes(q))
                 )
               })
-              const totalStoresPages = Math.max(1, Math.ceil(filteredStores.length / STORES_PER_PAGE))
-              const currentPageStores = filteredStores.slice((storesPage - 1) * STORES_PER_PAGE, storesPage * STORES_PER_PAGE)
+              const totalStoresPages = Math.max(1, adminStoresPage.totalPages || 1)
+              const currentPageStores = filteredStores
 
               return (
                 <div className="space-y-6">
@@ -912,19 +942,19 @@ export default function AdminSection({
               </div>
 
                   {/* Stores Pagination Bar */}
-                  {filteredStores.length > STORES_PER_PAGE && (
+                  {totalStoresPages > 1 && (
                     <div className="flex items-center justify-between pt-4 border-t-2 border-black font-black text-xs">
                       <button
                         disabled={storesPage === 1}
-                        onClick={() => setStoresPage((p) => Math.max(1, p - 1))}
+                        onClick={() => { const next = Math.max(1, storesPage - 1); setStoresPage(next); loadStorePage(next - 1) }}
                         className="px-3.5 py-1.5 bg-white text-black border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100 active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                       >
                         ◄ Trang Trước
                       </button>
-                      <span>Trang {storesPage} / {totalStoresPages} ({filteredStores.length} quán)</span>
+                      <span>Trang {storesPage} / {totalStoresPages} ({adminStoresPage.totalElements} quán)</span>
                       <button
                         disabled={storesPage >= totalStoresPages}
-                        onClick={() => setStoresPage((p) => Math.min(totalStoresPages, p + 1))}
+                        onClick={() => { const next = Math.min(totalStoresPages, storesPage + 1); setStoresPage(next); loadStorePage(next - 1) }}
                         className="px-3.5 py-1.5 bg-white text-black border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100 active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                       >
                         Trang Sau ►
@@ -994,8 +1024,8 @@ export default function AdminSection({
                   (u.email && u.email.toLowerCase().includes(q))
                 )
               })
-              const totalUsersPages = Math.max(1, Math.ceil(filteredUsers.length / USERS_PER_PAGE))
-              const currentPageUsers = filteredUsers.slice((usersPage - 1) * USERS_PER_PAGE, usersPage * USERS_PER_PAGE)
+              const totalUsersPages = Math.max(1, adminUsersPage.totalPages || 1)
+              const currentPageUsers = filteredUsers
 
               return (
                 <div className="space-y-4">
@@ -1235,19 +1265,19 @@ export default function AdminSection({
                   </div>
 
                   {/* Users Pagination Bar */}
-                  {filteredUsers.length > USERS_PER_PAGE && (
+                  {totalUsersPages > 1 && (
                     <div className="flex items-center justify-between pt-4 border-t-2 border-black font-black text-xs">
                       <button
                         disabled={usersPage === 1}
-                        onClick={() => setUsersPage((p) => Math.max(1, p - 1))}
+                        onClick={() => { const next = Math.max(1, usersPage - 1); setUsersPage(next); loadUserPage(next - 1) }}
                         className="px-3.5 py-1.5 bg-white text-black border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100 active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                       >
                         ◄ Trang Trước
                       </button>
-                      <span>Trang {usersPage} / {totalUsersPages} ({filteredUsers.length} người dùng)</span>
+                      <span>Trang {usersPage} / {totalUsersPages} ({adminUsersPage.totalElements} người dùng)</span>
                       <button
                         disabled={usersPage >= totalUsersPages}
-                        onClick={() => setUsersPage((p) => Math.min(totalUsersPages, p + 1))}
+                        onClick={() => { const next = Math.min(totalUsersPages, usersPage + 1); setUsersPage(next); loadUserPage(next - 1) }}
                         className="px-3.5 py-1.5 bg-white text-black border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100 active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                       >
                         Trang Sau ►

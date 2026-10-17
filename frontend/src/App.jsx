@@ -72,6 +72,13 @@ export default function App() {
   // App Data
   const [categories, setCategories] = useState([])
   const [stores, setStores] = useState([])
+  const [storePage, setStorePage] = useState({ page: 0, totalPages: 1, totalElements: 0, last: true })
+  const [loadingMoreStores, setLoadingMoreStores] = useState(false)
+  const publicStoreRequestRef = useRef(0)
+  const adminUserRequestSequenceRef = useRef(0)
+  const adminStoreRequestSequenceRef = useRef(0)
+  const adminUserRequestRef = useRef({ page: 0, query: '', role: 'ALL' })
+  const adminStoreRequestRef = useRef({ page: 0, query: '', status: 'ALL', categoryId: 'ALL' })
   const [ownedStores, setOwnedStores] = useState([])
   const [adminStores, setAdminStores] = useState([])
   const [savedStores, setSavedStores] = useState([])
@@ -161,6 +168,8 @@ export default function App() {
   const [adminUserRoles, setAdminUserRoles] = useState({ USER: false, ADMIN: false })
   const [adminUsersList, setAdminUsersList] = useState([])
   const [adminPendingStores, setAdminPendingStores] = useState([])
+  const [adminUsersPage, setAdminUsersPage] = useState({ page: 0, totalPages: 1, totalElements: 0 })
+  const [adminStoresPage, setAdminStoresPage] = useState({ page: 0, totalPages: 1, totalElements: 0 })
 
   // Load Initial Data
   useEffect(() => {
@@ -200,6 +209,13 @@ export default function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, token])
+
+  useEffect(() => {
+    if (activeTab !== 'explore') return undefined
+    const timer = window.setTimeout(() => loadPublicStores(0, false), 400)
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, selectedCategory?.id, activeTab])
 
   // Dynamic Document Title based on active tab & active store
   useEffect(() => {
@@ -611,10 +627,7 @@ export default function App() {
       setCategories(catRes.data.result)
     }
 
-    const storeRes = await makeRequest('GET', '/v1/stores')
-    if (storeRes.success && storeRes.data.result) {
-      setStores(storeRes.data.result)
-    }
+    await loadPublicStores(0, false)
 
     const activeToken = localStorage.getItem('jwtToken') || token
     if (activeToken) {
@@ -626,6 +639,35 @@ export default function App() {
     setLoading(false)
   }
 
+  async function loadPublicStores(page = 0, append = false) {
+    const requestId = ++publicStoreRequestRef.current
+    if (append) setLoadingMoreStores(true)
+    const params = new URLSearchParams({ page: String(page), size: '24', sort: 'newest' })
+    if (searchQuery.trim()) params.set('query', searchQuery.trim())
+    if (selectedCategory?.id) params.set('categoryId', String(selectedCategory.id))
+    const storeRes = await makeRequest('GET', `/v1/stores?${params.toString()}`)
+    if (requestId !== publicStoreRequestRef.current) {
+      if (append) setLoadingMoreStores(false)
+      return
+    }
+    if (storeRes.success && storeRes.data.result) {
+      const result = storeRes.data.result
+      const content = Array.isArray(result) ? result : (result.content || [])
+      setStores((previous) => append
+        ? [...new Map([...previous, ...content].map((store) => [store.id, store])).values()]
+        : content)
+      setStorePage(Array.isArray(result)
+        ? { page: 0, totalPages: 1, totalElements: content.length, last: true }
+        : result)
+    }
+    if (append) setLoadingMoreStores(false)
+  }
+
+  async function loadMorePublicStores() {
+    if (loadingMoreStores || storePage.last) return
+    await loadPublicStores((storePage.page || 0) + 1, true)
+  }
+
   async function loadMyStores() {
     const activeToken = localStorage.getItem('jwtToken') || token
     if (!activeToken) {
@@ -634,7 +676,7 @@ export default function App() {
     }
     const res = await makeRequest('GET', '/v1/stores/mine')
     if (res.success && res.data.result) {
-      setOwnedStores(res.data.result)
+      setOwnedStores(res.data.result.content || res.data.result)
     }
   }
 
@@ -647,7 +689,7 @@ export default function App() {
     }
     const res = await makeRequest('GET', '/v1/stores/saved')
     if (res.success && res.data.result) {
-      setSavedStores(res.data.result)
+      setSavedStores(res.data.result.content || res.data.result)
     }
   }
 
@@ -1295,10 +1337,9 @@ export default function App() {
   }
 
   // Update Store (Owner / Admin)
-  async function handleUpdateStore(e) {
+  async function handleUpdateStore(e, bannerFile = null) {
     e.preventDefault()
-    setLoading(true)
-    const res = await makeRequest('PUT', `/v1/stores/${editingStore.id}`, {
+    const storePayload = {
       name: editingStore.name,
       categoryId: editingStore.categoryId,
       landmarkNote: editingStore.landmarkNote,
@@ -1311,15 +1352,19 @@ export default function App() {
       closeTime: formatTimeHHmm(editingStore.closeTime),
       priceMin: parseFloat(editingStore.priceMin) || 0,
       priceMax: parseFloat(editingStore.priceMax) || 0,
-    })
-    setLoading(false)
+    }
+    const formData = new FormData()
+    formData.append('store', new Blob([JSON.stringify(storePayload)], { type: 'application/json' }))
+    if (bannerFile) formData.append('banner', bannerFile)
+    const res = await makeRequest('PUT', `/v1/stores/${editingStore.id}`, formData, true)
 
-    if (res.success) {
+    if (res.success && res.data.result) {
       showToast(`Quán "${editingStore.name}" đã được cập nhật!`, 'success')
-      setEditingStore(null)
       await loadGlobalData()
+      return res.data.result
     } else {
       showToast(getVietnameseApiError(res.error, 'Không thể cập nhật quán ăn.'), 'error')
+      return null
     }
   }
 
@@ -1567,22 +1612,50 @@ export default function App() {
   }
 
   // Admin View - Users List retrieve
-  async function loadAdminUsers() {
-    const res = await makeRequest('GET', '/users')
+  async function loadAdminUsers(options) {
+    const requestId = ++adminUserRequestSequenceRef.current
+    const request = options === undefined
+      ? adminUserRequestRef.current
+      : typeof options === 'number'
+        ? { ...adminUserRequestRef.current, page: options }
+        : { ...adminUserRequestRef.current, ...options }
+    adminUserRequestRef.current = request
+    const params = new URLSearchParams({ page: String(request.page || 0), size: '20', sort: 'newest' })
+    if (request.query) params.set('query', request.query)
+    if (request.role && request.role !== 'ALL') params.set('role', request.role)
+    const res = await makeRequest('GET', `/users?${params.toString()}`)
+    if (requestId !== adminUserRequestSequenceRef.current) return
     if (res.success && res.data.result) {
-      setAdminUsersList(res.data.result)
+      const result = res.data.result
+      setAdminUsersList(result.content || result)
+      if (result.content) setAdminUsersPage(result)
     } else {
       showToast('Quyền Admin bị từ chối hoặc tải danh sách người dùng thất bại.', 'error')
     }
   }
 
   // Admin View - Pending stores retrieve
-  async function loadAdminPendingStores() {
-    const res = await makeRequest('GET', '/v1/stores/admin')
+  async function loadAdminPendingStores(options) {
+    const requestId = ++adminStoreRequestSequenceRef.current
+    const request = options === undefined
+      ? adminStoreRequestRef.current
+      : typeof options === 'number'
+        ? { ...adminStoreRequestRef.current, page: options }
+        : { ...adminStoreRequestRef.current, ...options }
+    adminStoreRequestRef.current = request
+    const params = new URLSearchParams({ page: String(request.page || 0), size: '20', sort: 'newest' })
+    if (request.query) params.set('query', request.query)
+    if (request.status && request.status !== 'ALL') params.set('status', request.status)
+    if (request.categoryId && request.categoryId !== 'ALL') params.set('categoryId', String(request.categoryId))
+    const res = await makeRequest('GET', `/v1/stores/admin?${params.toString()}`)
+    if (requestId !== adminStoreRequestSequenceRef.current) return
     if (res.success && res.data.result) {
-      setAdminStores(res.data.result)
+      const result = res.data.result
+      const content = result.content || result
+      setAdminStores(content)
+      if (result.content) setAdminStoresPage(result)
       // filter only PENDING submissions
-      setAdminPendingStores(res.data.result.filter((s) => s.status === 'PENDING'))
+      setAdminPendingStores(content.filter((s) => s.status === 'PENDING'))
     }
   }
 
@@ -1806,6 +1879,10 @@ export default function App() {
             leaderboard={leaderboard}
             switchTab={switchTab}
             handleToggleSaveStore={handleToggleSaveStore}
+            hasMoreServerStores={!storePage.last}
+            loadMoreServerStores={loadMorePublicStores}
+            loadingMoreStores={loadingMoreStores}
+            totalStoreCount={storePage.totalElements || stores.length}
           />
         )}
 
@@ -1944,6 +2021,8 @@ export default function App() {
               handleUploadStoreBanner={handleUploadStoreBanner}
               handleUploadFoodImage={handleUploadFoodImage}
               loadGlobalData={loadGlobalData}
+              adminUsersPage={adminUsersPage}
+              adminStoresPage={adminStoresPage}
             />
           </Suspense>
         )}

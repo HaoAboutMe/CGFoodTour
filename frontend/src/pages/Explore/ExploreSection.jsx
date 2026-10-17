@@ -49,6 +49,10 @@ export default function ExploreSection({
   loadLeaderboard,
   leaderboard,
   handleToggleSaveStore,
+  hasMoreServerStores = false,
+  loadMoreServerStores,
+  loadingMoreStores = false,
+  totalStoreCount = 0,
 }) {
   const [viewMode, setViewMode] = useState('grid') // 'grid' or 'compact'
   const [nearMeActive, setNearMeActive] = useState(false)
@@ -187,7 +191,15 @@ export default function ExploreSection({
 
   // Infinite Batch Slicing
   const displayedStores = sortedStores.slice(0, visibleCount)
-  const hasMore = visibleCount < sortedStores.length
+  const hasMore = visibleCount < sortedStores.length || hasMoreServerStores
+
+  function handleLoadMore() {
+    if (visibleCount < sortedStores.length) {
+      setVisibleCount((prev) => prev + 6)
+      return
+    }
+    if (hasMoreServerStores && loadMoreServerStores) loadMoreServerStores()
+  }
 
   // Calculate store count per category
   const categoryStoreCount = (catId) => {
@@ -205,7 +217,7 @@ export default function ExploreSection({
               <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 inline mr-1 align-middle" /> Cần Giuộc Food Tour
             </span>
             <span className="brutalist-badge bg-[#fff9db] text-black border-black text-[10px] sm:text-xs">
-              {approvedStores.length} Địa điểm đang phục vụ
+              {totalStoreCount || approvedStores.length} Địa điểm đang phục vụ
             </span>
           </div>
           <h1 className="text-xl sm:text-4xl font-black uppercase tracking-tight text-black">
@@ -491,11 +503,12 @@ export default function ExploreSection({
         {hasMore && (
           <div className="text-center pt-6 pb-2">
             <button
-              onClick={() => setVisibleCount((prev) => prev + 6)}
+              onClick={handleLoadMore}
+              disabled={loadingMoreStores}
               className="brutalist-btn-white py-2.5 px-6 text-xs font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-2 mx-auto"
             >
               <ArrowDown className="w-4 h-4 text-[#ff3e3e] animate-bounce" />
-              <span>Tải Thêm Quán Ngon Lạ ({sortedStores.length - visibleCount} quán nữa)</span>
+              <span>{loadingMoreStores ? 'Đang tải...' : 'Tải Thêm Quán Ngon Lạ'}</span>
             </button>
           </div>
         )}
