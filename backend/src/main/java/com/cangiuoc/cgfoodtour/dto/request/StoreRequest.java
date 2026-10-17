@@ -43,8 +43,6 @@ public class StoreRequest {
     @Builder.Default
     Double priceMax = 0.0;
 
-    String bannerImageUrl;
-
     @Builder.Default
     Boolean isVerified = true;
 }

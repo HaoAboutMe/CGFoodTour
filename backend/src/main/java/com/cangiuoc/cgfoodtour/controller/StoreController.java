@@ -18,6 +18,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -128,6 +130,18 @@ public class StoreController {
         return ApiResponse.<StoreResponse>builder()
                 .result(response)
                 .message("Store updated successfully and is pending approval")
+                .build();
+    }
+
+    @PatchMapping(value = "/{id}/banner", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<StoreResponse> updateStoreBanner(@PathVariable String id,
+            @RequestParam("file") MultipartFile file) {
+        StoreResponse response = storeService.updateStoreBanner(id, file, getCurrentUserEmail());
+        sseNotificationService.broadcast("STORES_UPDATED");
+        return ApiResponse.<StoreResponse>builder()
+                .result(response)
+                .message("Store banner updated successfully")
                 .build();
     }
 

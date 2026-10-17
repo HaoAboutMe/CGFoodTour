@@ -10,7 +10,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class StoreVisibilityPolicy {
     public boolean canViewPublicly(Store store) {
-        return store != null && store.getStatus() == StoreStatus.APPROVED;
+        return store != null
+                && store.getStatus() == StoreStatus.APPROVED
+                && store.getOwner() != null
+                && Boolean.TRUE.equals(store.getOwner().getEnabled());
     }
 
     public boolean canManage(Store store, User user) {

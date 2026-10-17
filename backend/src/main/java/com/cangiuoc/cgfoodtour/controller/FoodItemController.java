@@ -11,6 +11,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -64,6 +66,16 @@ public class FoodItemController {
         return ApiResponse.<FoodItemResponse>builder()
                 .result(foodItemService.updateFoodItem(id, request, email))
                 .message("Food item updated successfully")
+                .build();
+    }
+
+    @PatchMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<FoodItemResponse> updateFoodItemImage(@PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        return ApiResponse.<FoodItemResponse>builder()
+                .result(foodItemService.updateFoodItemImage(id, file, getCurrentUserEmail()))
+                .message("Food item image updated successfully")
                 .build();
     }
 

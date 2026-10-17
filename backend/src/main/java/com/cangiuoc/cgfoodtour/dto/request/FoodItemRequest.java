@@ -19,7 +19,6 @@ public class FoodItemRequest {
     @PositiveOrZero(message = "Price must be positive or zero")
     Double price;
 
-    String imageUrl;
     String description;
     
     @Builder.Default

@@ -14,6 +14,11 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface StoreMapper {
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "bannerImageUrl", ignore = true)
+    @Mapping(target = "bannerImagePublicId", ignore = true)
+    @Mapping(target = "mapUrl", ignore = true)
+    @Mapping(target = "latitude", ignore = true)
+    @Mapping(target = "longitude", ignore = true)
     Store toStore(StoreRequest request);
 
     @Mapping(target = "categoryId", source = "category.id")
@@ -36,5 +41,10 @@ public interface StoreMapper {
     List<StoreResponse> toStoreResponseList(List<Store> stores);
 
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "bannerImageUrl", ignore = true)
+    @Mapping(target = "bannerImagePublicId", ignore = true)
+    @Mapping(target = "mapUrl", ignore = true)
+    @Mapping(target = "latitude", ignore = true)
+    @Mapping(target = "longitude", ignore = true)
     void updateStore(@MappingTarget Store store, StoreRequest request);
 }

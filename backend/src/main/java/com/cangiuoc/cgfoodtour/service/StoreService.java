@@ -23,6 +23,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import java.text.Normalizer;
@@ -53,6 +54,7 @@ public class StoreService {
     EmailService emailService;
     GoogleMapsUrlResolver googleMapsUrlResolver;
     StoreVisibilityPolicy storeVisibilityPolicy;
+    ManagedImageService managedImageService;
 
     StoreMapper storeMapper;
     FoodItemMapper foodItemMapper;
@@ -80,6 +82,7 @@ public class StoreService {
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
         
         Store store = storeMapper.toStore(request);
+        applyValidatedLocation(store, request);
         store.setCategory(category);
         store.setOwner(user);
         store.setStatus(StoreStatus.PENDING);
@@ -98,9 +101,9 @@ public class StoreService {
     public List<PublicStoreResponse> getStores(Integer categoryId, String email) {
         List<Store> publicStores;
         if (categoryId != null) {
-            publicStores = storeRepository.findByCategoryIdAndStatus(categoryId, StoreStatus.APPROVED);
+            publicStores = storeRepository.findByCategoryIdAndStatusAndOwnerEnabledTrue(categoryId, StoreStatus.APPROVED);
         } else {
-            publicStores = storeRepository.findByStatus(StoreStatus.APPROVED);
+            publicStores = storeRepository.findByStatusAndOwnerEnabledTrue(StoreStatus.APPROVED);
         }
         return publicStores.stream().map(store -> toPublicStoreResponse(store, email)).toList();
     }
@@ -148,6 +151,7 @@ public class StoreService {
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
         
         storeMapper.updateStore(store, request);
+        applyValidatedLocation(store, request);
         store.setCategory(category);
 
         // If updated by owner, reset verification & status to pending for Admin review (unless store is currently HIDDEN)
@@ -159,6 +163,28 @@ public class StoreService {
 
         store = storeRepository.save(store);
         return toStoreResponse(store);
+    }
+
+    @Transactional
+    public StoreResponse updateStoreBanner(String id, MultipartFile file, String email) {
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        if (!storeVisibilityPolicy.canManage(store, user)) throw new AppException(ErrorCode.UNAUTHORIZED);
+
+        String oldPublicId = store.getBannerImagePublicId();
+        var uploaded = managedImageService.upload(file, "stores", 2L * 1024 * 1024);
+        try {
+            store.setBannerImageUrl(uploaded.url());
+            store.setBannerImagePublicId(uploaded.publicId());
+            Store saved = storeRepository.saveAndFlush(store);
+            managedImageService.deleteAfterCommit(oldPublicId);
+            return toStoreResponse(saved, email);
+        } catch (RuntimeException exception) {
+            managedImageService.deleteBestEffort(uploaded.publicId());
+            throw exception;
+        }
     }
 
     @Transactional
@@ -397,14 +423,20 @@ public class StoreService {
             emailService.sendStoreStatusNotificationEmail(store.getOwner().getEmail(), store.getName(), "HARD_DELETE", reason);
         }
 
+        List<String> mediaPublicIds = new ArrayList<>();
+        if (store.getBannerImagePublicId() != null) mediaPublicIds.add(store.getBannerImagePublicId());
+        foodItemRepository.findByStoreId(store.getId()).stream()
+                .map(FoodItem::getImagePublicId).filter(java.util.Objects::nonNull)
+                .forEach(mediaPublicIds::add);
+
         // Delete all related records in child tables to prevent foreign key constraint errors
         foodItemRepository.deleteByStoreId(store.getId());
         storeRatingRepository.deleteByStoreId(store.getId());
         storeDailyReportRepository.deleteByStoreId(store.getId());
-        storeAuditLogRepository.deleteByStoreId(store.getId());
         userSavedStoreRepository.deleteByStoreId(store.getId());
 
         storeRepository.delete(store);
+        mediaPublicIds.forEach(managedImageService::deleteAfterCommit);
     }
 
     @Transactional
@@ -510,7 +542,7 @@ public class StoreService {
         }
 
         stores = stores.stream()
-                .filter(s -> s.getStatus() == StoreStatus.APPROVED)
+                .filter(storeVisibilityPolicy::canViewPublicly)
                 .collect(Collectors.toList());
 
         if (stores.isEmpty()) {
@@ -527,7 +559,7 @@ public class StoreService {
         List<Store> stores = storeRepository.findByTotalVotesGreaterThanEqualOrderBySatisfactionRateDescTotalVotesDesc(10);
         List<PublicStoreResponse> responses = new ArrayList<>();
         for (Store store : stores) {
-            if (store.getStatus() == StoreStatus.APPROVED) {
+            if (storeVisibilityPolicy.canViewPublicly(store)) {
                 responses.add(toPublicStoreResponse(store, email));
             }
         }
@@ -588,7 +620,7 @@ public class StoreService {
         List<UserSavedStore> savedStores = userSavedStoreRepository.findByUserIdOrderBySavedAtDesc(user.getId());
         List<PublicStoreResponse> responses = new ArrayList<>();
         for (UserSavedStore uss : savedStores) {
-            if (uss.getStore() != null && uss.getStore().getStatus() == StoreStatus.APPROVED) {
+            if (uss.getStore() != null && storeVisibilityPolicy.canViewPublicly(uss.getStore())) {
                 PublicStoreResponse resp = toPublicStoreResponse(uss.getStore(), email);
                 resp.setIsSaved(true);
                 responses.add(resp);
@@ -688,6 +720,33 @@ public class StoreService {
             }
         }
         return Collections.emptyMap();
+    }
+
+    private void applyValidatedLocation(Store store, StoreRequest request) {
+        if (request.getMapUrl() != null && !request.getMapUrl().isBlank()) {
+            var resolution = googleMapsUrlResolver.resolveMap(request.getMapUrl())
+                    .orElseThrow(() -> new AppException(ErrorCode.INVALID_MAP_URL));
+            store.setMapUrl(resolution.normalizedUrl());
+            store.setLatitude(resolution.latitude());
+            store.setLongitude(resolution.longitude());
+            return;
+        }
+
+        Double latitude = request.getLatitude();
+        Double longitude = request.getLongitude();
+        if (latitude == null && longitude == null) {
+            store.setMapUrl(null);
+            store.setLatitude(null);
+            store.setLongitude(null);
+            return;
+        }
+        if (latitude == null || longitude == null || Math.abs(latitude) > 90 || Math.abs(longitude) > 180
+                || !Double.isFinite(latitude) || !Double.isFinite(longitude)) {
+            throw new AppException(ErrorCode.INVALID_MAP_URL);
+        }
+        store.setLatitude(latitude);
+        store.setLongitude(longitude);
+        store.setMapUrl("https://www.google.com/maps/search/?api=1&query=" + latitude + "," + longitude);
     }
 
     private Map<String, String> extractCoordinatesFromText(String text) {

@@ -17,9 +17,12 @@ class StoreVisibilityPolicyTest {
 
     @Test
     void onlyApprovedStoresArePublic() {
-        assertThat(policy.canViewPublicly(Store.builder().status(StoreStatus.APPROVED).build())).isTrue();
-        assertThat(policy.canViewPublicly(Store.builder().status(StoreStatus.PENDING).build())).isFalse();
-        assertThat(policy.canViewPublicly(Store.builder().status(StoreStatus.HIDDEN).build())).isFalse();
+        User activeOwner = User.builder().id("owner").enabled(true).build();
+        User disabledOwner = User.builder().id("disabled").enabled(false).build();
+        assertThat(policy.canViewPublicly(Store.builder().owner(activeOwner).status(StoreStatus.APPROVED).build())).isTrue();
+        assertThat(policy.canViewPublicly(Store.builder().owner(disabledOwner).status(StoreStatus.APPROVED).build())).isFalse();
+        assertThat(policy.canViewPublicly(Store.builder().owner(activeOwner).status(StoreStatus.PENDING).build())).isFalse();
+        assertThat(policy.canViewPublicly(Store.builder().owner(activeOwner).status(StoreStatus.HIDDEN).build())).isFalse();
     }
 
     @Test

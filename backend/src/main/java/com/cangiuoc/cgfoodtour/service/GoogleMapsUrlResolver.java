@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -114,6 +115,30 @@ public class GoogleMapsUrlResolver {
         return candidates;
     }
 
+    public Optional<GoogleMapsResolution> resolveMap(String rawUrl) {
+        if (rawUrl == null || rawUrl.isBlank() || rawUrl.length() > 2048
+                || rawUrl.chars().anyMatch(Character::isISOControl)) {
+            return Optional.empty();
+        }
+        URI normalizedUri = null;
+        double[] coordinates = null;
+        for (String candidate : resolve(rawUrl.trim())) {
+            try {
+                URI uri = URI.create(candidate);
+                if (isAllowedTarget(uri)) {
+                    URI normalizedCandidate = normalize(uri);
+                    if (isAllowedTarget(normalizedCandidate)) normalizedUri = normalizedCandidate;
+                }
+            } catch (IllegalArgumentException ignored) {
+                // HTML response bodies are also candidates for coordinate extraction.
+            }
+            double[] extracted = extractCoordinates(candidate);
+            if (extracted != null) coordinates = extracted;
+        }
+        if (normalizedUri == null || coordinates == null) return Optional.empty();
+        return Optional.of(new GoogleMapsResolution(normalizedUri.toASCIIString(), coordinates[0], coordinates[1]));
+    }
+
     boolean isAllowedTarget(URI uri) {
         if (uri == null || !"https".equalsIgnoreCase(uri.getScheme())
                 || uri.getUserInfo() != null || (uri.getPort() != -1 && uri.getPort() != 443)) {
@@ -121,7 +146,59 @@ public class GoogleMapsUrlResolver {
         }
 
         String host = canonicalHost(uri.getHost());
-        return host != null && ALLOWED_HOSTS.contains(host) && hasOnlyPublicAddresses(host);
+        return host != null && ALLOWED_HOSTS.contains(host) && isAllowedMapsPath(host, uri)
+                && hasOnlyPublicAddresses(host);
+    }
+
+    private boolean isAllowedMapsPath(String host, URI uri) {
+        String path = uri.getPath() == null ? "" : uri.getPath();
+        if ("maps.app.goo.gl".equals(host)) return path.length() > 1;
+        if ("goo.gl".equals(host)) return path.equals("/maps") || path.startsWith("/maps/");
+        if ("maps.google.com".equals(host)) return true;
+        if (path.equals("/maps") || path.startsWith("/maps/")) return true;
+        return (path.isEmpty() || "/".equals(path)) && hasQueryParameter(uri, "api", "1");
+    }
+
+    private boolean hasQueryParameter(URI uri, String expectedName, String expectedValue) {
+        String query = uri.getRawQuery();
+        if (query == null) return false;
+        for (String parameter : query.split("&")) {
+            String[] pair = parameter.split("=", 2);
+            if (pair.length == 2 && expectedName.equalsIgnoreCase(pair[0]) && expectedValue.equals(pair[1])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private URI normalize(URI uri) {
+        try {
+            return new URI("https", null, canonicalHost(uri.getHost()),
+                    uri.getPort() == 443 ? -1 : uri.getPort(),
+                    uri.getPath(), uri.getQuery(), null).normalize();
+        } catch (Exception exception) {
+            throw new IllegalArgumentException("Invalid Google Maps URL", exception);
+        }
+    }
+
+    private double[] extractCoordinates(String text) {
+        if (text == null) return null;
+        Pattern[] patterns = new Pattern[] {
+                Pattern.compile("!3d(-?\\d+(?:\\.\\d+)?).*?!4d(-?\\d+(?:\\.\\d+)?)"),
+                Pattern.compile("@(-?\\d+(?:\\.\\d+)?),(-?\\d+(?:\\.\\d+)?)"),
+                Pattern.compile("[?&](?:q|ll|query|destination|near|center|point)=(-?\\d+(?:\\.\\d+)?),(-?\\d+(?:\\.\\d+)?)", Pattern.CASE_INSENSITIVE)
+        };
+        for (Pattern pattern : patterns) {
+            var matcher = pattern.matcher(text);
+            if (matcher.find()) {
+                double latitude = Double.parseDouble(matcher.group(1));
+                double longitude = Double.parseDouble(matcher.group(2));
+                if (Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180) {
+                    return new double[] {latitude, longitude};
+                }
+            }
+        }
+        return null;
     }
 
     boolean hasOnlyPublicAddresses(String host) {
@@ -215,4 +292,6 @@ public class GoogleMapsUrlResolver {
     }
 
     record FetchResult(int statusCode, String location, String body) {}
+
+    public record GoogleMapsResolution(String normalizedUrl, double latitude, double longitude) {}
 }

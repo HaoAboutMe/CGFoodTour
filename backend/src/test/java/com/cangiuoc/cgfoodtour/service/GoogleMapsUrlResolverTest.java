@@ -29,6 +29,33 @@ class GoogleMapsUrlResolverTest {
     }
 
     @Test
+    void resolvesShortLinkToNormalizedUrlAndCoordinates() {
+        FakeResolver resolver = new FakeResolver(true, new GoogleMapsUrlResolver.FetchResult(
+                302, "https://www.google.com/maps/place/example/@10.602913,106.656247,17m", ""));
+
+        var resolution = resolver.resolveMap("https://maps.app.goo.gl/oW3cwtzLXYQXrYLN8");
+
+        assertThat(resolution).isPresent();
+        assertThat(resolution.orElseThrow().normalizedUrl()).startsWith("https://www.google.com/maps/");
+        assertThat(resolution.orElseThrow().latitude()).isEqualTo(10.602913);
+        assertThat(resolution.orElseThrow().longitude()).isEqualTo(106.656247);
+    }
+
+    @Test
+    void rejectsGoogleLookalikeAndGeneralShortenerPaths() {
+        FakeResolver resolver = new FakeResolver(true);
+        assertThat(resolver.resolve("https://google.com.attacker.example/maps/x")).isEmpty();
+        assertThat(resolver.resolve("https://goo.gl/not-a-map")).isEmpty();
+    }
+
+    @Test
+    void rejectsNormalizedPathTraversalAndLookalikeApiQuery() {
+        FakeResolver resolver = new FakeResolver(true);
+        assertThat(resolver.resolveMap("https://www.google.com/maps/../../evil?query=10.5,106.6")).isEmpty();
+        assertThat(resolver.resolveMap("https://www.google.com/?notapi=1&query=10.5,106.6")).isEmpty();
+    }
+
+    @Test
     void rejectsNonHttpsUnknownHostsAndUnsafeRedirectTargets() {
         FakeResolver unknownHost = new FakeResolver(true);
         assertThat(unknownHost.resolve("https://attacker.example/maps")).isEmpty();

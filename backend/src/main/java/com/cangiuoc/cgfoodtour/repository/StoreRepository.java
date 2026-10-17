@@ -12,6 +12,8 @@ public interface StoreRepository extends JpaRepository<Store, String> {
     List<Store> findByCategoryId(Integer categoryId);
     List<Store> findByStatus(StoreStatus status);
     List<Store> findByCategoryIdAndStatus(Integer categoryId, StoreStatus status);
+    List<Store> findByStatusAndOwnerEnabledTrue(StoreStatus status);
+    List<Store> findByCategoryIdAndStatusAndOwnerEnabledTrue(Integer categoryId, StoreStatus status);
     List<Store> findByOwnerId(String ownerId);
     List<Store> findByTotalVotesGreaterThanEqualOrderBySatisfactionRateDescTotalVotesDesc(int minVotes);
 }
