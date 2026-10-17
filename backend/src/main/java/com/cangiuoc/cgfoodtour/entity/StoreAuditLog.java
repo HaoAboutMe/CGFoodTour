@@ -28,7 +28,7 @@ public class StoreAuditLog {
     @Column(name = "actor_id")
     String actorId;
 
-    @Column(name = "actor_email", nullable = false)
+    @Column(name = "actor_email")
     String actorEmail;
 
     @Column(name = "actor_role", nullable = false, length = 50)

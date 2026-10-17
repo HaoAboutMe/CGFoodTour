@@ -4,6 +4,7 @@ import com.cangiuoc.cgfoodtour.constant.SuccessMessage;
 import com.cangiuoc.cgfoodtour.dto.request.*;
 import com.cangiuoc.cgfoodtour.dto.response.UserResponse;
 import com.cangiuoc.cgfoodtour.service.UserService;
+import com.cangiuoc.cgfoodtour.service.UserDeletionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -22,6 +23,7 @@ import java.util.List;
 public class UserController
 {
     UserService userService;
+    UserDeletionService userDeletionService;
 
     @GetMapping("/users")
     public ApiResponse<List<UserResponse>> getUsers()
@@ -73,6 +75,23 @@ public class UserController
                 .build();
     }
 
+    @PostMapping("/users/{userId}/disable")
+    public ApiResponse<UserResponse> disableUser(@PathVariable String userId,
+            @RequestBody @Valid AccountDisableRequest request) {
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.disableUser(userId, request.getReason()))
+                .message("User disabled successfully")
+                .build();
+    }
+
+    @PostMapping("/users/{userId}/enable")
+    public ApiResponse<UserResponse> enableUser(@PathVariable String userId) {
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.enableUser(userId))
+                .message("User enabled successfully")
+                .build();
+    }
+
     // Endpoint Change Password
     @PutMapping("/users/me/change-password")
     public ApiResponse<UserResponse> changePassword(@RequestBody @Valid ChangePasswordRequest request)
@@ -93,10 +112,11 @@ public class UserController
     }
 
     @DeleteMapping("/users/{userId}")
-    public ApiResponse<String> deleteUser(@PathVariable("userId") String userId)
+    public ApiResponse<String> deleteUser(@PathVariable("userId") String userId,
+            @RequestBody @Valid AdminDeleteUserRequest request)
     {
         ApiResponse<String> apiResponse = new ApiResponse<>();
-        userService.deleteUser(userId);
+        userDeletionService.deleteUser(userId, request);
         apiResponse.setResult("User deleted successfully!");
         apiResponse.setMessage(SuccessMessage.DELETE_USER_SUCCESS);
         return apiResponse;

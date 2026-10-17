@@ -49,6 +49,11 @@ public class User
     @Builder.Default
     Boolean emailVerified = false;  // Email chưa được xác thực
 
+    @Column(length = 1000)
+    String disabledReason;
+    LocalDateTime disabledAt;
+    String disabledByAdminId;
+
     @ManyToMany
     Set<Role> roles;
     LocalDateTime createdAt;

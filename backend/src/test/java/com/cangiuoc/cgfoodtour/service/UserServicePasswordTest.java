@@ -45,6 +45,7 @@ class UserServicePasswordTest {
     @Mock PasswordEncoder passwordEncoder;
     @Mock EmailService emailService;
     @Mock CloudinaryService cloudinaryService;
+    @Mock ManagedImageService managedImageService;
     @InjectMocks UserService userService;
 
     @AfterEach
@@ -94,7 +95,7 @@ class UserServicePasswordTest {
                 .dateOfBirth(LocalDate.of(2000, 1, 1))
                 .roles(List.of("USER"))
                 .build();
-        when(userRepository.findById("user-1")).thenReturn(Optional.of(user));
+        when(userRepository.findByIdForUpdate("user-1")).thenReturn(Optional.of(user));
         when(roleRepository.findAllById(new HashSet<>(List.of("USER")))).thenReturn(List.of(regular));
         when(userRepository.saveAndFlush(user)).thenReturn(user);
 
@@ -102,6 +103,65 @@ class UserServicePasswordTest {
 
         assertThat(user.getTokenVersion()).isEqualTo(4L);
         assertThat(user.getRoles()).extracting(Role::getName).containsExactly("USER");
+    }
+
+    @Test
+    void disablingVerifiedUserRevokesExistingSessions() {
+        User actor = User.builder().id("admin-1").email("admin@example.com").enabled(true).build();
+        User target = User.builder().id("user-1").username("food-user").email("user@example.com")
+                .emailVerified(true).enabled(true).tokenVersion(7L).build();
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(actor.getEmail(), null));
+        when(userRepository.findByEmail(actor.getEmail())).thenReturn(Optional.of(actor));
+        when(userRepository.findByIdForUpdate(target.getId())).thenReturn(Optional.of(target));
+        when(userRepository.saveAndFlush(target)).thenReturn(target);
+
+        userService.disableUser(target.getId(), "Policy violation");
+
+        assertThat(target.getEnabled()).isFalse();
+        assertThat(target.getEmailVerified()).isTrue();
+        assertThat(target.getDisabledReason()).isEqualTo("Policy violation");
+        assertThat(target.getTokenVersion()).isEqualTo(8L);
+        verify(emailService).sendAccountDisabledEmail(
+                "user@example.com", "food-user", "Policy violation");
+    }
+
+    @Test
+    void enablingVerifiedUserSendsWelcomeBackEmailAndRevokesExistingSessions() {
+        User actor = User.builder().id("admin-1").email("admin@example.com").enabled(true).build();
+        User target = User.builder().id("user-1").username("food-user").email("user@example.com")
+                .emailVerified(true).enabled(false).tokenVersion(8L)
+                .disabledReason("Policy violation").disabledAt(LocalDateTime.now()).build();
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(actor.getEmail(), null));
+        when(userRepository.findByEmail(actor.getEmail())).thenReturn(Optional.of(actor));
+        when(userRepository.findByIdForUpdate(target.getId())).thenReturn(Optional.of(target));
+        when(userRepository.saveAndFlush(target)).thenReturn(target);
+
+        userService.enableUser(target.getId());
+
+        assertThat(target.getEnabled()).isTrue();
+        assertThat(target.getDisabledReason()).isNull();
+        assertThat(target.getDisabledAt()).isNull();
+        assertThat(target.getTokenVersion()).isEqualTo(9L);
+        verify(emailService).sendAccountEnabledEmail("user@example.com", "food-user");
+    }
+
+    @Test
+    void unchangedRolesDoNotRevokeSessions() {
+        Role regular = Role.builder().name("USER").build();
+        User user = User.builder().id("user-1").enabled(true)
+                .roles(new HashSet<>(List.of(regular))).tokenVersion(3L).build();
+        UserUpdateRequest request = UserUpdateRequest.builder()
+                .username("foodlover").firstname("Food").lastname("Lover")
+                .dateOfBirth(LocalDate.of(2000, 1, 1)).roles(List.of("USER")).build();
+        when(userRepository.findByIdForUpdate("user-1")).thenReturn(Optional.of(user));
+        when(roleRepository.findAllById(new HashSet<>(List.of("USER")))).thenReturn(List.of(regular));
+        when(userRepository.saveAndFlush(user)).thenReturn(user);
+
+        userService.updateUser(request, "user-1");
+
+        assertThat(user.getTokenVersion()).isEqualTo(3L);
     }
 
     @Test

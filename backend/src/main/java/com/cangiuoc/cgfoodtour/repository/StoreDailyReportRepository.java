@@ -12,4 +12,5 @@ public interface StoreDailyReportRepository extends JpaRepository<StoreDailyRepo
     Optional<StoreDailyReport> findByUserIdAndStoreIdAndReportDate(String userId, String storeId, LocalDate reportDate);
     long countByStoreIdAndReportDate(String storeId, LocalDate reportDate);
     void deleteByStoreId(String storeId);
+    void deleteByUserId(String userId);
 }

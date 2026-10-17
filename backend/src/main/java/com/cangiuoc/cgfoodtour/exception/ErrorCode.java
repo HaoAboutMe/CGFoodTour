@@ -50,7 +50,15 @@ public enum ErrorCode {
     USERNAME_EXISTED(1041, "Tên đăng nhập (username) đã được sử dụng", HttpStatus.BAD_REQUEST),
     CATEGORY_EXISTED(1042, "Tên danh mục đã tồn tại trong hệ thống", HttpStatus.BAD_REQUEST),
     CATEGORY_NAME_INVALID(1043, "Tên danh mục phải từ {min} đến {max} ký tự", HttpStatus.BAD_REQUEST),
-    CATEGORY_NAME_BLANK(1044, "Tên danh mục không được để trống", HttpStatus.BAD_REQUEST);
+    CATEGORY_NAME_BLANK(1044, "Tên danh mục không được để trống", HttpStatus.BAD_REQUEST),
+    ACCOUNT_ACTION_REASON_REQUIRED(1045, "Account action reason is required", HttpStatus.BAD_REQUEST),
+    ACCOUNT_SELF_ACTION_FORBIDDEN(1046, "You cannot disable or delete your own account", HttpStatus.BAD_REQUEST),
+    LAST_ADMIN_PROTECTED(1047, "The last active administrator cannot be disabled, deleted, or demoted", HttpStatus.CONFLICT),
+    ACCOUNT_NOT_VERIFIED(1048, "An unverified account cannot be enabled by an administrator", HttpStatus.CONFLICT),
+    INVALID_MAP_URL(1049, "Google Maps URL is invalid or unsupported", HttpStatus.BAD_REQUEST),
+    DELETE_CONFIRMATION_INVALID(1050, "Account deletion confirmation is invalid", HttpStatus.BAD_REQUEST),
+    MEDIA_DELETE_PENDING(1051, "Media cleanup has been queued", HttpStatus.ACCEPTED),
+    IMAGE_NOT_OWNED(1052, "Image does not belong to this resource", HttpStatus.FORBIDDEN);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;
