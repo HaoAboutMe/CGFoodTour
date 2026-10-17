@@ -1116,25 +1116,31 @@ export default function App() {
     setAvatarPreview(currentUser?.avatarUrl || '')
   }
 
-  // Upload Generic Image (Stores/Dishes)
-  async function handleUploadImage(file, folder = '') {
+  async function uploadManagedImage(endpoint, file) {
     if (!file) return null
     const formData = new FormData()
     formData.append('file', file)
 
-    let url = '/v1/upload/image'
-    if (folder) {
-      url += `?folder=${encodeURIComponent(folder)}`
-    }
-
-    const res = await makeRequest('POST', url, formData, true)
+    const res = await makeRequest('PATCH', endpoint, formData, true)
 
     if (res.success && res.data.result) {
-      return res.data.result.url
+      return res.data.result
     } else {
       showToast(getVietnameseApiError(res.error, 'Tải ảnh thất bại.'), 'error')
       return null
     }
+  }
+
+  async function handleUploadStoreBanner(storeId, file) {
+    const result = await uploadManagedImage(`/v1/stores/${storeId}/banner`, file)
+    if (result) await loadGlobalData()
+    return result
+  }
+
+  async function handleUploadFoodImage(foodId, file) {
+    const result = await uploadManagedImage(`/v1/food-items/${foodId}/image`, file)
+    if (result) await loadGlobalData()
+    return result
   }
 
   // Preview file upload avatar
@@ -1250,7 +1256,6 @@ export default function App() {
       closeTime: formatTimeHHmm(storeClose),
       priceMin: parseFloat(storePriceMin) || 0,
       priceMax: parseFloat(storePriceMax) || 0,
-      bannerImageUrl: storeBannerUrl
     })
 
     if (res && res.success && res.data && res.data.result) {
@@ -1306,7 +1311,6 @@ export default function App() {
       closeTime: formatTimeHHmm(editingStore.closeTime),
       priceMin: parseFloat(editingStore.priceMin) || 0,
       priceMax: parseFloat(editingStore.priceMax) || 0,
-      bannerImageUrl: editingStore.bannerImageUrl
     })
     setLoading(false)
 
@@ -1423,19 +1427,23 @@ export default function App() {
     const res = await makeRequest('POST', `/v1/food-items/store/${foodStoreId}`, {
       name: foodName,
       price: parseFloat(foodPrice) || 0,
-      imageUrl: foodImage,
       description: foodDesc
     })
 
     if (res.success) {
+      const createdFood = res.data.result
       showToast(`Món "${foodName}" đã được thêm vào thực đơn thành công!`, 'success')
       setFoodName('')
       setFoodPrice(0)
       setFoodImage('')
       setFoodDesc('')
       loadGlobalData()
+      setLoading(false)
+      return createdFood
     } else {
+      setLoading(false)
       showToast(getVietnameseApiError(res.error, 'Thêm món ăn thất bại.'), 'error')
+      return null
     }
   }
 
@@ -1445,7 +1453,6 @@ export default function App() {
     const res = await makeRequest('PUT', `/v1/food-items/${foodId}`, {
       name: foodData.name,
       price: parseFloat(foodData.price) || 0,
-      imageUrl: foodData.imageUrl,
       description: foodData.description
     })
     setLoading(false)
@@ -1619,10 +1626,16 @@ export default function App() {
   }
 
   // Admin View - Delete user account
-  async function handleAdminDeleteUser(userId) {
-    if (!window.confirm('Xóa tài khoản người dùng hoàn toàn? Hành động này sẽ xóa mọi thông tin và dữ liệu liên quan.')) return
+  async function handleAdminDeleteUser(user) {
+    const confirmation = window.prompt(`Nhập chính xác username "${user.username}" để xác nhận xóa toàn bộ tài khoản và dữ liệu liên quan:`)
+    if (confirmation === null) return
+    const reason = window.prompt('Nhập lý do xóa tài khoản:')
+    if (!reason?.trim()) {
+      showToast('Lý do xóa tài khoản không được để trống.', 'error')
+      return
+    }
     setLoading(true)
-    const res = await makeRequest('DELETE', `/users/${userId}`)
+    const res = await makeRequest('DELETE', `/users/${user.id}`, { confirmation, reason: reason.trim() })
     setLoading(false)
 
     if (res.success) {
@@ -1630,6 +1643,31 @@ export default function App() {
       loadAdminUsers()
     } else {
       showToast(getVietnameseApiError(res.error, 'Xóa tài khoản thất bại.'), 'error')
+    }
+  }
+
+  async function handleAdminDisableUser(user, reason) {
+    if (!reason?.trim()) return false
+    const res = await makeRequest('POST', `/users/${user.id}/disable`, { reason: reason.trim() })
+    if (res.success) {
+      showToast('Đã khóa tài khoản và thu hồi toàn bộ phiên đăng nhập.', 'success')
+      await Promise.all([loadAdminUsers(), loadAdminPendingStores(), loadGlobalData()])
+      return true
+    } else {
+      showToast(getVietnameseApiError(res.error, 'Không thể khóa tài khoản.'), 'error')
+      return false
+    }
+  }
+
+  async function handleAdminEnableUser(user) {
+    const res = await makeRequest('POST', `/users/${user.id}/enable`, {})
+    if (res.success) {
+      showToast('Đã mở khóa tài khoản.', 'success')
+      await Promise.all([loadAdminUsers(), loadAdminPendingStores(), loadGlobalData()])
+      return true
+    } else {
+      showToast(getVietnameseApiError(res.error, 'Không thể mở khóa tài khoản.'), 'error')
+      return false
     }
   }
 
@@ -1903,7 +1941,8 @@ export default function App() {
               handleCreateFoodItem={handleCreateFoodItem}
               handleUpdateFoodItem={handleUpdateFoodItem}
               handleDeleteFoodItem={handleDeleteFoodItem}
-              handleUploadImage={handleUploadImage}
+              handleUploadStoreBanner={handleUploadStoreBanner}
+              handleUploadFoodImage={handleUploadFoodImage}
               loadGlobalData={loadGlobalData}
             />
           </Suspense>
@@ -1936,7 +1975,6 @@ export default function App() {
               foodDesc={foodDesc}
               setFoodDesc={setFoodDesc}
               handleCreateFoodItem={handleCreateFoodItem}
-              handleUploadImage={handleUploadImage}
               adminPendingStores={adminPendingStores}
               handleAdminApprove={handleAdminApprove}
               handleAdminReject={handleAdminReject}
@@ -1947,6 +1985,8 @@ export default function App() {
               adminUsersList={adminUsersList}
               handleOpenAdminEditUser={handleOpenAdminEditUser}
               handleAdminDeleteUser={handleAdminDeleteUser}
+              handleAdminDisableUser={handleAdminDisableUser}
+              handleAdminEnableUser={handleAdminEnableUser}
               editingUser={editingUser}
               setEditingUser={setEditingUser}
               adminUserUsername={adminUserUsername}

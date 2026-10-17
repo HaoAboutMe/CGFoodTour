@@ -110,7 +110,8 @@ export default function MyStoresSection({
   handleCreateFoodItem,
   handleUpdateFoodItem,
   handleDeleteFoodItem,
-  handleUploadImage,
+  handleUploadStoreBanner,
+  handleUploadFoodImage,
   loadGlobalData
 }) {
   const [isAddingNew, setIsAddingNew] = useState(false)
@@ -120,6 +121,8 @@ export default function MyStoresSection({
   const [mapPickerTarget, setMapPickerTarget] = useState(null) // 'add' or 'edit'
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadingFood, setUploadingFood] = useState(false)
+  const [pendingBannerFile, setPendingBannerFile] = useState(null)
+  const [pendingFoodFile, setPendingFoodFile] = useState(null)
   const [editingFood, setEditingFood] = useState(null)
   const [actionModalStore, setActionModalStore] = useState(null)
   const [actionModalType, setActionModalType] = useState(null) // 'HIDE', 'RECOVER', 'HARD_DELETE'
@@ -348,6 +351,12 @@ export default function MyStoresSection({
     e.preventDefault()
     const createdStore = await handleCreateStore(e)
     if (createdStore) {
+      if (pendingBannerFile) {
+        setUploadingBanner(true)
+        await handleUploadStoreBanner(createdStore.id, pendingBannerFile)
+        setUploadingBanner(false)
+        setPendingBannerFile(null)
+      }
       setIsAddingNew(false)
       setCreateStep(1)
       if (createdStore.id && setFoodStoreId) {
@@ -363,14 +372,25 @@ export default function MyStoresSection({
       const success = await handleUpdateFoodItem(editingFood.id, {
         name: foodName,
         price: foodPrice,
-        imageUrl: foodImage,
         description: foodDesc
       })
       if (success) {
+        if (pendingFoodFile) {
+          setUploadingFood(true)
+          await handleUploadFoodImage(editingFood.id, pendingFoodFile)
+          setUploadingFood(false)
+          setPendingFoodFile(null)
+        }
         setEditingFood(null)
       }
     } else {
-      await handleCreateFoodItem(e)
+      const createdFood = await handleCreateFoodItem(e)
+      if (createdFood && pendingFoodFile) {
+        setUploadingFood(true)
+        await handleUploadFoodImage(createdFood.id, pendingFoodFile)
+        setUploadingFood(false)
+        setPendingFoodFile(null)
+      }
     }
   }
 
@@ -379,26 +399,18 @@ export default function MyStoresSection({
     if (!file) return
 
     if (type === 'banner') {
-      setUploadingBanner(true)
-      const url = await handleUploadImage(file, 'stores')
-      setUploadingBanner(false)
-      if (url) {
-        setStoreBannerUrl(url)
-      }
+      setPendingBannerFile(file)
+      setStoreBannerUrl(URL.createObjectURL(file))
     } else if (type === 'editBanner') {
       setUploadingBanner(true)
-      const url = await handleUploadImage(file, 'stores')
+      const updatedStore = await handleUploadStoreBanner(editingStore.id, file)
       setUploadingBanner(false)
-      if (url) {
-        setEditingStore({ ...editingStore, bannerImageUrl: url })
+      if (updatedStore) {
+        setEditingStore(updatedStore)
       }
     } else if (type === 'food') {
-      setUploadingFood(true)
-      const url = await handleUploadImage(file, 'foods')
-      setUploadingFood(false)
-      if (url) {
-        setFoodImage(url)
-      }
+      setPendingFoodFile(file)
+      setFoodImage(URL.createObjectURL(file))
     }
   }
 
@@ -800,36 +812,17 @@ export default function MyStoresSection({
                             {uploadingBanner ? 'Đang Tải Lên...' : 'Chọn Ảnh Từ Thiết Bị'}
                             <input
                               type="file"
-                              accept="image/*"
+                              accept="image/jpeg,image/png,image/gif"
                               disabled={uploadingBanner}
                               onChange={(e) => handleFileChange(e, 'editBanner')}
                               className="hidden"
                             />
                           </label>
-                          {editingStore.bannerImageUrl && (
-                            <button
-                              type="button"
-                              onClick={() => setEditingStore({ ...editingStore, bannerImageUrl: '' })}
-                              className="brutalist-btn-red py-1 px-3 text-xs font-black uppercase"
-                            >
-                              Xóa Ảnh
-                            </button>
-                          )}
                         </div>
                         <p className="text-[10px] font-bold text-neutral-500">Hỗ trợ JPG, PNG, GIF. Tải lên Cloudinary tự động.</p>
                       </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <span className="text-[10px] text-neutral-500 font-extrabold uppercase">Hoặc nhập URL hình ảnh trực tiếp:</span>
-                      <input
-                        type="text"
-                        value={editingStore.bannerImageUrl || ''}
-                        onChange={(e) => setEditingStore({ ...editingStore, bannerImageUrl: e.target.value })}
-                        className="brutalist-input text-xs"
-                        placeholder="https://example.com/banner.jpg"
-                      />
-                    </div>
                   </div>
                 </div>
               )}
@@ -837,9 +830,10 @@ export default function MyStoresSection({
 
             <button
               type="submit"
-              className="w-full brutalist-btn-red py-3 text-sm font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
+              disabled={uploadingBanner}
+              className="w-full brutalist-btn-red py-3 text-sm font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Lưu Thay Đổi Quán Ăn
+              {uploadingBanner ? 'Đang Tải Ảnh...' : 'Lưu Thay Đổi Quán Ăn'}
             </button>
           </form>
         </div>
@@ -1243,7 +1237,7 @@ export default function MyStoresSection({
                           {uploadingBanner ? 'Đang Tải Lên...' : 'Chọn Ảnh Từ Thiết Bị'}
                           <input
                             type="file"
-                            accept="image/*"
+                            accept="image/jpeg,image/png,image/gif"
                             disabled={uploadingBanner}
                             onChange={(e) => handleFileChange(e, 'banner')}
                             className="hidden"
@@ -1252,7 +1246,10 @@ export default function MyStoresSection({
                         {storeBannerUrl && (
                           <button
                             type="button"
-                            onClick={() => setStoreBannerUrl('')}
+                            onClick={() => {
+                              setStoreBannerUrl('')
+                              setPendingBannerFile(null)
+                            }}
                             className="brutalist-btn-red py-1 px-3 text-xs font-black uppercase"
                           >
                             Xóa Ảnh
@@ -1263,16 +1260,6 @@ export default function MyStoresSection({
                     </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <span className="text-[10px] text-neutral-500 font-extrabold uppercase">Hoặc nhập URL hình ảnh trực tiếp:</span>
-                    <input
-                      type="text"
-                      placeholder="https://images.unsplash.com/photo-..."
-                      value={storeBannerUrl}
-                      onChange={(e) => setStoreBannerUrl(e.target.value)}
-                      className="brutalist-input text-xs"
-                    />
-                  </div>
                 </div>
 
                 {/* Store Review Summary Card */}
@@ -1300,9 +1287,10 @@ export default function MyStoresSection({
                   </button>
                   <button
                     type="submit"
-                    className="brutalist-btn-red py-3 px-6 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
+                    disabled={uploadingBanner}
+                    className="brutalist-btn-red py-3 px-6 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Gửi Quán Ăn Chờ Duyệt
+                    {uploadingBanner ? 'Đang Tải Ảnh...' : 'Gửi Quán Ăn Chờ Duyệt'}
                   </button>
                 </div>
               </div>
@@ -1395,7 +1383,7 @@ export default function MyStoresSection({
                         {uploadingFood ? 'Đang Tải Lên...' : 'Chọn Ảnh Từ Thiết Bị'}
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/jpeg,image/png,image/gif"
                           disabled={uploadingFood}
                           onChange={(e) => handleFileChange(e, 'food')}
                           className="hidden"
@@ -1404,7 +1392,10 @@ export default function MyStoresSection({
                       {foodImage && (
                         <button
                           type="button"
-                          onClick={() => setFoodImage('')}
+                          onClick={() => {
+                            setFoodImage('')
+                            setPendingFoodFile(null)
+                          }}
                           className="brutalist-btn-red py-1 px-3 text-xs font-black uppercase"
                         >
                           Xóa Ảnh
@@ -1415,17 +1406,6 @@ export default function MyStoresSection({
                   </div>
                 </div>
 
-                {/* Text fallback input */}
-                <div className="space-y-1">
-                  <span className="text-[10px] text-neutral-500 font-extrabold uppercase">Hoặc nhập URL hình ảnh trực tiếp:</span>
-                  <input
-                    type="text"
-                    placeholder="https://images.unsplash.com/photo-..."
-                    value={foodImage}
-                    onChange={(e) => setFoodImage(e.target.value)}
-                    className="brutalist-input text-xs"
-                  />
-                </div>
               </div>
 
               <div className="space-y-2">
@@ -1442,9 +1422,10 @@ export default function MyStoresSection({
 
               <button
                 type="submit"
-                className="w-full brutalist-btn-red py-3 text-sm font-black"
+                disabled={uploadingFood}
+                className="w-full brutalist-btn-red py-3 text-sm font-black disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {editingFood ? 'Xác Nhận Cập Nhật' : 'Xác Nhận Thêm Món Ăn'}
+                {uploadingFood ? 'Đang Tải Ảnh...' : (editingFood ? 'Xác Nhận Cập Nhật' : 'Xác Nhận Thêm Món Ăn')}
               </button>
             </form>
           </div>

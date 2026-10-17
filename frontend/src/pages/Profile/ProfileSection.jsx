@@ -97,7 +97,7 @@ export default function ProfileSection({
               {!uploadingAvatar && (
                 <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer border border-black rounded-lg">
                   <Camera className="w-6 h-6 text-white" />
-                  <input type="file" accept="image/*" onChange={onAvatarFileChange} className="hidden" />
+                  <input type="file" accept="image/jpeg,image/png,image/gif" onChange={onAvatarFileChange} className="hidden" />
                 </label>
               )}
             </div>

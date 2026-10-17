@@ -43,7 +43,15 @@ const API_ERROR_MESSAGES_VI = Object.freeze({
   1041: 'Tên đăng nhập đã được sử dụng.',
   1042: 'Tên danh mục đã tồn tại trong hệ thống.',
   1043: 'Độ dài tên danh mục không hợp lệ.',
-  1044: 'Tên danh mục không được để trống.'
+  1044: 'Tên danh mục không được để trống.',
+  1045: 'Vui lòng nhập lý do thực hiện thao tác với tài khoản.',
+  1046: 'Bạn không thể khóa hoặc xóa chính tài khoản đang đăng nhập.',
+  1047: 'Không thể khóa, xóa hoặc gỡ quyền quản trị viên hoạt động cuối cùng.',
+  1048: 'Không thể mở khóa tài khoản chưa xác thực email.',
+  1049: 'Liên kết Google Maps không hợp lệ hoặc không được hỗ trợ.',
+  1050: 'Thông tin xác nhận xóa tài khoản không chính xác.',
+  1051: 'Việc dọn dẹp hình ảnh đã được đưa vào hàng đợi.',
+  1052: 'Hình ảnh không thuộc tài nguyên này.'
 })
 
 export function getVietnameseApiError(error, fallback = 'Không thể hoàn tất thao tác. Vui lòng thử lại.') {
