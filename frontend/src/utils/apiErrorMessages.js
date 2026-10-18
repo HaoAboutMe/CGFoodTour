@@ -55,7 +55,10 @@ const API_ERROR_MESSAGES_VI = Object.freeze({
   1053: 'Bạn đã gửi quá nhiều yêu cầu đăng ký. Vui lòng thử lại sau.',
   1054: 'Bạn đã yêu cầu xử lý liên kết bản đồ quá nhiều lần. Vui lòng thử lại sau.',
   1055: 'Dịch vụ xử lý bản đồ đang bận. Vui lòng thử lại sau.',
-  1056: 'Thông tin trang, bộ lọc hoặc sắp xếp không hợp lệ.'
+  1056: 'Thông tin trang, bộ lọc hoặc sắp xếp không hợp lệ.',
+  1057: 'Phiên bảo mật không hợp lệ. Vui lòng tải lại trang và thử lại.',
+  1058: 'Trạng thái quán đã thay đổi. Vui lòng tải lại dữ liệu và thử lại.',
+  1059: 'Cần cung cấp đầy đủ vĩ độ và kinh độ để tìm quán theo khoảng cách.'
 })
 
 export function getVietnameseApiError(error, fallback = 'Không thể hoàn tất thao tác. Vui lòng thử lại.') {

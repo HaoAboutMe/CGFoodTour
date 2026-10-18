@@ -18,6 +18,7 @@ import AboutSection from '@/pages/About/AboutSection'
 import SavedStoresSection from '@/components/SavedStoresSection'
 import { getVietnameseApiError } from '@/utils/apiErrorMessages'
 import { redactSensitiveData } from '@/utils/redactSensitiveData'
+import { storePath } from '@/utils/storeUrl'
 
 // Code splitting & Dynamic imports for heavy sections per Vercel Best Practices (bundle-dynamic-imports)
 const AdminSection = lazy(() => import('@/pages/Admin/AdminSection'))
@@ -28,6 +29,16 @@ const DevConsole = import.meta.env.DEV
   : null
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '/api')).replace(/\/+$/, '')
+
+function readCookie(name) {
+  const prefix = `${encodeURIComponent(name)}=`
+  const item = document.cookie.split('; ').find((value) => value.startsWith(prefix))
+  return item ? decodeURIComponent(item.substring(prefix.length)) : ''
+}
+
+function csrfToken() {
+  return readCookie('__Host-cgft_csrf') || readCookie('cgft_csrf')
+}
 
 function getRefreshDelay(accessToken) {
   try {
@@ -52,12 +63,14 @@ export default function App() {
   const location = useLocation()
 
   // Navigation & Authentication - Lazy State Initialization (rerender-lazy-state-init)
-  const [token, setToken] = useState(() => localStorage.getItem('jwtToken') || '')
-  const [refreshTokenVal, setRefreshTokenVal] = useState(() => localStorage.getItem('refreshToken') || '')
+  const [token, setToken] = useState('')
+  const tokenRef = useRef('')
+  const [hasSession, setHasSession] = useState(true)
   const refreshPromiseRef = useRef(null)
   const logoutPromiseRef = useRef(null)
   const refreshSessionRef = useRef(null)
   const handleLogoutRef = useRef(null)
+  const authChannelRef = useRef(null)
   const [currentUser, setCurrentUser] = useState(null)
   const [activeTab, setActiveTab] = useState('explore')
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -82,9 +95,16 @@ export default function App() {
   const [ownedStores, setOwnedStores] = useState([])
   const [adminStores, setAdminStores] = useState([])
   const [savedStores, setSavedStores] = useState([])
+  const [ownedStoresPage, setOwnedStoresPage] = useState({ page: 0, totalElements: 0, last: true })
+  const [savedStoresPage, setSavedStoresPage] = useState({ page: 0, totalElements: 0, last: true })
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [activeStore, setActiveStore] = useState(null)
+  const detailOpenedFromAppRef = useRef(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [publicFilters, setPublicFilters] = useState({
+    categoryIds: [], openNow: false, nearMe: false, latitude: null, longitude: null
+  })
+  const [storeFacets, setStoreFacets] = useState({})
 
   // Form Fields - Auth
   const [loginEmail, setLoginEmail] = useState('')
@@ -168,6 +188,7 @@ export default function App() {
   const [adminUserRoles, setAdminUserRoles] = useState({ USER: false, ADMIN: false })
   const [adminUsersList, setAdminUsersList] = useState([])
   const [adminPendingStores, setAdminPendingStores] = useState([])
+  const [adminStoreSummary, setAdminStoreSummary] = useState({})
   const [adminUsersPage, setAdminUsersPage] = useState({ page: 0, totalPages: 1, totalElements: 0 })
   const [adminStoresPage, setAdminStoresPage] = useState({ page: 0, totalPages: 1, totalElements: 0 })
 
@@ -183,6 +204,12 @@ export default function App() {
   // Sync URL path with activeTab and load data
   useEffect(() => {
     const rawPath = location.pathname.substring(1)
+    if (rawPath.startsWith('quan/')) {
+      // Keep the originating tab visible behind the drawer when detail was
+      // opened inside the app. Direct/shared detail URLs use Explore.
+      if (!detailOpenedFromAppRef.current) setActiveTab('explore')
+      return
+    }
     const tab = rawPath === '' ? 'explore' : rawPath
 
     if (['explore', 'about', 'cs2-spinner', 'saved', 'profile', 'my-stores', 'admin'].includes(tab)) {
@@ -197,6 +224,8 @@ export default function App() {
       }
       
       setActiveTab(tab)
+      setActiveStore(null)
+      detailOpenedFromAppRef.current = false
       if (tab === 'admin') {
         loadAdminUsers()
         loadAdminPendingStores()
@@ -210,12 +239,42 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, token])
 
+  // Resolve a store route independently from the currently loaded Explore page.
+  useEffect(() => {
+    const match = location.pathname.match(/^\/quan\/([^/]+)(?:\/([^/]+))?\/?$/)
+    if (!match) return undefined
+    let cancelled = false
+    const id = decodeURIComponent(match[1])
+    ;(async () => {
+      const response = await makeRequest('GET', `/v1/stores/${encodeURIComponent(id)}`)
+      if (cancelled) return
+      if (!response.success || !response.data.result) {
+        setActiveStore(null)
+        document.title = 'Không tìm thấy quán | Cần Giuộc Food Tour'
+        return
+      }
+      const store = response.data.result
+      setActiveStore(store)
+      const canonicalPath = storePath(store)
+      if (location.pathname !== canonicalPath) navigate(canonicalPath, { replace: true })
+    })()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, token])
+
+  function openActiveStore(store) {
+    if (!store) return
+    detailOpenedFromAppRef.current = true
+    setActiveStore(store)
+    navigate(storePath(store))
+  }
+
   useEffect(() => {
     if (activeTab !== 'explore') return undefined
     const timer = window.setTimeout(() => loadPublicStores(0, false), 400)
     return () => window.clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, selectedCategory?.id, activeTab])
+  }, [searchQuery, selectedCategory?.id, publicFilters, activeTab])
 
   // Dynamic Document Title based on active tab & active store
   useEffect(() => {
@@ -223,6 +282,34 @@ export default function App() {
 
     if (activeStore) {
       document.title = `${activeStore.name} | ${BRAND_SUFFIX}`
+      const canonical = new URL(storePath(activeStore), window.location.origin).toString()
+      const description = `${activeStore.name} tại ${activeStore.addressLine || 'Cần Giuộc'}`
+      const values = {
+        'meta[name="description"]': description,
+        'meta[property="og:title"]': activeStore.name,
+        'meta[property="og:description"]': description,
+        'meta[property="og:url"]': canonical,
+        'meta[property="og:image"]': activeStore.bannerImageUrl || `${window.location.origin}/logo_1024.webp`,
+      }
+      Object.entries(values).forEach(([selector, content]) => {
+        let element = document.head.querySelector(selector)
+        if (!element) {
+          element = document.createElement('meta')
+          const property = selector.match(/property="([^"]+)/)?.[1]
+          const name = selector.match(/name="([^"]+)/)?.[1]
+          if (property) element.setAttribute('property', property)
+          if (name) element.setAttribute('name', name)
+          document.head.appendChild(element)
+        }
+        element.setAttribute('content', content)
+      })
+      let canonicalLink = document.head.querySelector('link[rel="canonical"]')
+      if (!canonicalLink) {
+        canonicalLink = document.createElement('link')
+        canonicalLink.setAttribute('rel', 'canonical')
+        document.head.appendChild(canonicalLink)
+      }
+      canonicalLink.setAttribute('href', canonical)
       return
     }
 
@@ -238,35 +325,69 @@ export default function App() {
 
     const titlePrefix = tabTitles[activeTab] || 'Khám Phá Ẩm Thực'
     document.title = `${titlePrefix} | ${BRAND_SUFFIX}`
-  }, [activeTab, activeStore])
+    const canonical = new URL(location.pathname || '/explore', window.location.origin).toString()
+    const description = 'Khám phá ẩm thực và các quán ăn tại Cần Giuộc.'
+    document.head.querySelector('meta[name="description"]')?.setAttribute('content', description)
+    document.head.querySelector('meta[property="og:title"]')?.setAttribute('content', document.title)
+    document.head.querySelector('meta[property="og:description"]')?.setAttribute('content', description)
+    document.head.querySelector('meta[property="og:url"]')?.setAttribute('content', canonical)
+    let canonicalLink = document.head.querySelector('link[rel="canonical"]')
+    if (!canonicalLink) {
+      canonicalLink = document.createElement('link')
+      canonicalLink.setAttribute('rel', 'canonical')
+      document.head.appendChild(canonicalLink)
+    }
+    canonicalLink.setAttribute('href', canonical)
+  }, [activeTab, activeStore, location.pathname])
 
-  // Cross-tab authentication synchronization
+  function closeActiveStore() {
+    setActiveStore(null)
+    if (location.pathname.startsWith('/quan/')) {
+      if (detailOpenedFromAppRef.current) navigate(-1)
+      else navigate('/explore', { replace: true })
+    }
+    detailOpenedFromAppRef.current = false
+  }
+
+  // Cross-tab authentication synchronization. Raw tokens are never sent.
   useEffect(() => {
-    function handleStorageChange(e) {
-      if (e.key === 'jwtToken') {
-        if (e.newValue) setToken(e.newValue)
-        else {
-          setToken('')
-          setCurrentUser(null)
-        }
-      }
-      if (e.key === 'refreshToken') {
-        if (e.newValue) setRefreshTokenVal(e.newValue)
-        else setRefreshTokenVal('')
+    if (!('BroadcastChannel' in window)) return undefined
+    const channel = new BroadcastChannel('cgft-auth')
+    authChannelRef.current = channel
+    channel.onmessage = ({ data }) => {
+      if (data?.type === 'LOGOUT') {
+        tokenRef.current = ''
+        setToken('')
+        setHasSession(false)
+        setCurrentUser(null)
+      } else if (data?.type === 'LOGIN') {
+        setHasSession(true)
+        refreshSessionRef.current?.().catch(() => {})
       }
     }
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
+    return () => {
+      channel.close()
+      authChannelRef.current = null
+    }
+  }, [])
+
+  // Restore the access token from the HttpOnly refresh-cookie session after reload.
+  useEffect(() => {
+    refreshSessionRef.current?.().catch(() => {
+      tokenRef.current = ''
+      setToken('')
+      setHasSession(false)
+    })
   }, [])
 
   // Refresh shortly before the current access token expires.
   useEffect(() => {
-    if (!token || !refreshTokenVal) return
+    if (!token || !hasSession) return
     const timeout = setTimeout(() => {
       refreshSessionRef.current().catch(() => handleLogoutRef.current())
     }, getRefreshDelay(token))
     return () => clearTimeout(timeout)
-  }, [token, refreshTokenVal])
+  }, [token, hasSession])
 
   // Server-Sent Events (SSE) for Real-time Store Updates
   useEffect(() => {
@@ -437,32 +558,34 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }
 
-  function persistSession(authResult) {
-    if (!authResult?.accessToken || !authResult?.refreshToken) {
+  function persistSession(authResult, broadcast = false) {
+    if (!authResult?.accessToken) {
       throw new Error('Invalid authentication response')
     }
+    tokenRef.current = authResult.accessToken
     setToken(authResult.accessToken)
-    setRefreshTokenVal(authResult.refreshToken)
-    localStorage.setItem('jwtToken', authResult.accessToken)
-    localStorage.setItem('refreshToken', authResult.refreshToken)
+    setHasSession(true)
+    if (broadcast) authChannelRef.current?.postMessage({ type: 'LOGIN' })
     return authResult.accessToken
   }
 
   async function refreshSession() {
     if (refreshPromiseRef.current) return refreshPromiseRef.current
 
-    refreshPromiseRef.current = (async () => {
-      const storedRefreshToken = localStorage.getItem('refreshToken') || refreshTokenVal
-      if (!storedRefreshToken) throw new Error('Missing refresh token')
+    const executeRefresh = async () => {
       const response = await fetch(API_BASE + '/auth/refresh', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken: storedRefreshToken })
+        credentials: 'include',
+        headers: { 'X-CSRF-Token': csrfToken() }
       })
       if (!response.ok) throw new Error('Refresh failed')
       const data = await response.json()
       return persistSession(data?.result)
-    })()
+    }
+
+    refreshPromiseRef.current = ('locks' in navigator)
+      ? navigator.locks.request('cgft-refresh', executeRefresh)
+      : executeRefresh()
 
     try {
       return await refreshPromiseRef.current
@@ -476,14 +599,15 @@ export default function App() {
     const url = API_BASE + endpoint
     const headers = {}
 
-    const currentToken = localStorage.getItem('jwtToken') || token
+    const currentToken = tokenRef.current
     if (currentToken && !endpoint.startsWith('/auth/')) {
       headers['Authorization'] = `Bearer ${currentToken}`
     }
 
     let requestOptions = {
       method: method,
-      headers: headers
+      headers: headers,
+      credentials: 'include'
     }
 
     if (body) {
@@ -519,7 +643,7 @@ export default function App() {
             endpoint !== '/auth/google-login' && 
             endpoint !== '/auth/facebook-login') {
           
-          if (localStorage.getItem('refreshToken') || refreshTokenVal) {
+          if (hasSession) {
             console.log('Attempting automatic token refresh...')
             try {
               const newAccessToken = await refreshSession()
@@ -629,7 +753,7 @@ export default function App() {
 
     await loadPublicStores(0, false)
 
-    const activeToken = localStorage.getItem('jwtToken') || token
+    const activeToken = tokenRef.current
     if (activeToken) {
       await Promise.all([loadSavedStores(), loadMyStores()])
     } else {
@@ -644,7 +768,17 @@ export default function App() {
     if (append) setLoadingMoreStores(true)
     const params = new URLSearchParams({ page: String(page), size: '24', sort: 'newest' })
     if (searchQuery.trim()) params.set('query', searchQuery.trim())
-    if (selectedCategory?.id) params.set('categoryId', String(selectedCategory.id))
+    const categoryIds = publicFilters.categoryIds.length > 0
+      ? publicFilters.categoryIds
+      : (selectedCategory?.id ? [selectedCategory.id] : [])
+    categoryIds.forEach((id) => params.append('categoryIds', String(id)))
+    if (publicFilters.openNow) params.set('openNow', 'true')
+    if (publicFilters.nearMe && publicFilters.latitude != null && publicFilters.longitude != null) {
+      params.set('latitude', String(publicFilters.latitude))
+      params.set('longitude', String(publicFilters.longitude))
+      params.set('radiusKm', '10')
+      params.set('sort', 'distance')
+    }
     const storeRes = await makeRequest('GET', `/v1/stores?${params.toString()}`)
     if (requestId !== publicStoreRequestRef.current) {
       if (append) setLoadingMoreStores(false)
@@ -660,6 +794,20 @@ export default function App() {
         ? { page: 0, totalPages: 1, totalElements: content.length, last: true }
         : result)
     }
+    if (!append) {
+      const facetParams = new URLSearchParams()
+      if (searchQuery.trim()) facetParams.set('query', searchQuery.trim())
+      if (publicFilters.openNow) facetParams.set('openNow', 'true')
+      if (publicFilters.nearMe && publicFilters.latitude != null && publicFilters.longitude != null) {
+        facetParams.set('latitude', String(publicFilters.latitude))
+        facetParams.set('longitude', String(publicFilters.longitude))
+        facetParams.set('radiusKm', '10')
+      }
+      const facetRes = await makeRequest('GET', `/v1/stores/facets?${facetParams.toString()}`)
+      if (requestId === publicStoreRequestRef.current && facetRes.success) {
+        setStoreFacets(facetRes.data.result || {})
+      }
+    }
     if (append) setLoadingMoreStores(false)
   }
 
@@ -668,34 +816,40 @@ export default function App() {
     await loadPublicStores((storePage.page || 0) + 1, true)
   }
 
-  async function loadMyStores() {
-    const activeToken = localStorage.getItem('jwtToken') || token
+  async function loadMyStores(page = 0, append = false) {
+    const activeToken = tokenRef.current
     if (!activeToken) {
       setOwnedStores([])
       return
     }
-    const res = await makeRequest('GET', '/v1/stores/mine')
+    const res = await makeRequest('GET', `/v1/stores/mine?page=${page}&size=20`)
     if (res.success && res.data.result) {
-      setOwnedStores(res.data.result.content || res.data.result)
+      const result = res.data.result
+      const content = result.content || result
+      setOwnedStores((previous) => append ? [...new Map([...previous, ...content].map((store) => [store.id, store])).values()] : content)
+      if (!Array.isArray(result)) setOwnedStoresPage(result)
     }
   }
 
   // Load saved stores for current logged in user
-  async function loadSavedStores() {
-    const activeToken = localStorage.getItem('jwtToken') || token
+  async function loadSavedStores(page = 0, append = false) {
+    const activeToken = tokenRef.current
     if (!activeToken) {
       setSavedStores([])
       return
     }
-    const res = await makeRequest('GET', '/v1/stores/saved')
+    const res = await makeRequest('GET', `/v1/stores/saved?page=${page}&size=24`)
     if (res.success && res.data.result) {
-      setSavedStores(res.data.result.content || res.data.result)
+      const result = res.data.result
+      const content = result.content || result
+      setSavedStores((previous) => append ? [...new Map([...previous, ...content].map((store) => [store.id, store])).values()] : content)
+      if (!Array.isArray(result)) setSavedStoresPage(result)
     }
   }
 
   // Toggle Save / Bookmark Store
   async function handleToggleSaveStore(storeId) {
-    const activeToken = localStorage.getItem('jwtToken') || token
+    const activeToken = tokenRef.current
     if (!activeToken) {
       showToast('Vui lòng đăng nhập để lưu quán ăn yêu thích.', 'info')
       setAuthMode('login')
@@ -756,7 +910,7 @@ export default function App() {
     setLoading(false)
 
     if (res.success && res.data.result) {
-      persistSession(res.data.result)
+      persistSession(res.data.result, true)
       
       showToast('Chào mừng bạn quay trở lại Cần Giuộc FoodTour!', 'success')
       setShowAuthModal(false)
@@ -929,13 +1083,12 @@ export default function App() {
     if (res.success) {
       // Reset password revokes every token that was issued before the reset.
       setToken('')
-      setRefreshTokenVal('')
+      tokenRef.current = ''
+      setHasSession(false)
       setCurrentUser(null)
       setOwnedStores([])
       setAdminStores([])
       setAdminPendingStores([])
-      localStorage.removeItem('jwtToken')
-      localStorage.removeItem('refreshToken')
       showToast('Đổi mật khẩu thành công! Hãy đăng nhập.', 'success')
       setAuthMode('login')
       setResetEmail('')
@@ -963,7 +1116,7 @@ export default function App() {
     setLoading(false)
 
     if (res.success && res.data.result) {
-      persistSession(res.data.result)
+      persistSession(res.data.result, true)
       showToast('Đăng nhập bằng Google thành công!', 'success')
       setShowAuthModal(false)
       setSocialGoogleToken('')
@@ -987,7 +1140,7 @@ export default function App() {
     setLoading(false)
 
     if (res.success && res.data.result) {
-      persistSession(res.data.result)
+      persistSession(res.data.result, true)
       showToast('Đăng nhập bằng Facebook thành công!', 'success')
       setShowAuthModal(false)
       setSocialFacebookToken('')
@@ -1029,7 +1182,7 @@ export default function App() {
 
   // Token refresh
   async function handleRefreshToken() {
-    if (!refreshTokenVal) {
+    if (!hasSession) {
       showToast('Không tìm thấy phiên đăng nhập. Vui lòng đăng nhập lại.', 'error')
       return
     }
@@ -1050,27 +1203,29 @@ export default function App() {
     if (logoutPromiseRef.current) return logoutPromiseRef.current
 
     logoutPromiseRef.current = (async () => {
-      const accessToken = localStorage.getItem('jwtToken') || token
-      const refreshToken = localStorage.getItem('refreshToken') || refreshTokenVal
+      const accessToken = tokenRef.current
       const abortController = new AbortController()
       const timeout = setTimeout(() => abortController.abort(), 3000)
 
       // Start server-side revocation before clearing the local token pair. Local cleanup is
       // immediate and is never blocked by network/backend availability.
-      const revokeRequest = accessToken && refreshToken
+      const revokeRequest = hasSession
         ? fetch(API_BASE + '/auth/logout', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ accessToken, refreshToken }),
+            credentials: 'include',
+            headers: {
+              ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+              'X-CSRF-Token': csrfToken()
+            },
             signal: abortController.signal
           })
         : Promise.resolve(null)
 
       setToken('')
-      setRefreshTokenVal('')
+      tokenRef.current = ''
+      setHasSession(false)
       setCurrentUser(null)
-      localStorage.removeItem('jwtToken')
-      localStorage.removeItem('refreshToken')
+      authChannelRef.current?.postMessage({ type: 'LOGOUT' })
       setAvatarPreview('')
       setAvatarFile(null)
       setEditingStore(null)
@@ -1648,6 +1803,7 @@ export default function App() {
     if (request.status && request.status !== 'ALL') params.set('status', request.status)
     if (request.categoryId && request.categoryId !== 'ALL') params.set('categoryId', String(request.categoryId))
     const res = await makeRequest('GET', `/v1/stores/admin?${params.toString()}`)
+    const summaryRes = await makeRequest('GET', '/v1/stores/admin/summary')
     if (requestId !== adminStoreRequestSequenceRef.current) return
     if (res.success && res.data.result) {
       const result = res.data.result
@@ -1657,6 +1813,7 @@ export default function App() {
       // filter only PENDING submissions
       setAdminPendingStores(content.filter((s) => s.status === 'PENDING'))
     }
+    if (summaryRes.success) setAdminStoreSummary(summaryRes.data.result || {})
   }
 
   // Admin View - Approve store submission
@@ -1870,7 +2027,7 @@ export default function App() {
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             loadGlobalData={loadGlobalData}
-            setActiveStore={setActiveStore}
+            setActiveStore={openActiveStore}
             handleRandomPick={handleRandomPick}
             rollingRandom={rollingRandom}
             randomResult={randomResult}
@@ -1883,6 +2040,8 @@ export default function App() {
             loadMoreServerStores={loadMorePublicStores}
             loadingMoreStores={loadingMoreStores}
             totalStoreCount={storePage.totalElements || stores.length}
+            onServerFiltersChange={setPublicFilters}
+            categoryFacets={storeFacets}
           />
         )}
 
@@ -1890,15 +2049,22 @@ export default function App() {
         {/* SAVED STORES TAB */}
         {/* ========================================================================= */}
         {activeTab === 'saved' && (
-          <SavedStoresSection
-            savedStores={savedStores}
-            loadSavedStores={loadSavedStores}
-            handleToggleSaveStore={handleToggleSaveStore}
-            setActiveStore={setActiveStore}
-            setShowAuthModal={setShowAuthModal}
-            setAuthMode={setAuthMode}
-            currentUser={currentUser}
-          />
+          <div className="space-y-4">
+            <SavedStoresSection
+              savedStores={savedStores}
+              loadSavedStores={loadSavedStores}
+              handleToggleSaveStore={handleToggleSaveStore}
+              setActiveStore={openActiveStore}
+              setShowAuthModal={setShowAuthModal}
+              setAuthMode={setAuthMode}
+              currentUser={currentUser}
+            />
+            {!savedStoresPage.last && (
+              <button className="brutalist-btn-white mx-auto block" onClick={() => loadSavedStores(savedStoresPage.page + 1, true)}>
+                Xem thêm ({savedStores.length}/{savedStoresPage.totalElements})
+              </button>
+            )}
+          </div>
         )}
 
         {/* ========================================================================= */}
@@ -1910,7 +2076,7 @@ export default function App() {
               <CS2CaseOpener
                 stores={stores}
                 categories={categories}
-                setActiveStore={setActiveStore}
+                setActiveStore={openActiveStore}
               />
             </div>
           </Suspense>
@@ -1968,7 +2134,7 @@ export default function App() {
               categories={categories}
               editingStore={editingStore}
               setEditingStore={setEditingStore}
-              setActiveStore={setActiveStore}
+              setActiveStore={openActiveStore}
               handleParseGmapsUrl={handleParseGmapsUrl}
               handleUpdateStore={handleUpdateStore}
               handleDeleteStore={handleDeleteStore}
@@ -2055,6 +2221,7 @@ export default function App() {
               setFoodDesc={setFoodDesc}
               handleCreateFoodItem={handleCreateFoodItem}
               adminPendingStores={adminPendingStores}
+              adminStoreSummary={adminStoreSummary}
               handleAdminApprove={handleAdminApprove}
               handleAdminReject={handleAdminReject}
               handleHideStore={handleHideStore}
@@ -2086,6 +2253,11 @@ export default function App() {
               loadAdminPendingStores={loadAdminPendingStores}
               loadGlobalData={loadGlobalData}
             />
+            {!ownedStoresPage.last && (
+              <button className="brutalist-btn-white mx-auto block mt-4" onClick={() => loadMyStores(ownedStoresPage.page + 1, true)}>
+                Xem thêm ({ownedStores.length}/{ownedStoresPage.totalElements})
+              </button>
+            )}
           </Suspense>
         )}
       </main>
@@ -2156,6 +2328,7 @@ export default function App() {
       <StoreDetailDrawer
         activeStore={activeStore}
         setActiveStore={setActiveStore}
+        onClose={closeActiveStore}
         handleSubmitRating={handleSubmitRating}
         handleReportClosedToday={handleReportClosedToday}
         handleToggleSaveStore={handleToggleSaveStore}

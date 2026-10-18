@@ -527,8 +527,19 @@ public class EmailService {
             helper.setFrom(fromEmail);
             helper.setTo(toEmail);
 
-            String actionText = "HIDE".equalsIgnoreCase(actionType) ? "đã bị ẨN" : "đã bị XÓA VĨNH VIỄN";
-            helper.setSubject("Thông báo về quán ăn: " + storeName + " - CGFoodTour");
+            String actionText = switch (actionType == null ? "" : actionType.toUpperCase(java.util.Locale.ROOT)) {
+                case "HIDE" -> "đã bị ẨN";
+                case "HARD_DELETE" -> "đã bị XÓA VĨNH VIỄN";
+                case "REJECT_RECOVERY_REQUEST" -> "đã bị TỪ CHỐI KHÔI PHỤC";
+                default -> "đã được CẬP NHẬT TRẠNG THÁI";
+            };
+            String safeStoreName = HtmlUtils.htmlEscape(storeName == null ? "Quán ăn" : storeName);
+            String safeReason = HtmlUtils.htmlEscape(
+                    (reason != null && !reason.isBlank()) ? reason : "Không có lý do chi tiết")
+                    .replace("\r\n", "<br>").replace("\n", "<br>");
+            String safeSubjectName = (storeName == null ? "Quán ăn" : storeName)
+                    .replace("\r", " ").replace("\n", " ");
+            helper.setSubject("Thông báo về quán ăn: " + safeSubjectName + " - CGFoodTour");
 
             String htmlContent = """
                 <!DOCTYPE html>
@@ -557,7 +568,7 @@ public class EmailService {
                     </div>
                 </body>
                 </html>
-                """.formatted(storeName, actionText, (reason != null && !reason.isBlank()) ? reason : "Không có lý do chi tiết");
+                """.formatted(safeStoreName, actionText, safeReason);
 
             helper.setText(htmlContent, true);
             mailSender.send(message);

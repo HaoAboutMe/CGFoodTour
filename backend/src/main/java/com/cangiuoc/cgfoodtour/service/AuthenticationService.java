@@ -5,8 +5,6 @@ import com.cangiuoc.cgfoodtour.dto.request.ForgotPasswordRequest;
 import com.cangiuoc.cgfoodtour.dto.request.GoogleLoginRequest;
 import com.cangiuoc.cgfoodtour.dto.request.FacebookLoginRequest;
 import com.cangiuoc.cgfoodtour.dto.request.IntrospectRequest;
-import com.cangiuoc.cgfoodtour.dto.request.LogOutRequest;
-import com.cangiuoc.cgfoodtour.dto.request.RefreshRequest;
 import com.cangiuoc.cgfoodtour.dto.request.ResetPasswordRequest;
 import com.cangiuoc.cgfoodtour.dto.request.VerifyOtpRequest;
 import com.cangiuoc.cgfoodtour.dto.response.AuthenticationResponse;
@@ -171,9 +169,13 @@ public class AuthenticationService
         return buildAuthenticationResponse(user);
     }
 
-    public void logout(LogOutRequest request) {
-        invalidateToken(request.getAccessToken(), ACCESS_TOKEN_TYPE);
-        invalidateToken(request.getRefreshToken(), REFRESH_TOKEN_TYPE);
+    public void logout(String accessToken, String refreshToken) {
+        if (accessToken != null && !accessToken.isBlank()) {
+            invalidateToken(accessToken, ACCESS_TOKEN_TYPE);
+        }
+        if (refreshToken != null && !refreshToken.isBlank()) {
+            invalidateToken(refreshToken, REFRESH_TOKEN_TYPE);
+        }
     }
 
     private void invalidateToken(String token, String expectedType) {
@@ -197,9 +199,12 @@ public class AuthenticationService
     }
 
     @Transactional
-    public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException
+    public AuthenticationResponse refreshToken(String refreshToken) throws ParseException, JOSEException
     {
-        var signedToken = verifyToken(request.getRefreshToken(), REFRESH_TOKEN_TYPE);
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        var signedToken = verifyToken(refreshToken, REFRESH_TOKEN_TYPE);
 
         var jti = signedToken.getJWTClaimsSet().getJWTID();
         var expiryTime = signedToken.getJWTClaimsSet().getExpirationTime();

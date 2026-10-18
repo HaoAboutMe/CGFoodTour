@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface StoreDailyReportRepository extends JpaRepository<StoreDailyReport, Long> {
+    long deleteByReportDateBefore(LocalDate cutoff);
     Optional<StoreDailyReport> findByUserIdAndStoreIdAndReportDate(String userId, String storeId, LocalDate reportDate);
     long countByStoreIdAndReportDate(String storeId, LocalDate reportDate);
     void deleteByStoreId(String storeId);

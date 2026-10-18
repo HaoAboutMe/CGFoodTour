@@ -10,6 +10,9 @@ server:
   servlet:
     context-path: /api
 
+app:
+  business-zone: ${APP_BUSINESS_ZONE:Asia/Ho_Chi_Minh}
+
 # Default security baseline: disable swagger-ui in other profiles unless explicitly enabled
 springdoc:
   api-docs:

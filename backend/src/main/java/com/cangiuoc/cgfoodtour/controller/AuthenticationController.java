@@ -10,9 +10,11 @@ import com.cangiuoc.cgfoodtour.service.AuthenticationService;
 import com.cangiuoc.cgfoodtour.service.AuthAbuseProtectionService;
 import com.cangiuoc.cgfoodtour.service.UserService;
 import com.cangiuoc.cgfoodtour.service.ClientIpResolver;
+import com.cangiuoc.cgfoodtour.service.AuthCookieService;
 import com.nimbusds.jose.JOSEException;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
@@ -30,15 +32,18 @@ public class AuthenticationController {
     AuthAbuseProtectionService authAbuseProtectionService;
     UserService userService;
     ClientIpResolver clientIpResolver;
+    AuthCookieService authCookieService;
 
     public AuthenticationController(AuthenticationService authenticationService,
                                     AuthAbuseProtectionService authAbuseProtectionService,
                                     UserService userService,
-                                    ClientIpResolver clientIpResolver) {
+                                    ClientIpResolver clientIpResolver,
+                                    AuthCookieService authCookieService) {
         this.authenticationService = authenticationService;
         this.authAbuseProtectionService = authAbuseProtectionService;
         this.userService = userService;
         this.clientIpResolver = clientIpResolver;
+        this.authCookieService = authCookieService;
     }
 
     @PostMapping("/register")
@@ -53,8 +58,10 @@ public class AuthenticationController {
 
     @PostMapping("/token")
     ApiResponse<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest request,
-                                                      HttpServletRequest httpRequest) {
+                                                      HttpServletRequest httpRequest,
+                                                      HttpServletResponse httpResponse) {
         var result = authenticationService.authenticate(request, clientIpResolver.resolve(httpRequest));
+        authCookieService.writeSessionCookies(httpResponse, result.getRefreshToken());
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(result)
                 .message(SuccessMessage.LOGIN_SUCCESS)
@@ -63,8 +70,10 @@ public class AuthenticationController {
 
     @PostMapping("/google-login")
     ApiResponse<AuthenticationResponse> googleLogin(@RequestBody @Valid GoogleLoginRequest request,
-                                                     HttpServletRequest httpRequest) {
+                                                     HttpServletRequest httpRequest,
+                                                     HttpServletResponse httpResponse) {
         var result = authenticationService.googleAuthenticate(request, clientIpResolver.resolve(httpRequest));
+        authCookieService.writeSessionCookies(httpResponse, result.getRefreshToken());
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(result)
                 .message(SuccessMessage.GOOGLE_LOGIN_SUCCESS)
@@ -73,8 +82,10 @@ public class AuthenticationController {
 
     @PostMapping("/facebook-login")
     ApiResponse<AuthenticationResponse> facebookLogin(@RequestBody @Valid com.cangiuoc.cgfoodtour.dto.request.FacebookLoginRequest request,
-                                                       HttpServletRequest httpRequest) {
+                                                       HttpServletRequest httpRequest,
+                                                       HttpServletResponse httpResponse) {
         var result = authenticationService.facebookAuthenticate(request, clientIpResolver.resolve(httpRequest));
+        authCookieService.writeSessionCookies(httpResponse, result.getRefreshToken());
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(result)
                 .message(SuccessMessage.FACEBOOK_LOGIN_SUCCESS)
@@ -92,21 +103,32 @@ public class AuthenticationController {
     }
 
     @PostMapping("/logout")
-    ApiResponse<Void> logout(@RequestBody @Valid LogOutRequest request) {
-        authenticationService.logout(request);
+    ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response,
+                             @RequestHeader(value = "Authorization", required = false) String authorization) {
+        authCookieService.requireValidCsrf(request);
+        authenticationService.logout(extractBearer(authorization), authCookieService.readRefreshToken(request));
+        authCookieService.clearSessionCookies(response);
         return ApiResponse.<Void>builder()
                 .message(SuccessMessage.LOGOUT_SUCCESS)
                 .build();
     }
 
     @PostMapping("/refresh")
-    ApiResponse<AuthenticationResponse> refresh(@RequestBody @Valid RefreshRequest request)
+    ApiResponse<AuthenticationResponse> refresh(HttpServletRequest request, HttpServletResponse response)
             throws ParseException, JOSEException {
-        var result = authenticationService.refreshToken(request);
+        authCookieService.requireValidCsrf(request);
+        var result = authenticationService.refreshToken(authCookieService.readRefreshToken(request));
+        authCookieService.writeSessionCookies(response, result.getRefreshToken());
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(result)
                 .message(SuccessMessage.REFRESH_TOKEN_SUCCESS)
                 .build();
+    }
+
+    private String extractBearer(String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) return null;
+        String token = authorization.substring(7).trim();
+        return token.isBlank() ? null : token;
     }
 
     @PostMapping("/verify-email")

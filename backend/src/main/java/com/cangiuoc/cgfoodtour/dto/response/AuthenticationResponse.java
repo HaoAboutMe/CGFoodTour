@@ -1,5 +1,6 @@
 package com.cangiuoc.cgfoodtour.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -11,10 +12,12 @@ import lombok.experimental.FieldDefaults;
 public class AuthenticationResponse
 {
     String accessToken;
+    @JsonIgnore
     String refreshToken;
     @Builder.Default
     String tokenType = "Bearer";
     long expiresIn;
+    @JsonIgnore
     long refreshExpiresIn;
     boolean isAuthenticated;
 }

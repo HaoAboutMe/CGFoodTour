@@ -10,6 +10,7 @@
     "test:redaction": "node --test src/utils/redactSensitiveData.test.js",
     "test:ui-errors": "node --test src/utils/apiErrorMessages.test.js",
     "test:maps": "node --test src/utils/googleMapsUrl.test.js",
+    "test:store-url": "node --test src/utils/storeUrl.test.js",
     "preview": "vite preview"
   },
   "dependencies": {

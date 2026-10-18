@@ -42,6 +42,8 @@ public class PublicStoreResponse {
     Boolean isSaved;
     List<FoodItemResponse> foodItems;
     Boolean isReportedClosed;
+    Double distanceKm;
+    Boolean openNow;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 }

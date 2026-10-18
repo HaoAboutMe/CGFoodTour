@@ -16,21 +16,6 @@ import {
 } from 'lucide-react'
 import StoreCard from '@/components/common/StoreCard'
 import CategoryIcon from '@/components/common/CategoryIcon'
-import { checkStoreOpenStatus } from '@/utils/timeUtils'
-
-// Haversine formula to compute distance in km
-function getDistanceKm(lat1, lon1, lat2, lon2) {
-  if (!lat1 || !lon1 || !lat2 || !lon2) return null
-  const R = 6371
-  const dLat = (lat2 - lat1) * (Math.PI / 180)
-  const dLon = (lon2 - lon1) * (Math.PI / 180)
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2)
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  return Math.round(R * c * 10) / 10 // Distance in km rounded to 1 decimal place
-}
 
 export default function ExploreSection({
   stores,
@@ -53,6 +38,8 @@ export default function ExploreSection({
   loadMoreServerStores,
   loadingMoreStores = false,
   totalStoreCount = 0,
+  onServerFiltersChange,
+  categoryFacets = {},
 }) {
   const [viewMode, setViewMode] = useState('grid') // 'grid' or 'compact'
   const [nearMeActive, setNearMeActive] = useState(false)
@@ -138,56 +125,27 @@ export default function ExploreSection({
         setLocationLoading(false)
       },
       (err) => {
-        console.warn('Geolocation fallback to Can Giuoc Town center:', err)
-        setUserCoords({ lat: 10.6035, lng: 106.6047 }) // Default Town Center
-        setNearMeActive(true)
+        console.warn('Geolocation was not available:', err)
+        alert('Không thể lấy vị trí. Vui lòng cấp quyền GPS hoặc chọn vị trí thủ công.')
+        setNearMeActive(false)
         setLocationLoading(false)
       },
       { timeout: 8000 }
     )
   }
 
-  // Filtered stores
-  const filteredStores = approvedStores.filter((st) => {
-    const q = searchQuery.toLowerCase()
-    const matchesSearch =
-      !q ||
-      st.name.toLowerCase().includes(q) ||
-      (st.addressLine && st.addressLine.toLowerCase().includes(q)) ||
-      (st.description && st.description.toLowerCase().includes(q))
+  useEffect(() => {
+    onServerFiltersChange?.({
+      categoryIds: selectedCategoryIds,
+      openNow: openNowActive,
+      nearMe: nearMeActive,
+      latitude: userCoords?.lat ?? null,
+      longitude: userCoords?.lng ?? null,
+    })
+  }, [selectedCategoryIds, openNowActive, nearMeActive, userCoords, onServerFiltersChange])
 
-    const activeCategoryIds =
-      selectedCategoryIds.length > 0
-        ? selectedCategoryIds
-        : selectedCategory
-        ? [selectedCategory.id]
-        : []
-
-    const matchesCategory =
-      activeCategoryIds.length > 0
-        ? activeCategoryIds.includes(st.categoryId)
-        : true
-    const isOpenNow = checkStoreOpenStatus(st).isOpen
-    const matchesOpenNow = openNowActive ? isOpenNow : true
-
-    return matchesSearch && matchesCategory && matchesOpenNow
-  })
-
-  // Distance calculation per store
-  const storesWithDistance = filteredStores.map((st) => {
-    let dist = null
-    if (userCoords) {
-      const storeLat = st.latitude || (10.6035 + (st.id % 7) * 0.004 - 0.01)
-      const storeLng = st.longitude || (106.6047 + (st.id % 5) * 0.004 - 0.01)
-      dist = getDistanceKm(userCoords.lat, userCoords.lng, storeLat, storeLng)
-    }
-    return { ...st, distanceKm: dist }
-  })
-
-  // Sort stores: If Near Me is active, sort by distance (km).
-  const sortedStores = nearMeActive
-    ? [...storesWithDistance].sort((a, b) => (a.distanceKm || 999) - (b.distanceKm || 999))
-    : storesWithDistance
+  // Search, category, open-now, radius and distance sorting are already applied by the backend.
+  const sortedStores = approvedStores
 
   // Infinite Batch Slicing
   const displayedStores = sortedStores.slice(0, visibleCount)
@@ -203,8 +161,8 @@ export default function ExploreSection({
 
   // Calculate store count per category
   const categoryStoreCount = (catId) => {
-    if (!catId) return approvedStores.length
-    return approvedStores.filter((st) => st.categoryId === catId).length
+    if (!catId) return Object.values(categoryFacets).reduce((sum, value) => sum + Number(value || 0), 0)
+    return Number(categoryFacets[catId] || 0)
   }
 
   return (

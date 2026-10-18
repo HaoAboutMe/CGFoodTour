@@ -62,7 +62,10 @@ public enum ErrorCode {
     REGISTRATION_RATE_LIMITED(1053, "Too many registration attempts. Please try again later.", HttpStatus.TOO_MANY_REQUESTS),
     MAP_RESOLUTION_RATE_LIMITED(1054, "Too many map resolution attempts. Please try again later.", HttpStatus.TOO_MANY_REQUESTS),
     MAP_RESOLUTION_BUSY(1055, "Map resolution service is temporarily busy", HttpStatus.SERVICE_UNAVAILABLE),
-    INVALID_PAGE_REQUEST(1056, "Invalid page, size, filter, or sort value", HttpStatus.BAD_REQUEST);
+    INVALID_PAGE_REQUEST(1056, "Invalid page, size, filter, or sort value", HttpStatus.BAD_REQUEST),
+    CSRF_TOKEN_INVALID(1057, "CSRF token or request origin is invalid", HttpStatus.FORBIDDEN),
+    INVALID_STORE_STATE_TRANSITION(1058, "Invalid store state transition", HttpStatus.CONFLICT),
+    LOCATION_REQUIRED(1059, "Latitude and longitude are required for distance queries", HttpStatus.BAD_REQUEST);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

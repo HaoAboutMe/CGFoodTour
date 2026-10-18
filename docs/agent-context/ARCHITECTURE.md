@@ -1,5 +1,14 @@
 # Kiến trúc hệ thống
 
+## Cập nhật P1 — 18/10/2026
+
+- Session dùng refresh cookie `HttpOnly` + CSRF double-submit; access token chỉ sống trong React memory. Nhiều tab đồng bộ sự kiện không chứa token và serialize refresh bằng Web Locks.
+- Google/Facebook SDK tiếp tục tải trực tiếp từ `frontend/index.html`; không dùng lazy-loader.
+- `StoreTransitionPolicy` là boundary chung cho moderation state; rating/save serialize bằng pessimistic lock trên store.
+- `Clock` business dùng zone cấu hình `Asia/Ho_Chi_Minh`; cleanup và reconciliation là các scheduled service idempotent/bounded.
+- Public filter/distance được xử lý backend trước khi tạo page; frontend chỉ render `distanceKm` từ contract.
+- Route quán dùng ID làm định danh và slug chỉ để đọc/canonical. `frontend/nginx.conf` cung cấp reverse proxy, CSP và SPA fallback mẫu.
+
 ## 1. Bản đồ repository
 
 ```text
@@ -44,19 +53,19 @@ Không thấy Dockerfile, Compose, Terraform, workflow CI/CD, SQL schema hay mig
 2. `application.yaml` chọn profile `${SPRING_PROFILES_ACTIVE:dev}`, context path `/api`, port 8080 mặc định.
 3. Bean security dựng stateless resource server JWT; CORS bean được gắn vào filter chain; CSRF tắt.
 4. JPA tạo/validate mapping tùy profile. `ApplicationInitConfig.applicationRunner()` đảm bảo 4 permission, role `ADMIN`/`USER`, và có thể tạo admin mặc định.
-5. Store report cron chạy `0 0 0 * * *` theo timezone JVM vì annotation không khai báo zone.
+5. Store report cleanup giữ retention 30 ngày và chạy theo business zone `Asia/Ho_Chi_Minh`; các security artifact/media task có cleanup lifecycle riêng.
 
 **Khoảng trống:** checkout sạch không có `application-dev.yaml`; profile mặc định có thể không khởi động nếu không cung cấp đủ datasource/mail/JWT/Cloudinary properties. Không chạy để xác minh vì build/test bị sandbox từ chối.
 
 ### Frontend
 
 1. `main.jsx` mount `<App/>` trong `StrictMode` và `BrowserRouter`.
-2. `App.jsx` khôi phục `jwtToken`/`refreshToken` từ `localStorage`, đồng bộ `activeTab` từ `location.pathname` và tải categories/stores.
+2. `App.jsx` phục hồi session từ refresh cookie, giữ access token trong memory, đồng bộ tab/route từ `location.pathname` và tải categories/stores.
 3. Pages lớn `AdminSection`, `MyStoresSection`, `CS2CaseOpener`, `DevConsole` được lazy-load.
 4. `makeRequest()` tạo request, đính Bearer, parse JSON/text, refresh-on-401 rồi retry một lần.
 5. Một `EventSource` public nghe `/v1/stores/events`; `STORES_UPDATED` kích hoạt reload.
 
-Không có route tree; `BrowserRouter` chỉ cung cấp location/navigation. Server host production cần SPA fallback cho các path như `/explore`.
+`BrowserRouter` điều phối tab và route canonical `/quan/{id}/{slug}`; `frontend/nginx.conf` cung cấp SPA fallback mẫu cho reload trực tiếp.
 
 ## 3. Dependency direction
 
