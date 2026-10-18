@@ -100,6 +100,7 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [activeStore, setActiveStore] = useState(null)
   const detailOpenedFromAppRef = useRef(false)
+  const previousRoutePathRef = useRef(location.pathname)
   const [searchQuery, setSearchQuery] = useState('')
   const [publicFilters, setPublicFilters] = useState({
     categoryIds: [], openNow: false, nearMe: false, latitude: null, longitude: null
@@ -203,6 +204,11 @@ export default function App() {
 
   // Sync URL path with activeTab and load data
   useEffect(() => {
+    const previousPath = previousRoutePathRef.current
+    const returningFromStoreDetail = previousPath.startsWith('/quan/')
+      && !location.pathname.startsWith('/quan/')
+    previousRoutePathRef.current = location.pathname
+
     const rawPath = location.pathname.substring(1)
     if (rawPath.startsWith('quan/')) {
       // Keep the originating tab visible behind the drawer when detail was
@@ -226,6 +232,11 @@ export default function App() {
       setActiveTab(tab)
       setActiveStore(null)
       detailOpenedFromAppRef.current = false
+      if (returningFromStoreDetail) {
+        // The originating screen is still mounted with current data behind the
+        // drawer. Avoid a redundant reload and its full-screen loading flash.
+        return
+      }
       if (tab === 'admin') {
         loadAdminUsers()
         loadAdminPendingStores()
