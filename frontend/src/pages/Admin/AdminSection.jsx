@@ -64,6 +64,7 @@ export default function AdminSection({
   setFoodDesc,
   handleCreateFoodItem,
   adminPendingStores = [],
+  adminStoreSummary = {},
   handleAdminApprove,
   handleAdminReject,
   handleHideStore,
@@ -216,8 +217,8 @@ export default function AdminSection({
   }
 
   // Calculate Metrics
-  const pendingCount = adminPendingStores.length
-  const recoveryCount = stores.filter(s => s.recoveryRequested).length
+  const pendingCount = Number(adminStoreSummary.pending ?? adminPendingStores.length)
+  const recoveryCount = Number(adminStoreSummary.recoveryRequested ?? stores.filter(s => s.recoveryRequested).length)
   const totalNeedsAttention = pendingCount + recoveryCount
   const approvedStoresCount = stores.filter(s => s.status === 'APPROVED').length
   const totalUsersCount = adminUsersList.length
@@ -551,7 +552,7 @@ export default function AdminSection({
                 </button>
               </div>
 
-              {(adminPendingStores.length + stores.filter(s => s.recoveryRequested).length) === 0 ? (
+              {(pendingCount + recoveryCount) === 0 ? (
                 <div className="bg-[#e6fcf5] border-2 border-black p-6 rounded-xl text-center space-y-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                   <CheckCircle2 className="w-8 h-8 text-[#0ca678] mx-auto" />
                   <p className="font-extrabold text-sm text-black">Không có tác vụ nào đang chờ xử lý!</p>
@@ -723,7 +724,7 @@ export default function AdminSection({
                 <span className="text-xs font-black uppercase text-neutral-500 shrink-0">Lọc:</span>
                 {[
                   { id: 'ALL', label: 'Tất Cả' },
-                  { id: 'PENDING', label: 'Chờ Duyệt', badge: adminPendingStores.length },
+                  { id: 'PENDING', label: 'Chờ Duyệt', badge: pendingCount },
                   { id: 'RECOVERY_REQUESTED', label: 'Xin KP', badge: stores.filter((s) => s.recoveryRequested).length },
                   { id: 'APPROVED', label: 'Đã Duyệt' },
                   { id: 'HIDDEN', label: 'Đã Ẩn' },

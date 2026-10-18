@@ -39,7 +39,7 @@ public class StoreDailyReport {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         if (reportDate == null) {
-            reportDate = LocalDate.now();
+            reportDate = LocalDate.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
         }
     }
 }

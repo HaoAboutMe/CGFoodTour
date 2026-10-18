@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Trophy, MapPin, Phone, DollarSign, ThumbsUp, Meh, ThumbsDown, ZoomIn, Bookmark } from 'lucide-react'
+import { X, Trophy, MapPin, Phone, DollarSign, ThumbsUp, Meh, ThumbsDown, ZoomIn, Bookmark, Share2, Check } from 'lucide-react'
 import { checkStoreOpenStatus } from '@/utils/timeUtils'
 import ImageViewerModal from '@/components/modals/ImageViewerModal'
 import { getSafeGoogleMapsUrl } from '@/utils/googleMapsUrl'
+import { canShareStore, storePath } from '@/utils/storeUrl'
 
 export default function StoreDetailDrawer({
   activeStore,
   setActiveStore,
+  onClose,
   handleSubmitRating,
   handleReportClosedToday,
   handleToggleSaveStore,
@@ -17,6 +19,7 @@ export default function StoreDetailDrawer({
   setGpsLng
 }) {
   const [previewImage, setPreviewImage] = useState(null)
+  const [shareFeedback, setShareFeedback] = useState('')
 
   // Prevent background page scrolling when store detail is open
   useEffect(() => {
@@ -30,26 +33,101 @@ export default function StoreDetailDrawer({
     }
   }, [activeStore])
 
+  useEffect(() => {
+    if (!shareFeedback) return undefined
+    const timeoutId = window.setTimeout(() => setShareFeedback(''), 2500)
+    return () => window.clearTimeout(timeoutId)
+  }, [shareFeedback])
+
   if (!activeStore) return null
 
   const statusInfo = checkStoreOpenStatus(activeStore)
   const safeMapUrl = getSafeGoogleMapsUrl(activeStore.mapUrl, activeStore.latitude, activeStore.longitude)
+  const isShareable = canShareStore(activeStore)
+
+  const copyShareUrl = async (url) => {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url)
+      return
+    }
+
+    const input = document.createElement('textarea')
+    input.value = url
+    input.setAttribute('readonly', '')
+    input.style.position = 'fixed'
+    input.style.opacity = '0'
+    document.body.appendChild(input)
+    input.select()
+    const copied = document.execCommand('copy')
+    input.remove()
+    if (!copied) throw new Error('Copy command failed')
+  }
+
+  const handleShareStore = async (event) => {
+    event.stopPropagation()
+    if (!isShareable) return
+
+    const url = new URL(storePath(activeStore), window.location.origin).toString()
+    const shareData = {
+      title: activeStore.name,
+      text: `Khám phá ${activeStore.name} trên Cần Giuộc Food Tour`,
+      url
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+        setShareFeedback('Đã chia sẻ')
+        return
+      } catch (error) {
+        if (error?.name === 'AbortError') return
+      }
+    }
+
+    try {
+      await copyShareUrl(url)
+      setShareFeedback('Đã sao chép liên kết')
+    } catch {
+      setShareFeedback('Không thể sao chép liên kết')
+    }
+  }
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] bg-black/60 flex justify-end items-end sm:items-stretch">
       {/* Close click backdrop */}
-      <div className="fixed inset-0 bg-black/60 cursor-pointer" onClick={() => setActiveStore(null)} />
+      <div className="fixed inset-0 bg-black/60 cursor-pointer" onClick={() => onClose ? onClose() : setActiveStore(null)} />
 
       {/* Drawer content (Bottom-sheet on mobile, Right slide-in on desktop) */}
-      <div className="w-full sm:max-w-lg bg-white border-t-4 sm:border-t-0 sm:border-l-4 border-black h-[90vh] sm:h-full rounded-t-3xl sm:rounded-none overflow-y-auto no-scrollbar relative z-10 shadow-2xl flex flex-col justify-between animate-slide-in-right">
+      <div className="w-full sm:max-w-lg bg-white border-t-4 sm:border-t-0 sm:border-l-4 border-black h-[90vh] sm:h-full rounded-t-3xl sm:rounded-none overflow-y-auto no-scrollbar relative z-10 shadow-2xl animate-slide-in-right">
         {/* Sticky Top Close Button (Stays visible on top-right at all scroll positions) */}
-        <div className="sticky top-3 right-3 z-50 flex justify-end px-4 pt-1 pointer-events-none -mb-12">
+        <div className="sticky top-3 right-3 z-50 flex h-0 items-start justify-end gap-2 px-4 pointer-events-none">
+          {isShareable && (
+            <div className="relative pointer-events-auto">
+              <button
+                onClick={handleShareStore}
+                className="w-9 h-9 shrink-0 flex items-center justify-center bg-white border-2 border-black rounded-full hover:bg-[#fff9db] text-black transition-colors cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                title="Chia sẻ quán ăn"
+                aria-label={`Chia sẻ ${activeStore.name}`}
+              >
+                {shareFeedback.startsWith('Đã') ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
+              </button>
+              {shareFeedback && (
+                <span
+                  role="status"
+                  className="absolute top-11 right-0 whitespace-nowrap rounded-lg border-2 border-black bg-white px-2.5 py-1.5 text-[10px] font-black text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                >
+                  {shareFeedback}
+                </span>
+              )}
+            </div>
+          )}
           <button
             onClick={(e) => {
               e.stopPropagation()
-              setActiveStore(null)
+              if (onClose) onClose()
+              else setActiveStore(null)
             }}
-            className="p-2 bg-white border-2 border-black rounded-full hover:bg-neutral-100 text-black transition-colors cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] pointer-events-auto"
+            className="w-9 h-9 shrink-0 flex items-center justify-center bg-white border-2 border-black rounded-full hover:bg-neutral-100 text-black transition-colors cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] pointer-events-auto"
             title="Đóng cửa sổ chi tiết"
           >
             <X className="w-4 h-4" />
@@ -230,9 +308,10 @@ export default function StoreDetailDrawer({
               )}
             </div>
 
-            {/* Rating & Closed Reports block */}
-            <div className="space-y-4 pt-6 border-t-2 border-black">
-              <h3 className="text-sm font-black uppercase tracking-wider text-black">Tương Tác & Đánh Giá</h3>
+            {/* Public interactions are available only for approved stores. */}
+            {isShareable && (
+              <div className="space-y-4 pt-6 border-t-2 border-black">
+                <h3 className="text-sm font-black uppercase tracking-wider text-black">Tương Tác & Đánh Giá</h3>
 
               {/* 1-Touch rating pills */}
               <div className="space-y-3 bg-[#f7f6f2] p-4 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
@@ -298,13 +377,14 @@ export default function StoreDetailDrawer({
                   </div>
                 </div>
               </div>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* 📌 Floating Bookmark Action Button (Bottom-Right corner for mobile/desktop drawer) */}
-      {handleToggleSaveStore && (
+      {isShareable && handleToggleSaveStore && (
         <button
           onClick={(e) => {
             e.stopPropagation()

@@ -74,14 +74,42 @@ public class StoreController {
     @GetMapping
     public ApiResponse<PageResponse<PublicStoreResponse>> getStores(
             @RequestParam(value = "categoryId", required = false) Integer categoryId,
+            @RequestParam(value = "categoryIds", required = false) List<Integer> categoryIds,
             @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "openNow", defaultValue = "false") boolean openNow,
+            @RequestParam(value = "latitude", required = false) Double latitude,
+            @RequestParam(value = "longitude", required = false) Double longitude,
+            @RequestParam(value = "radiusKm", required = false) Double radiusKm,
             @RequestParam(value = "sort", defaultValue = "newest") String sort,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "24") int size) {
         String email = getCurrentUserEmail();
         return ApiResponse.<PageResponse<PublicStoreResponse>>builder()
-                .result(storeService.getStores(categoryId, query, sort, page, size, email))
+                .result(storeService.getStores(categoryId, categoryIds, query, openNow, latitude, longitude,
+                        radiusKm, sort, page, size, email))
                 .message("Stores retrieved successfully")
+                .build();
+    }
+
+    @GetMapping("/admin/summary")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<Map<String, Long>> getAdminSummary() {
+        return ApiResponse.<Map<String, Long>>builder()
+                .result(storeService.getAdminSummary())
+                .message("Administrative store summary retrieved successfully")
+                .build();
+    }
+
+    @GetMapping("/facets")
+    public ApiResponse<Map<Integer, Long>> getPublicFacets(
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "openNow", defaultValue = "false") boolean openNow,
+            @RequestParam(value = "latitude", required = false) Double latitude,
+            @RequestParam(value = "longitude", required = false) Double longitude,
+            @RequestParam(value = "radiusKm", required = false) Double radiusKm) {
+        return ApiResponse.<Map<Integer, Long>>builder()
+                .result(storeService.getPublicFacets(query, openNow, latitude, longitude, radiusKm))
+                .message("Store facets retrieved successfully")
                 .build();
     }
 
@@ -264,7 +292,7 @@ public class StoreController {
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<StoreResponse> approveStore(@PathVariable String id) {
-        StoreResponse response = storeService.approveStore(id);
+        StoreResponse response = storeService.approveStore(id, getCurrentUserEmail());
         sseNotificationService.broadcast("STORES_UPDATED");
         return ApiResponse.<StoreResponse>builder()
                 .result(response)
@@ -275,7 +303,7 @@ public class StoreController {
     @PostMapping("/{id}/reject")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<StoreResponse> rejectStore(@PathVariable String id, @RequestBody @Valid RejectStoreRequest request) {
-        StoreResponse response = storeService.rejectStore(id, request.getReason());
+        StoreResponse response = storeService.rejectStore(id, request.getReason(), getCurrentUserEmail());
         sseNotificationService.broadcast("STORES_UPDATED");
         return ApiResponse.<StoreResponse>builder()
                 .result(response)

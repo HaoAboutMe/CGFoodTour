@@ -2,6 +2,7 @@ package com.cangiuoc.cgfoodtour.service;
 
 import com.cangiuoc.cgfoodtour.entity.MediaCleanupTask;
 import com.cangiuoc.cgfoodtour.repository.MediaCleanupTaskRepository;
+import com.cangiuoc.cgfoodtour.enums.MediaCleanupStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -11,11 +12,17 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.Duration;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class MediaCleanupQueueService {
+    private static final int MAX_ATTEMPTS = 10;
+    private static final Duration[] BACKOFF = {
+            Duration.ofMinutes(5), Duration.ofMinutes(15), Duration.ofHours(1),
+            Duration.ofHours(6), Duration.ofHours(24)
+    };
     private final MediaCleanupTaskRepository repository;
     private final CloudinaryService cloudinaryService;
 
@@ -25,6 +32,8 @@ public class MediaCleanupQueueService {
         try {
             repository.save(MediaCleanupTask.builder()
                     .publicId(publicId)
+                    .status(MediaCleanupStatus.PENDING)
+                    .nextAttemptAt(LocalDateTime.now())
                     .lastError(abbreviate(cause))
                     .build());
         } catch (DataIntegrityViolationException duplicate) {
@@ -35,18 +44,39 @@ public class MediaCleanupQueueService {
     @Scheduled(fixedDelayString = "${app.media-cleanup.retry-delay-ms:300000}")
     @Transactional
     public void retryPending() {
-        for (MediaCleanupTask task : repository.findTop100ByOrderByCreatedAtAsc()) {
+        LocalDateTime now = LocalDateTime.now();
+        for (MediaCleanupTask task : repository
+                .findTop100ByStatusAndNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(
+                        MediaCleanupStatus.PENDING, now)) {
             try {
                 cloudinaryService.deleteImage(task.getPublicId());
                 repository.delete(task);
             } catch (Exception exception) {
-                task.setAttempts(task.getAttempts() + 1);
-                task.setLastAttemptAt(LocalDateTime.now());
+                int attempts = task.getAttempts() + 1;
+                task.setAttempts(attempts);
+                task.setLastAttemptAt(now);
                 task.setLastError(abbreviate(exception));
+                if (attempts >= MAX_ATTEMPTS) {
+                    task.setStatus(MediaCleanupStatus.DEAD);
+                    task.setNextAttemptAt(null);
+                } else {
+                    Duration delay = BACKOFF[Math.min(attempts - 1, BACKOFF.length - 1)];
+                    task.setNextAttemptAt(now.plus(delay));
+                }
                 repository.save(task);
-                log.warn("Media cleanup retry failed for public id {}", task.getPublicId());
+                log.warn("Media cleanup retry failed (attempt {}, status {})", attempts, task.getStatus());
             }
         }
+    }
+
+    @Transactional
+    public void retryDeadTask(long taskId) {
+        MediaCleanupTask task = repository.findById(taskId).orElseThrow();
+        task.setStatus(MediaCleanupStatus.PENDING);
+        task.setAttempts(0);
+        task.setNextAttemptAt(LocalDateTime.now());
+        task.setLastError(null);
+        repository.save(task);
     }
 
     private String abbreviate(Exception exception) {

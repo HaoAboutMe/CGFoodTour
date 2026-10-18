@@ -2,9 +2,7 @@ package com.cangiuoc.cgfoodtour.service;
 
 import com.cangiuoc.cgfoodtour.dto.request.AuthenticationRequest;
 import com.cangiuoc.cgfoodtour.dto.request.ForgotPasswordRequest;
-import com.cangiuoc.cgfoodtour.dto.request.LogOutRequest;
 import com.cangiuoc.cgfoodtour.dto.request.IntrospectRequest;
-import com.cangiuoc.cgfoodtour.dto.request.RefreshRequest;
 import com.cangiuoc.cgfoodtour.dto.request.ResetPasswordRequest;
 import com.cangiuoc.cgfoodtour.dto.request.VerifyOtpRequest;
 import com.cangiuoc.cgfoodtour.entity.InvalidatedToken;
@@ -93,8 +91,7 @@ class AuthenticationServiceTest {
         assertThat(SignedJWT.parse(pair.getAccessToken()).getJWTClaimsSet().getLongClaim("ver"))
                 .isZero();
 
-        var rotated = authenticationService.refreshToken(
-                RefreshRequest.builder().refreshToken(pair.getRefreshToken()).build());
+        var rotated = authenticationService.refreshToken(pair.getRefreshToken());
 
         assertThat(rotated.getRefreshToken()).isNotEqualTo(pair.getRefreshToken());
         verify(invalidatedTokenRepository).save(any(InvalidatedToken.class));
@@ -132,10 +129,7 @@ class AuthenticationServiceTest {
         login.setPassword("password123");
         var pair = authenticationService.authenticate(login, "192.0.2.1");
 
-        authenticationService.logout(LogOutRequest.builder()
-                .accessToken(pair.getAccessToken())
-                .refreshToken(pair.getRefreshToken())
-                .build());
+        authenticationService.logout(pair.getAccessToken(), pair.getRefreshToken());
 
         ArgumentCaptor<InvalidatedToken> revokedTokens = ArgumentCaptor.forClass(InvalidatedToken.class);
         verify(invalidatedTokenRepository, times(2)).save(revokedTokens.capture());
@@ -157,10 +151,7 @@ class AuthenticationServiceTest {
         login.setPassword("password123");
         var pair = authenticationService.authenticate(login, "192.0.2.1");
 
-        authenticationService.logout(LogOutRequest.builder()
-                .accessToken("malformed-access-token")
-                .refreshToken(pair.getRefreshToken())
-                .build());
+        authenticationService.logout("malformed-access-token", pair.getRefreshToken());
 
         ArgumentCaptor<InvalidatedToken> revokedToken = ArgumentCaptor.forClass(InvalidatedToken.class);
         verify(invalidatedTokenRepository).save(revokedToken.capture());

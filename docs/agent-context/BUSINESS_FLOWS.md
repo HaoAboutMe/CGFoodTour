@@ -1,5 +1,14 @@
 # Business Flows End-to-End
 
+## Cập nhật P1 — 18/10/2026
+
+- Login thành công đặt refresh cookie + CSRF cookie và trả access token; reload gọi refresh cookie để phục hồi access token memory.
+- Refresh/logout yêu cầu CSRF cookie/header và Origin nằm trong allowlist; logout một tab phát sự kiện để các tab khác xóa access token.
+- Approve/reject chỉ hợp lệ từ `PENDING`; owner sửa `APPROVED`/`REJECTED` đưa quán về `PENDING`; sửa `HIDDEN` không tự khôi phục.
+- Rating/save khóa store, ghi bảng nguồn, flush và đếm lại counter trước commit.
+- “Gần tôi” gửi GPS thật cho backend; nếu người dùng từ chối GPS thì không dùng tọa độ trung tâm giả.
+- Mở chi tiết quán chuyển sang `/quan/{id}/{slug}`; reload route fetch detail theo ID. Quán APPROVED được xem công khai; quán chưa public chỉ owner/admin đã xác thực xem được.
+
 ## 1. Đăng ký và kích hoạt email
 
 **Mục đích:** tạo USER disabled, gửi link 24h, enable sau xác minh.
@@ -14,27 +23,26 @@ sequenceDiagram
   participant M as SMTP
   U->>UI: Submit registration
   UI->>C: POST /auth/register (hiện tại)
-  Note over UI,C: Backend không có endpoint này → 401/404 tùy dispatch/security
-  Note over UI,C: Intended endpoint là POST /users; UI thiếu dateOfBirth
+  Note over UI,C: Payload gồm DOB và password tối thiểu 8 ký tự
   C->>S: createUser(valid DTO)
   S->>DB: user disabled + USER role + token 24h
-  S-->>M: async verification email
-  U->>C: GET /auth/verify-email?token
+  S-->>M: gửi verification email
+  U->>C: POST /auth/verify-email {token}
   C->>S: verifyEmail
   S->>DB: enabled=true, verified=true, delete token
 ```
 
-**Trạng thái:** backend flow có implementation; frontend flow email/password **không hoàn chỉnh** do path/payload mismatch. Social registration hoạt động theo flow riêng.
+**Trạng thái:** frontend/backend đã đồng bộ endpoint, payload và validation; vẫn cần browser E2E với SMTP thật.
 
 ## 2. Login, request được bảo vệ, refresh và logout
 
-1. UI POST `/auth/token`; service match BCrypt + account flags; trả JWT.
-2. Client lưu JWT localStorage; GET `/users/me` dựng `currentUser`.
+1. UI POST `/auth/token`; service match BCrypt + account flags; trả access JWT và đặt refresh/CSRF cookie.
+2. Client giữ access JWT trong memory; GET `/users/me` dựng `currentUser`. Reload gọi refresh cookie để phục hồi access token.
 3. Request sau gắn Bearer; `CustomJwtDecoder` introspect signature/expiry/blacklist rồi Spring tạo authorities từ scope.
-4. Khi 401, client có refresh token string mới gọi `/auth/refresh`; backend chấp nhận JWT cũ trong `iat + refreshableDuration`, blacklist JTI cũ, phát JWT mới, retry request.
-5. UI logout hiện chỉ clear storage/state. Backend `/auth/logout` chỉ được dùng nếu caller khác gọi.
+4. Khi 401, client gọi `/auth/refresh` với refresh cookie + CSRF header; backend blacklist refresh JTI cũ, rotate cookie, trả access JWT mới rồi client retry request.
+5. UI logout gọi backend bằng Bearer + cookie + CSRF, xóa memory và phát `LOGOUT` qua `BroadcastChannel`.
 
-**Lỗi/giới hạn:** login ban đầu không lưu token vào refresh slot; proactive interval mới fallback access token. Password reset/change không revoke các session khác.
+**Giới hạn còn lại:** cookie HTTPS và refresh race nhiều tab cần browser E2E trên domain triển khai thật.
 
 ## 3. Quên mật khẩu
 

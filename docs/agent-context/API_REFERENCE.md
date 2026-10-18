@@ -1,5 +1,15 @@
 # API Reference đã xác minh
 
+## Cập nhật P1 — 18/10/2026
+
+- `POST /auth/token`, `/auth/google-login`, `/auth/facebook-login`: JSON chỉ trả access token; refresh token được đặt bằng cookie `HttpOnly`.
+- `POST /auth/refresh`: không nhận body; đọc refresh cookie và yêu cầu `X-CSRF-Token` khớp CSRF cookie.
+- `POST /auth/logout`: access token nằm trong Bearer header, refresh token nằm trong cookie; yêu cầu CSRF và xóa cả hai cookie.
+- `GET /v1/stores`: thêm `categoryIds`, `openNow`, `latitude`, `longitude`, `radiusKm`, `sort=distance`; response thêm `distanceKm`, `openNow`.
+- `GET /v1/stores/facets`: count category trên toàn bộ tập public phù hợp, độc lập page.
+- `GET /v1/stores/admin/summary`: tổng moderation toàn cục cho admin.
+- Detail URL frontend: `/quan/{storeId}/{slug}`; API detail vẫn là `GET /v1/stores/{id}`. Quán chưa public chỉ chủ sở hữu hoặc admin đã xác thực mới xem được.
+
 ## 1. Quy ước chung
 
 - Base path backend: `/api` từ `server.servlet.context-path`; bảng dưới ghi path sau `/api`.
@@ -13,12 +23,12 @@
 
 | Method/path | Access | Input | Result / behavior |
 |---|---|---|---|
-| POST `/auth/token` | Public | `{email,password}` validated | access/refresh token pair; rate limit IP/email; unknown email và sai password cùng trả `INVALID_CREDENTIALS` |
+| POST `/auth/token` | Public | `{email,password}` validated | access token JSON + refresh/CSRF cookies; rate limit IP/email |
 | POST `/auth/google-login` | Public | `{idToken}`; field không validation annotation | verify Google JWK/issuer/audience/email; link/create user; JWT |
 | POST `/auth/facebook-login` | Public | `{accessToken}` nonblank | gọi Graph `/me`, link facebookId/email hoặc tạo user; JWT |
 | POST `/auth/introspect` | Public | `{token}` | `{valid}`; signature, normal expiry, blacklist |
-| POST `/auth/logout` | Public | `{token}` | blacklist JTI đến token expiry; invalid token được xem như đã logout |
-| POST `/auth/refresh` | Public | `{token}` | blacklist token cũ; phát JWT mới nếu trong cửa sổ refresh từ `issueTime` |
+| POST `/auth/logout` | Public | Bearer access + refresh cookie + `X-CSRF-Token` | revoke token hợp lệ và clear session cookies, idempotent với token lỗi/hết hạn |
+| POST `/auth/refresh` | Public | refresh cookie + `X-CSRF-Token`, body rỗng | rotate refresh cookie và trả access token JSON mới |
 | GET `/auth/verify-email?token=` | Public | query token | HTML success/error, không phải JSON |
 | POST `/auth/resend-verification?email=` | Public | query email | thay token cũ, gửi email async |
 | POST `/auth/forgot-password` | Public | valid email body | xóa OTP cũ, tạo OTP 6 số/5 phút, gửi async |
@@ -27,13 +37,13 @@
 
 Lỗi chính: `USER_NOT_EXISTED`, `PASSWORD_INCORRECT`, `EMAIL_NOT_VERIFIED`, `ACCOUNT_DISABLED`, `UNAUTHENTICATED`, `INVALID_VERIFICATION_TOKEN`, `EMAIL_ALREADY_VERIFIED`, `INVALID_OTP`, social token invalid.
 
-**Contract quan trọng:** không có refresh token riêng; `AuthenticationResponse` không có `refreshToken`. Không có `POST /auth/register`.
+**Contract quan trọng:** refresh token tồn tại nội bộ nhưng bị `@JsonIgnore`, không xuất hiện trong JSON. Registration canonical là `POST /auth/register`.
 
-### Cập nhật contract auth/session (2026-10-17)
+### Lịch sử contract auth/session (2026-10-17, đã được P1 ngày 18/10 thay thế)
 
-- `AuthenticationResponse` hiện trả `accessToken`, `refreshToken`, `expiresIn` và `refreshExpiresIn`.
+- Contract ngày 17/10 từng trả `accessToken`, `refreshToken`, `expiresIn` và `refreshExpiresIn`; P1 đã chuyển refresh token sang cookie.
 - Access/refresh JWT có claim `typ` và `ver`; introspect/refresh/protected API từ chối token nếu user bị disable hoặc `ver` khác `User.tokenVersion`.
-- `POST /auth/logout` nhận `{accessToken,refreshToken}` và revoke cả hai token theo kiểu idempotent.
+- Contract ngày 17/10 từng nhận `{accessToken,refreshToken}`; body này không còn được sử dụng.
 - `POST /auth/reset-password` consume OTP, đổi mật khẩu và tăng `tokenVersion`, vì vậy mọi JWT cũ của user mất hiệu lực.
 - Google login kiểm tra issuer/audience/`email_verified`/`sub`; Facebook login kiểm tra `debug_token`, App ID và provider user ID.
 - Social login chỉ kích hoạt trạng thái pending (`enabled=false,emailVerified=false`); trạng thái admin-disabled (`false,true`) trả `ACCOUNT_DISABLED` mà không mutate user.
@@ -84,7 +94,7 @@ Mutations broadcast SSE `STORES_UPDATED` sau khi service thành công.
 | GET `/v1/stores/admin` | Admin | `page,size,status,categoryId,query,sort` | page store và moderation/owner fields |
 | GET `/v1/stores/ranking` | Public | `limit` mặc định 20, tối đa 100 | APPROVED, totalVotes≥10, satisfaction desc/votes desc |
 | GET `/v1/stores/random?categoryId=` | Public | optional integer | random APPROVED hoặc 404 |
-| GET `/v1/stores/{id}` | Public, optional JWT | string ID | chỉ APPROVED; non-public trả 404 |
+| GET `/v1/stores/{id}` | Public, optional JWT | string ID | APPROVED được xem công khai; non-public chỉ owner/admin, các caller khác nhận 404 |
 | PUT `/v1/stores/{id}` | Owner/Admin | JSON `StoreRequest`, hoặc multipart `store` JSON + optional `banner` | metadata/banner áp dụng cùng lần lưu; owner edit non-hidden → PENDING/unverified; admin giữ status |
 | PATCH `/v1/stores/{id}/banner` | Owner/Admin | multipart `file` | cập nhật banner độc lập; owner non-hidden vẫn → PENDING/unverified; ảnh cũ chỉ xóa sau commit |
 | DELETE `/v1/stores/{id}` | Owner/Admin | optional `{reason}` | admin bắt buộc reason; hard-delete children/store |
@@ -138,16 +148,15 @@ Frontend hiện không gọi sáu endpoint RBAC này.
 
 | Frontend call | Backend | Kết luận |
 |---|---|---|
-| POST `/auth/register` | chỉ POST `/users` | **Không khớp; registration hỏng** |
-| Registration body không DOB, password min6 | backend DOB non-null/min5, password min8 | **Không khớp** |
-| Login đọc optional `result.refreshToken` | response không có field | fallback/inconsistent |
-| Verify email qua `makeRequest` | backend trả HTML | wrapper coi text là `data.message`; status vẫn dùng được |
+| POST `/auth/register` + DOB/password min8 | POST `/auth/register`, DTO cùng rule | Khớp |
+| Login/social nhận access JSON và cookie | controller cùng contract | Khớp |
+| Refresh/logout cookie + CSRF | controller cùng contract | Khớp |
+| Verify email JSON qua POST `/auth/verify-email` | controller trả JSON/status | Khớp |
 | Store/category/food/user/admin calls còn lại | mappings tồn tại | Khớp path/method/payload chính |
-| Profile UI nói password min6 | DTO min8 nhưng endpoint thiếu `@Valid` | Text và intended rule không khớp; runtime hiện không enforce min |
 
 ## 10. Backend API chưa được frontend chính dùng
 
-`/auth/introspect`, `/auth/logout` (client chỉ xóa local token), public get category by ID, public store by ID, public food-item endpoints (store data đã nhúng food items), toàn bộ roles/permissions. Legacy static console trong backend có thể gọi thêm một số endpoint nhưng không phải React SPA.
+`/auth/introspect`, public get category by ID, public food-item endpoints (store data đã nhúng food items), toàn bộ roles/permissions. Public store by ID hiện được route `/quan/{id}/{slug}` sử dụng.
 
 ## 11. Handler index
 

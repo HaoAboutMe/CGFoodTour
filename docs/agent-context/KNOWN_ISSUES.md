@@ -1,5 +1,20 @@
 # Known Issues và khoảng trống xác minh
 
+## Cập nhật P1 — 18/10/2026
+
+Đã triển khai lại theo `P1_Product_Readiness_Blueprint.md` từ mốc code 17/10:
+
+- **M-07:** rating/bookmark khóa hàng `Store`, flush bảng nguồn rồi aggregate counter; có reconciliation job.
+- **M-13:** moderation transition đi qua `StoreTransitionPolicy`, transition sai trả HTTP 409 và được audit trong transaction.
+- **M-16:** refresh token chuyển sang cookie `HttpOnly`; JSON/body/localStorage không còn refresh token; access token chỉ giữ trong memory, có CSRF double-submit, Web Locks và `BroadcastChannel`.
+- **L-03/L-04:** cleanup có retention/batch; scheduler và business date dùng `Asia/Ho_Chi_Minh`.
+- **L-05:** dữ liệu động trong email trạng thái quán được HTML-escape.
+- Public query hỗ trợ multi-category, open-now, radius/distance trước pagination; frontend không còn tạo tọa độ giả.
+- My stores/saved stores có tải thêm; admin badge dùng summary toàn cục.
+- Có route `/quan/{id}/{slug}`, canonical/meta runtime và Nginx SPA fallback mẫu.
+
+Automated verification: backend 62 test pass, frontend production build pass và lint không có error. Vẫn chưa xác minh MySQL/Testcontainers, OAuth thật, cookie HTTPS, CSP enforce, browser deep-link hoặc metadata server-rendered cho social crawler.
+
 > Mức độ và bằng chứng gốc là đánh giá kiến trúc dựa trên source ngày 15/10/2026, không phải kết luận pentest. Xem phần cập nhật trạng thái bên dưới trước khi dùng danh sách này làm backlog hiện tại.
 
 ## Cập nhật trạng thái — 17/10/2026

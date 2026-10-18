@@ -1,5 +1,6 @@
 package com.cangiuoc.cgfoodtour.entity;
 
+import com.cangiuoc.cgfoodtour.enums.MediaCleanupStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,14 +25,22 @@ public class MediaCleanupTask {
     @Builder.Default
     private int attempts = 0;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private MediaCleanupStatus status = MediaCleanupStatus.PENDING;
+
     @Column(length = 1000)
     private String lastError;
 
     private LocalDateTime createdAt;
     private LocalDateTime lastAttemptAt;
+    private LocalDateTime nextAttemptAt;
 
     @PrePersist
     void onCreate() {
         createdAt = LocalDateTime.now();
+        if (nextAttemptAt == null) nextAttemptAt = createdAt;
+        if (status == null) status = MediaCleanupStatus.PENDING;
     }
 }

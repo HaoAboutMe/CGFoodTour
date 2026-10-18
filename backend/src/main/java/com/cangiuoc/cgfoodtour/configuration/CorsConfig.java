@@ -17,11 +17,15 @@ public class CorsConfig {
     @Value("${app.cors.allowed-origins:}")
     private String customAllowedOrigins;
 
+    @Value("${app.cors.include-local-origins:true}")
+    private boolean includeLocalOrigins;
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        List<String> origins = new ArrayList<>(Arrays.asList(
+        List<String> origins = new ArrayList<>();
+        if (includeLocalOrigins) origins.addAll(Arrays.asList(
                 "http://127.0.0.1:5500",
                 "http://localhost:5500",
                 "http://127.0.0.1:5501",
@@ -39,8 +43,7 @@ public class CorsConfig {
                     .forEach(origins::add);
         }
 
-        // Cho phép các origin patterns (hỗ trợ cả domain cụ thể và wildcard subdomain)
-        configuration.setAllowedOriginPatterns(origins);
+        configuration.setAllowedOrigins(origins.stream().distinct().toList());
 
         // Cho phép tất cả các HTTP methods
         configuration.setAllowedMethods(Arrays.asList(

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StoreVisibilityPolicyTest {
@@ -36,7 +37,11 @@ class StoreVisibilityPolicyTest {
 
         assertThat(policy.canManage(pending, owner)).isTrue();
         assertThat(policy.canManage(pending, admin)).isTrue();
+        assertThatCode(() -> policy.requireReadable(pending, owner)).doesNotThrowAnyException();
+        assertThatCode(() -> policy.requireReadable(pending, admin)).doesNotThrowAnyException();
         assertThatThrownBy(() -> policy.requireReadable(pending, unrelated))
+                .isInstanceOf(AppException.class);
+        assertThatThrownBy(() -> policy.requireReadable(pending, null))
                 .isInstanceOf(AppException.class);
     }
 }

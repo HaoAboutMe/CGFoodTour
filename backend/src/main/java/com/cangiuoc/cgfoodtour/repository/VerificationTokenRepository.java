@@ -5,6 +5,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
+import java.time.LocalDateTime;
+import org.springframework.data.domain.Pageable;
 
 @Repository
 public interface VerificationTokenRepository extends JpaRepository<VerificationToken, String>
@@ -12,5 +15,6 @@ public interface VerificationTokenRepository extends JpaRepository<VerificationT
     Optional<VerificationToken> findByToken(String token);
     Optional<VerificationToken> findByUserId(String userId);
     void deleteByUserId(String userId);
+    List<VerificationToken> findByExpiryDateBeforeOrderByExpiryDateAsc(LocalDateTime cutoff, Pageable pageable);
 }
 

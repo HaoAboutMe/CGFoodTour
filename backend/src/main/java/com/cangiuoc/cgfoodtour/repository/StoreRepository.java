@@ -7,12 +7,17 @@ import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
 @Repository
 public interface StoreRepository extends JpaRepository<Store, String> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select s from Store s where s.id = :id")
+    java.util.Optional<Store> findByIdForUpdate(@Param("id") String id);
     List<Store> findByOwnerId(String ownerId);
 
     @Query("""
@@ -44,6 +49,8 @@ public interface StoreRepository extends JpaRepository<Store, String> {
 
     Page<Store> findByOwnerIdAndStatus(String ownerId, StoreStatus status, Pageable pageable);
     Page<Store> findByOwnerId(String ownerId, Pageable pageable);
+    long countByStatus(StoreStatus status);
+    long countByRecoveryRequestedTrue();
 
     @Query("""
             select s from Store s join s.owner o

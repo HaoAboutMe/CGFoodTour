@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+# Add the absolute production sitemap URL when the server-rendered sitemap endpoint is deployed.
