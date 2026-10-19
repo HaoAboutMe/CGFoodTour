@@ -20,6 +20,8 @@ node_modules/
 /frontend/build/
 /frontend/.next/
 /frontend/out/
+/frontend/playwright-report/
+/frontend/test-results/
 /frontend/.svelte-kit/
 /frontend/.nuxt/
 
