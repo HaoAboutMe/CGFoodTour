@@ -25,7 +25,7 @@ public enum ErrorCode {
     GOOGLE_TOKEN_INVALID(1016, "Google ID token is invalid or expired", HttpStatus.BAD_REQUEST),
     PASSWORD_INCORRECT(1017, "Incorrect password", HttpStatus.BAD_REQUEST),
     INVALID_FILE(1018, "Invalid file", HttpStatus.BAD_REQUEST),
-    FILE_TOO_LARGE(1019, "File too large (Max 2MB)", HttpStatus.BAD_REQUEST),
+    FILE_TOO_LARGE(1019, "File too large (Max 2MB)", HttpStatus.PAYLOAD_TOO_LARGE),
     UNSUPPORTED_MEDIA_TYPE(1020, "Unsupported media type", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
     UPLOAD_FAILED(1021, "Upload failed", HttpStatus.INTERNAL_SERVER_ERROR),
     FACEBOOK_TOKEN_INVALID(1022, "Facebook access token is invalid or expired", HttpStatus.BAD_REQUEST),

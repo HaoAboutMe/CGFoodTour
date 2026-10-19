@@ -3,6 +3,7 @@ package com.cangiuoc.cgfoodtour.exception;
 import com.cangiuoc.cgfoodtour.dto.request.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,5 +31,15 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getBody().getCode()).isEqualTo(ErrorCode.DATA_CONFLICT.getCode());
         assertThat(response.getBody().getMessage()).isEqualTo(ErrorCode.DATA_CONFLICT.getMessage());
         assertThat(response.getBody().getMessage()).doesNotContain("UK_verification_token_user_id");
+    }
+
+    @Test
+    void oversizedMultipartRequestReturnsStablePayloadTooLargeResponse() {
+        var response = handler.handlingMaxUploadSizeExceededException(
+                new MaxUploadSizeExceededException(2L * 1024 * 1024));
+
+        assertThat(response.getStatusCode().value()).isEqualTo(413);
+        assertThat(response.getBody().getCode()).isEqualTo(ErrorCode.FILE_TOO_LARGE.getCode());
+        assertThat(response.getBody().getMessage()).isEqualTo(ErrorCode.FILE_TOO_LARGE.getMessage());
     }
 }

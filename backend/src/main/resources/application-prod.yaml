@@ -1,6 +1,10 @@
 # Production Environment Configuration (Profile: prod)
 # Activated when SPRING_PROFILES_ACTIVE=prod or --spring.profiles.active=prod
 spring:
+  servlet:
+    multipart:
+      max-file-size: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:2MB}
+      max-request-size: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:3MB}
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}

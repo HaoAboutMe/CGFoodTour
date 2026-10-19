@@ -11,6 +11,9 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Map;
@@ -50,6 +53,20 @@ class ManagedImageServiceTest {
 
         assertThat(result.url()).isEqualTo("https://cdn.example/pixel.png");
         assertThat(result.publicId()).isEqualTo("avatars/pixel");
+    }
+
+    @Test
+    void uploadRejectsImageDimensionsThatExceedTheDecodeLimit() throws IOException {
+        BufferedImage oversized = new BufferedImage(4097, 1, BufferedImage.TYPE_INT_RGB);
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        ImageIO.write(oversized, "png", output);
+        var image = new MockMultipartFile("file", "too-wide.png", "image/png", output.toByteArray());
+
+        assertThatThrownBy(() -> managedImageService.upload(image, "stores", 2 * 1024 * 1024))
+                .isInstanceOf(AppException.class)
+                .satisfies(exception -> assertThat(((AppException) exception).getErrorCode())
+                        .isEqualTo(ErrorCode.INVALID_FILE));
+        verify(cloudinaryService, never()).uploadImage(image, "stores");
     }
 
     @Test

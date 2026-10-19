@@ -10,13 +10,20 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ManagedImageService {
+    private static final int MAXIMUM_IMAGE_WIDTH = 4096;
+    private static final int MAXIMUM_IMAGE_HEIGHT = 4096;
+    private static final long MAXIMUM_IMAGE_PIXELS = 16_000_000L;
+
     private final CloudinaryService cloudinaryService;
     private final MediaCleanupQueueService cleanupQueueService;
 
@@ -86,9 +93,26 @@ public class ManagedImageService {
                 || contentType.equals("image/png") || contentType.equals("image/gif"))) {
             throw new AppException(ErrorCode.UNSUPPORTED_MEDIA_TYPE);
         }
-        try {
-            if (ImageIO.read(file.getInputStream()) == null) {
-                throw new AppException(ErrorCode.INVALID_FILE);
+        try (ImageInputStream input = ImageIO.createImageInputStream(file.getInputStream())) {
+            if (input == null) throw new AppException(ErrorCode.INVALID_FILE);
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+            if (!readers.hasNext()) throw new AppException(ErrorCode.INVALID_FILE);
+
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(input, true, true);
+                int width = reader.getWidth(0);
+                int height = reader.getHeight(0);
+                long pixels = (long) width * height;
+                if (width <= 0 || height <= 0
+                        || width > MAXIMUM_IMAGE_WIDTH
+                        || height > MAXIMUM_IMAGE_HEIGHT
+                        || pixels > MAXIMUM_IMAGE_PIXELS) {
+                    throw new AppException(ErrorCode.INVALID_FILE);
+                }
+                if (reader.read(0) == null) throw new AppException(ErrorCode.INVALID_FILE);
+            } finally {
+                reader.dispose();
             }
         } catch (IOException exception) {
             throw new AppException(ErrorCode.INVALID_FILE);

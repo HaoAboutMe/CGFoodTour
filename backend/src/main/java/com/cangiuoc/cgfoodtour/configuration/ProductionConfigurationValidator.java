@@ -7,6 +7,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -50,15 +52,13 @@ public class ProductionConfigurationValidator {
         if (normalizedDatasource.contains("localhost") || normalizedDatasource.contains("127.0.0.1")) {
             throw invalid("spring.datasource.url", "must not target localhost in production");
         }
-        if (normalizedDatasource.contains("usessl=false")) {
-            throw invalid("spring.datasource.url", "must not disable TLS in production");
-        }
+        requireVerifiedDatabaseTls(datasourceUrl);
 
         requireHttps("app.base-url", environment.getRequiredProperty("app.base-url"));
         Arrays.stream(environment.getRequiredProperty("app.cors.allowed-origins").split(","))
                 .map(String::trim)
                 .filter(value -> !value.isEmpty())
-                .forEach(value -> requireHttps("app.cors.allowed-origins", value));
+                .forEach(value -> requireHttpsOrigin("app.cors.allowed-origins", value));
 
         String jwtKey = environment.getRequiredProperty("jwt.signerKey");
         if (jwtKey.length() < 64) {
@@ -87,6 +87,47 @@ public class ProductionConfigurationValidator {
             }
         } catch (IllegalArgumentException exception) {
             throw invalid(property, "must be an absolute HTTPS URL");
+        }
+    }
+
+    private void requireHttpsOrigin(String property, String value) {
+        try {
+            URI uri = URI.create(value);
+            boolean hasOnlyOrigin = "https".equalsIgnoreCase(uri.getScheme())
+                    && uri.getHost() != null
+                    && uri.getUserInfo() == null
+                    && (uri.getPath() == null || uri.getPath().isEmpty())
+                    && uri.getQuery() == null
+                    && uri.getFragment() == null;
+            if (!hasOnlyOrigin) throw invalid(property, "must contain HTTPS origins without path, query or fragment");
+        } catch (IllegalArgumentException exception) {
+            throw invalid(property, "must contain valid HTTPS origins");
+        }
+    }
+
+    private void requireVerifiedDatabaseTls(String datasourceUrl) {
+        int queryStart = datasourceUrl.indexOf('?');
+        if (queryStart < 0 || queryStart == datasourceUrl.length() - 1) {
+            throw invalid("spring.datasource.url", "must use sslMode=VERIFY_IDENTITY in production");
+        }
+
+        List<String> sslModes = Arrays.stream(datasourceUrl.substring(queryStart + 1).split("[&;]"))
+                .map(parameter -> parameter.split("=", 2))
+                .filter(parts -> parts.length == 2)
+                .filter(parts -> "sslmode".equalsIgnoreCase(decode(parts[0])))
+                .map(parts -> decode(parts[1]))
+                .toList();
+
+        if (sslModes.size() != 1 || !"VERIFY_IDENTITY".equalsIgnoreCase(sslModes.get(0))) {
+            throw invalid("spring.datasource.url", "must contain exactly one sslMode=VERIFY_IDENTITY parameter");
+        }
+    }
+
+    private String decode(String value) {
+        try {
+            return URLDecoder.decode(value, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException exception) {
+            throw invalid("spring.datasource.url", "contains an invalid query parameter");
         }
     }
 

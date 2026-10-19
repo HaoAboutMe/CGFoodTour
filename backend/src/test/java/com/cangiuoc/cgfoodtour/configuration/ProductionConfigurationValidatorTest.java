@@ -25,6 +25,32 @@ class ProductionConfigurationValidatorTest {
     }
 
     @Test
+    void rejectsDatabaseConnectionsWithoutVerifiedTls() {
+        MockEnvironment missingMode = validEnvironment()
+                .withProperty("spring.datasource.url", "jdbc:mysql://db.internal:3306/cgfoodtour");
+        MockEnvironment disabledMode = validEnvironment()
+                .withProperty("spring.datasource.url", "jdbc:mysql://db.internal:3306/cgfoodtour?sslMode=DISABLED");
+
+        assertThrows(IllegalStateException.class,
+                () -> new ProductionConfigurationValidator(missingMode).validate());
+        assertThrows(IllegalStateException.class,
+                () -> new ProductionConfigurationValidator(disabledMode).validate());
+    }
+
+    @Test
+    void rejectsDuplicateOrDisguisedDatabaseTlsParameters() {
+        MockEnvironment duplicateMode = validEnvironment().withProperty("spring.datasource.url",
+                "jdbc:mysql://db.internal:3306/cgfoodtour?sslMode=VERIFY_IDENTITY&sslMode=DISABLED");
+        MockEnvironment disguisedMode = validEnvironment().withProperty("spring.datasource.url",
+                "jdbc:mysql://db.internal:3306/cgfoodtour?note=sslMode%3DVERIFY_IDENTITY");
+
+        assertThrows(IllegalStateException.class,
+                () -> new ProductionConfigurationValidator(duplicateMode).validate());
+        assertThrows(IllegalStateException.class,
+                () -> new ProductionConfigurationValidator(disguisedMode).validate());
+    }
+
+    @Test
     void rejectsMissingAndPlaceholderSecrets() {
         MockEnvironment missing = validEnvironment().withProperty("cloudinary.api-secret", "");
         MockEnvironment placeholder = validEnvironment().withProperty("spring.mail.password", "CHANGE_ME");
@@ -45,6 +71,15 @@ class ProductionConfigurationValidatorTest {
                 () -> new ProductionConfigurationValidator(sharedPepper).validate());
         assertThrows(IllegalStateException.class,
                 () -> new ProductionConfigurationValidator(httpUrl).validate());
+    }
+
+    @Test
+    void rejectsCorsValuesThatAreUrlsInsteadOfOrigins() {
+        MockEnvironment environment = validEnvironment()
+                .withProperty("app.cors.allowed-origins", "https://example.com/app?source=test");
+
+        assertThrows(IllegalStateException.class,
+                () -> new ProductionConfigurationValidator(environment).validate());
     }
 
     private MockEnvironment validEnvironment() {
