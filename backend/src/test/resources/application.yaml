@@ -1,4 +1,6 @@
 spring:
+  flyway:
+    enabled: false
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL;NON_KEYWORDS=USER
     driver-class-name: org.h2.Driver
@@ -11,8 +13,48 @@ spring:
   mail:
     host: localhost
     username: test@example.com
+    password: test
+
+app:
+  base-url: http://localhost:8080/api
+  cors:
+    allowed-origins: http://localhost:5173
+  admin:
+    default-email: admin@example.com
+    default-password: test-admin-password
+  google:
+    client-id: test-google-client
+  facebook:
+    app-id: test-facebook-app
+    app-secret: test-facebook-secret
 
 jwt:
   signerKey: 1234567890123456789012345678901212345678901234567890123456789012
   valid-duration: 300
   refreshable-duration: 1200
+
+security:
+  registration:
+    ip-pepper: test-registration-pepper
+  otp:
+    pepper: test-otp-pepper
+
+cloudinary:
+  cloud-name: test-cloud
+  api-key: test-key
+  api-secret: test-secret
+  folder: test
+  default-avatar-url: https://example.com/avatar.svg
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+      probes.enabled: true
+      group:
+        liveness.include: livenessState
+        readiness.include: readinessState,db

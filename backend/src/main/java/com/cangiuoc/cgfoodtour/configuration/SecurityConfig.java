@@ -55,6 +55,8 @@ public class SecurityConfig {
                 httpSecurity.authorizeHttpRequests(request -> request
                                 // Allow Swagger/OpenAPI endpoints first - without any restrictions
                                 .requestMatchers(SWAGGER_WHITELIST).permitAll()
+                                .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                                .requestMatchers("/actuator/prometheus", "/actuator/metrics/**").hasRole("ADMIN")
                                 // Then allow public endpoints
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
                                 .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS).permitAll()
