@@ -8,12 +8,12 @@ import com.cangiuoc.cgfoodtour.repository.RoleRepository;
 import com.cangiuoc.cgfoodtour.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
@@ -26,18 +26,8 @@ import java.util.HashSet;
 public class ApplicationInitConfig
 {
     PasswordEncoder passwordEncoder;
-
-    @NonFinal
-    @Value("${app.admin.default-email:haoaboutme@gmail.com}")
-    String adminEmail;
-
-    @NonFinal
-    @Value("${app.admin.default-password:}")
-    String adminPassword;
-
-    @NonFinal
-    @Value("${spring.profiles.active:dev}")
-    String activeProfile;
+    AdminBootstrapProperties adminProperties;
+    Environment environment;
 
     @Bean
     ApplicationRunner applicationRunner(UserRepository userRepository,
@@ -111,19 +101,21 @@ public class ApplicationInitConfig
             }
 
             // Create admin user if it doesn't exist
+            String adminEmail = adminProperties.getDefaultEmail().trim();
             if(userRepository.findByEmail(adminEmail).isEmpty())
             {
                 String resolvedPassword;
-                boolean isProdProfile = activeProfile != null && activeProfile.toLowerCase().contains("prod");
+                String configuredPassword = adminProperties.getDefaultPassword();
+                boolean isProdProfile = environment.acceptsProfiles(Profiles.of("prod"));
 
-                if (adminPassword != null && !adminPassword.trim().isEmpty()) {
-                    resolvedPassword = adminPassword.trim();
+                if (configuredPassword != null && !configuredPassword.trim().isEmpty()) {
+                    resolvedPassword = configuredPassword.trim();
                 } else if (!isProdProfile) {
                     resolvedPassword = "admin";
                     log.warn("Admin User created with default DEV password: 'admin'. Set APP_ADMIN_DEFAULT_PASSWORD before running in production!");
                 } else {
-                    log.warn("Production profile active but APP_ADMIN_DEFAULT_PASSWORD is not provided. Skipping automatic admin user creation for security.");
-                    return;
+                    throw new IllegalStateException("Invalid production configuration: app.admin.default-password "
+                            + "is required while the bootstrap admin account does not exist");
                 }
 
                 var roles = new HashSet<Role>();
@@ -135,7 +127,7 @@ public class ApplicationInitConfig
                         .lastname("Hảo About Me")
                         .password(passwordEncoder.encode(resolvedPassword))
                         .email(adminEmail)
-                        .dateOfBirth(LocalDate.parse("2026-01-01"))
+                        .dateOfBirth(LocalDate.parse("1990-01-01"))
                         .roles(roles)
                         .enabled(true)  // Admin được kích hoạt ngay
                         .emailVerified(true)  // Email admin đã được xác thực

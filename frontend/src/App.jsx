@@ -19,6 +19,7 @@ import SavedStoresSection from '@/components/SavedStoresSection'
 import { getVietnameseApiError } from '@/utils/apiErrorMessages'
 import { redactSensitiveData } from '@/utils/redactSensitiveData'
 import { storePath } from '@/utils/storeUrl'
+import { frontendConfig } from '@/config/frontendConfig'
 
 // Code splitting & Dynamic imports for heavy sections per Vercel Best Practices (bundle-dynamic-imports)
 const AdminSection = lazy(() => import('@/pages/Admin/AdminSection'))
@@ -28,7 +29,7 @@ const DevConsole = import.meta.env.DEV
   ? lazy(() => import('@/components/common/DevConsole'))
   : null
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '/api')).replace(/\/+$/, '')
+const API_BASE = frontendConfig.apiBase
 
 function readCookie(name) {
   const prefix = `${encodeURIComponent(name)}=`
@@ -474,7 +475,7 @@ export default function App() {
         }
         try {
           window.FB.init({
-            appId: import.meta.env.VITE_FACEBOOK_APP_ID || 'YOUR_FB_ID',
+            appId: frontendConfig.facebookAppId,
             cookie: true,
             xfbml: true,
             version: 'v18.0'
@@ -530,7 +531,7 @@ export default function App() {
       try {
           if (window.google?.accounts?.id) {
             window.google.accounts.id.initialize({
-              client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID',
+              client_id: frontendConfig.googleClientId,
               callback: (googleResponse) => {
                 const idToken = googleResponse.credential
                 setSocialGoogleToken(idToken)
@@ -1204,7 +1205,7 @@ export default function App() {
     }
     try {
       window.FB.init({
-        appId: import.meta.env.VITE_FACEBOOK_APP_ID || 'YOUR_FB_ID',
+        appId: frontendConfig.facebookAppId,
         cookie: true,
         xfbml: true,
         version: 'v18.0'

@@ -39,6 +39,7 @@ build/
 !.env.example
 !*.env.example
 !**/.env.example
+!**/.env.production.example
 
 # Agent skills
 .agents/
