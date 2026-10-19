@@ -4,6 +4,10 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:dev} # Mặc định kích hoạt profile 'dev' khi chạy máy cục bộ
   application:
     name: cgfoodtour
+  # Development databases predate Flyway. Migration ownership is enabled only
+  # by staging/production until a local database has been deliberately baselined.
+  flyway:
+    enabled: false
 
 server:
   port: ${PORT:${SERVER_PORT:8080}}
@@ -12,6 +16,22 @@ server:
 
 app:
   business-zone: ${APP_BUSINESS_ZONE:Asia/Ho_Chi_Minh}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db
 
 # Default security baseline: disable swagger-ui in other profiles unless explicitly enabled
 springdoc:

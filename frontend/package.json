@@ -11,6 +11,8 @@
     "test:ui-errors": "node --test src/utils/apiErrorMessages.test.js",
     "test:maps": "node --test src/utils/googleMapsUrl.test.js",
     "test:store-url": "node --test src/utils/storeUrl.test.js",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -23,6 +25,7 @@
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",

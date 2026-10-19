@@ -1,0 +1,84 @@
+# Containerized local rehearsal profile. It deliberately enables Flyway and
+# Hibernate validation without pretending to be a real TLS production host.
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://db:3306/cgfoodtour?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh}
+    username: ${SPRING_DATASOURCE_USERNAME:cgfoodtour}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  flyway:
+    enabled: true
+    validate-on-migrate: true
+    clean-disabled: true
+    baseline-on-migrate: false
+  mail:
+    host: ${SPRING_MAIL_HOST:mailpit}
+    port: ${SPRING_MAIL_PORT:1025}
+    username: ${SPRING_MAIL_USERNAME:test@cgfoodtour.local}
+    password: ${SPRING_MAIL_PASSWORD:test}
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
+
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8081/api}
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:8081}
+    include-local-origins: false
+  admin:
+    default-email: ${APP_ADMIN_DEFAULT_EMAIL:admin@cgfoodtour.local}
+    default-password: ${APP_ADMIN_DEFAULT_PASSWORD}
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:test-google-client}
+  facebook:
+    app-id: ${FACEBOOK_APP_ID:test-facebook-app}
+    app-secret: ${FACEBOOK_APP_SECRET:test-facebook-secret}
+  auth-cookie:
+    secure: false
+    same-site: Strict
+  sse:
+    maximum-connections: ${SSE_MAX_CONNECTIONS:50}
+    heartbeat-delay-ms: ${SSE_HEARTBEAT_DELAY_MS:30000}
+  email:
+    maximum-attempts: ${EMAIL_MAX_ATTEMPTS:3}
+    retry-initial-delay-ms: ${EMAIL_RETRY_INITIAL_DELAY_MS:100}
+
+jwt:
+  signerKey: ${JWT_SIGNER_KEY}
+  valid-duration: 900
+  refreshable-duration: 2592000
+
+security:
+  client-ip:
+    trust-forwarded-headers: true
+    trusted-proxies: ${TRUSTED_PROXY_CIDRS:172.20.0.0/16}
+    maximum-forwarded-hops: 1
+  registration:
+    ip-pepper: ${REGISTRATION_IP_PEPPER}
+  otp:
+    pepper: ${OTP_PEPPER}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:test-cloud}
+  api-key: ${CLOUDINARY_API_KEY:test-key}
+  api-secret: ${CLOUDINARY_API_SECRET:test-secret}
+  folder: ${CLOUDINARY_FOLDER:cgfoodtour/rehearsal}
+  default-avatar-url: ${CLOUDINARY_DEFAULT_AVATAR_URL:https://res.cloudinary.com/demo/image/upload/sample.jpg}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+      probes.enabled: true
+      group:
+        liveness.include: livenessState
+        readiness.include: readinessState,db
+  health.mail.enabled: false

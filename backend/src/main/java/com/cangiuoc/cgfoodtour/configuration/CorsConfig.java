@@ -63,7 +63,8 @@ public class CorsConfig {
         configuration.setExposedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
-                "X-Total-Count"
+                "X-Total-Count",
+                RequestCorrelationFilter.HEADER_NAME
         ));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

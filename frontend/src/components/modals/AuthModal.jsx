@@ -18,6 +18,8 @@ export default function AuthModal({
   setSocialGoogleToken,
   handleGoogleLoginSubmit,
   socialFacebookToken,
+  googleSdkReady,
+  facebookSdkReady,
   setSocialFacebookToken,
   handleFacebookLoginSubmit,
   regUsername,
@@ -201,7 +203,7 @@ export default function AuthModal({
                 {/* Neo-Brutalist Google Button Container */}
                 <div className="relative w-full h-12 overflow-hidden">
                   {/* Visual Custom Neo-Brutalist Button */}
-                  <div className="w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] transition-all select-none">
+                  <div className={`w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] transition-all select-none ${googleSdkReady ? '' : 'opacity-60'}`}>
                     <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
                       <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.14C3.26 21.3 7.31 24 12 24z"/>
@@ -214,9 +216,10 @@ export default function AuthModal({
                   {/* Real Google GSI SDK iframe container overlaid transparently */}
                   <div
                     id="googleSignInBtn"
+                    aria-disabled={!googleSdkReady}
                     className="absolute inset-0 opacity-0 overflow-hidden cursor-pointer flex justify-center items-center z-10 w-full h-full"
                     onClick={() => {
-                      if (window.google?.accounts?.id) {
+                      if (googleSdkReady && window.google?.accounts?.id) {
                         window.google.accounts.id.prompt()
                       } else {
                         if (showToast) showToast('Google Sign-In SDK đang khởi tạo, vui lòng thử lại sau giây lát!', 'info')
@@ -229,7 +232,8 @@ export default function AuthModal({
                 <button
                   type="button"
                   onClick={handleFacebookSDKLogin}
-                  className="w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer select-none"
+                  aria-disabled={!facebookSdkReady}
+                  className={`w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer select-none ${facebookSdkReady ? '' : 'opacity-60'}`}
                 >
                   <svg className="w-5 h-5 fill-[#1877f2] shrink-0" viewBox="0 0 24 24">
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -446,7 +450,7 @@ export default function AuthModal({
                 {/* Neo-Brutalist Google Button Container */}
                 <div className="relative w-full h-12 overflow-hidden">
                   {/* Visual Custom Neo-Brutalist Button */}
-                  <div className="w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] transition-all select-none">
+                  <div className={`w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] transition-all select-none ${googleSdkReady ? '' : 'opacity-60'}`}>
                     <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
                       <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.14C3.26 21.3 7.31 24 12 24z"/>
@@ -459,9 +463,10 @@ export default function AuthModal({
                   {/* Real Google GSI SDK iframe container overlaid transparently */}
                   <div
                     id="googleSignInBtnRegister"
+                    aria-disabled={!googleSdkReady}
                     className="absolute inset-0 opacity-0 overflow-hidden cursor-pointer flex justify-center items-center z-10 w-full h-full"
                     onClick={() => {
-                      if (window.google?.accounts?.id) {
+                      if (googleSdkReady && window.google?.accounts?.id) {
                         window.google.accounts.id.prompt()
                       } else {
                         if (showToast) showToast('Google Sign-In SDK đang khởi tạo, vui lòng thử lại sau giây lát!', 'info')
@@ -474,7 +479,8 @@ export default function AuthModal({
                 <button
                   type="button"
                   onClick={handleFacebookSDKLogin}
-                  className="w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer select-none"
+                  aria-disabled={!facebookSdkReady}
+                  className={`w-full h-12 py-3 px-4 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-3 bg-white text-black border-2 border-black rounded-full shadow-[4px_4px_0px_0px_#111111] hover:shadow-[6px_6px_0px_0px_#111111] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer select-none ${facebookSdkReady ? '' : 'opacity-60'}`}
                 >
                   <svg className="w-5 h-5 fill-[#1877f2] shrink-0" viewBox="0 0 24 24">
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>

@@ -1,6 +1,7 @@
 package com.cangiuoc.cgfoodtour.service;
 
 import jakarta.mail.internet.MimeMessage;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.util.HtmlUtils;
 
 @Slf4j
@@ -20,12 +20,19 @@ import org.springframework.web.util.HtmlUtils;
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class EmailService {
     final JavaMailSender mailSender;
+    final MeterRegistry meterRegistry;
 
     @Value("${spring.mail.username}")
     String fromEmail;
 
     @Value("${app.base-url:http://localhost:8080/api}")
     String baseUrl;
+
+    @Value("${app.email.maximum-attempts:3}")
+    int maximumAttempts;
+
+    @Value("${app.email.retry-initial-delay-ms:500}")
+    long retryInitialDelayMs;
 
     public void sendVerificationEmail(String toEmail, String token) {
         try {
@@ -41,7 +48,7 @@ public class EmailService {
             String htmlContent = buildEmailTemplate(verificationLink);
             helper.setText(htmlContent, true);
 
-            mailSender.send(message);
+            sendMessageWithRetry(message, "verification");
             log.info("Verification email dispatched successfully");
         } catch (Exception e) {
             log.error("Failed to send verification email", e);
@@ -61,7 +68,7 @@ public class EmailService {
             String htmlContent = buildOtpEmailTemplate(otp);
             helper.setText(htmlContent, true);
 
-            mailSender.send(message);
+            sendMessageWithRetry(message, "password_reset_otp");
             log.info("OTP email dispatched successfully");
         } catch (Exception e) {
             log.error("Failed to send OTP email", e);
@@ -121,7 +128,7 @@ public class EmailService {
                     """.formatted(safeUsername, safeReason);
 
             helper.setText(htmlContent, true);
-            mailSender.send(message);
+            sendMessageWithRetry(message, "account_disabled");
             log.info("Account disabled notification dispatched successfully for user {}", safeUsername);
         } catch (Exception exception) {
             log.error("Failed to send account disabled notification", exception);
@@ -171,7 +178,7 @@ public class EmailService {
                     """.formatted(safeUsername);
 
             helper.setText(htmlContent, true);
-            mailSender.send(message);
+            sendMessageWithRetry(message, "account_enabled");
             log.info("Account enabled notification dispatched successfully for user {}", safeUsername);
         } catch (Exception exception) {
             log.error("Failed to send account enabled notification", exception);
@@ -517,7 +524,6 @@ public class EmailService {
                 .formatted(otp);
     }
 
-    @Async
     public void sendStoreStatusNotificationEmail(String toEmail, String storeName, String actionType, String reason) {
         if (toEmail == null || toEmail.isBlank()) return;
         try {
@@ -571,10 +577,41 @@ public class EmailService {
                 """.formatted(safeStoreName, actionText, safeReason);
 
             helper.setText(htmlContent, true);
-            mailSender.send(message);
-            log.info("Store notification email sent to: {}", toEmail);
+            sendMessageWithRetry(message, "store_status");
+            log.info("Store notification email dispatched successfully");
         } catch (Exception e) {
-            log.error("Failed to send store status notification email to: {} - Error: {}", toEmail, e.getMessage());
+            log.error("Failed to send store status notification email after bounded retries", e);
+        }
+    }
+
+    private void sendMessageWithRetry(MimeMessage message, String template) {
+        RuntimeException lastFailure = null;
+        int attempts = Math.max(1, maximumAttempts);
+        for (int attempt = 1; attempt <= attempts; attempt++) {
+            try {
+                mailSender.send(message);
+                meterRegistry.counter("cgfoodtour.email.delivery", "template", template,
+                        "outcome", "sent").increment();
+                return;
+            } catch (RuntimeException exception) {
+                lastFailure = exception;
+                meterRegistry.counter("cgfoodtour.email.delivery", "template", template,
+                        "outcome", attempt == attempts ? "failed" : "retry").increment();
+                if (attempt < attempts) {
+                    sleepBeforeRetry(attempt);
+                }
+            }
+        }
+        throw lastFailure == null ? new IllegalStateException("Email delivery failed") : lastFailure;
+    }
+
+    private void sleepBeforeRetry(int attempt) {
+        long delay = Math.max(0, retryInitialDelayMs) * (1L << Math.min(attempt - 1, 10));
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Email delivery retry interrupted", exception);
         }
     }
 }

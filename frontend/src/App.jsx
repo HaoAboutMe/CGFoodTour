@@ -71,6 +71,7 @@ export default function App() {
   const refreshSessionRef = useRef(null)
   const handleLogoutRef = useRef(null)
   const authChannelRef = useRef(null)
+  const facebookInitializedRef = useRef(false)
   const [currentUser, setCurrentUser] = useState(null)
   const [activeTab, setActiveTab] = useState('explore')
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -129,6 +130,8 @@ export default function App() {
   const [forgotStep, setForgotStep] = useState(1) // 1: Email, 2: OTP, 3: New Password
   const [socialGoogleToken, setSocialGoogleToken] = useState('')
   const [socialFacebookToken, setSocialFacebookToken] = useState('')
+  const [googleSdkReady, setGoogleSdkReady] = useState(() => Boolean(window.google?.accounts?.id))
+  const [facebookSdkReady, setFacebookSdkReady] = useState(() => Boolean(window.FB))
   const [showPassword, setShowPassword] = useState(false)
 
   // Form Fields - Profile Edit
@@ -465,6 +468,10 @@ export default function App() {
 
     const initFB = () => {
       if (window.FB) {
+        if (facebookInitializedRef.current) {
+          setFacebookSdkReady(true)
+          return
+        }
         try {
           window.FB.init({
             appId: import.meta.env.VITE_FACEBOOK_APP_ID || 'YOUR_FB_ID',
@@ -472,6 +479,8 @@ export default function App() {
             xfbml: true,
             version: 'v18.0'
           })
+          facebookInitializedRef.current = true
+          setFacebookSdkReady(true)
         } catch (e) {
           console.warn('FB.init failed', e)
         }
@@ -485,14 +494,41 @@ export default function App() {
 
     // If FB is already loaded, init immediately
     initFB()
+
+    const googleScript = document.getElementById('google-gsi-sdk')
+    const facebookScript = document.getElementById('facebook-sdk')
+    const markGoogleReady = () => setGoogleSdkReady(Boolean(window.google?.accounts?.id))
+    const markFacebookReady = () => {
+      initFB()
+      setFacebookSdkReady(Boolean(window.FB))
+    }
+    googleScript?.addEventListener('load', markGoogleReady)
+    facebookScript?.addEventListener('load', markFacebookReady)
+
+    // Static SDK loading remains the source of truth. This bounded readiness
+    // check only covers the case where an async script finishes after React mounts.
+    let checks = 0
+    const readinessTimer = window.setInterval(() => {
+      checks += 1
+      if (window.google?.accounts?.id) setGoogleSdkReady(true)
+      if (window.FB) markFacebookReady()
+      if ((window.google?.accounts?.id && window.FB) || checks >= 50) {
+        window.clearInterval(readinessTimer)
+      }
+    }, 100)
+
+    return () => {
+      window.clearInterval(readinessTimer)
+      googleScript?.removeEventListener('load', markGoogleReady)
+      facebookScript?.removeEventListener('load', markFacebookReady)
+    }
   }, [])
 
   // Re-render Google Sign-in button when the Auth Modal opens
   useEffect(() => {
-    if (showAuthModal && (authMode === 'login' || authMode === 'register')) {
-      const timer = setTimeout(() => {
-        try {
-          if (window.google) {
+    if (showAuthModal && googleSdkReady && (authMode === 'login' || authMode === 'register')) {
+      try {
+          if (window.google?.accounts?.id) {
             window.google.accounts.id.initialize({
               client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID',
               callback: (googleResponse) => {
@@ -506,6 +542,7 @@ export default function App() {
             })
             const btnLogin = document.getElementById('googleSignInBtn')
             if (btnLogin) {
+              btnLogin.replaceChildren()
               window.google.accounts.id.renderButton(btnLogin, {
                 theme: 'outline',
                 size: 'large',
@@ -516,6 +553,7 @@ export default function App() {
             }
             const btnReg = document.getElementById('googleSignInBtnRegister')
             if (btnReg) {
+              btnReg.replaceChildren()
               window.google.accounts.id.renderButton(btnReg, {
                 theme: 'outline',
                 size: 'large',
@@ -525,13 +563,11 @@ export default function App() {
               })
             }
           }
-        } catch (e) {
-          console.warn('Google GSI SDK load/render check failed', e)
-        }
-      }, 150)
-      return () => clearTimeout(timer)
+      } catch (e) {
+        console.warn('Google GSI SDK load/render check failed', e)
+      }
     }
-  }, [showAuthModal, authMode])
+  }, [showAuthModal, authMode, googleSdkReady])
 
   // Logger helper
   function logEvent(method, url, requestBody, responseData, isSuccess = true) {
@@ -2290,6 +2326,8 @@ export default function App() {
         setSocialGoogleToken={setSocialGoogleToken}
         handleGoogleLoginSubmit={handleGoogleLoginSubmit}
         socialFacebookToken={socialFacebookToken}
+        googleSdkReady={googleSdkReady}
+        facebookSdkReady={facebookSdkReady}
         setSocialFacebookToken={setSocialFacebookToken}
         handleFacebookLoginSubmit={handleFacebookLoginSubmit}
         regUsername={regUsername}
