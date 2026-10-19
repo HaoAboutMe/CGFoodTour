@@ -43,7 +43,14 @@ jobs:
       - run: npm run test:ui-errors
       - run: npm run test:maps
       - run: npm run test:store-url
-      - run: npm run build
+      - run: npm run test:build-contract
+      - run: npm run test:nginx-contract
+      - name: Build and inspect production frontend
+        env:
+          VITE_API_BASE_URL: /api
+          VITE_GOOGLE_CLIENT_ID: ci-test-client.apps.googleusercontent.com
+          VITE_FACEBOOK_APP_ID: ci-test-facebook-app
+        run: npm run build
       - run: npm audit --audit-level=high
       - name: Validate Playwright test discovery
         run: npx playwright test --list
