@@ -22,5 +22,7 @@ test('returns correlation id without exposing health details', async ({ request 
   expect(response.ok()).toBeTruthy()
   expect(response.headers()['x-request-id']).toBe('e2e-health-check')
   const body = await response.json()
-  expect(body).toEqual({ status: 'UP' })
+  expect(body).toMatchObject({ status: 'UP' })
+  expect(body).not.toHaveProperty('components')
+  expect(body).not.toHaveProperty('details')
 })

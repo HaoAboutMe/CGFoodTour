@@ -1,7 +1,7 @@
 import { test, expect, request as playwrightRequest } from '@playwright/test'
 
 const mailpitUrl = process.env.E2E_MAILPIT_URL
-const appBaseUrl = process.env.E2E_BASE_URL || 'http://127.0.0.1:8081'
+const appBaseUrl = process.env.E2E_BASE_URL || 'http://localhost:8081'
 
 test('registers, verifies, logs in, rotates refresh token and logs out', async ({ page }) => {
   test.skip(!mailpitUrl, 'Set E2E_MAILPIT_URL to the isolated staging/rehearsal Mailpit API')
@@ -42,7 +42,10 @@ test('registers, verifies, logs in, rotates refresh token and logs out', async (
   expect(csrf?.value).toBeTruthy()
 
   const refresh = await page.request.post('/api/auth/refresh', {
-    headers: { 'X-CSRF-Token': csrf.value }
+    headers: {
+      Origin: appBaseUrl,
+      'X-CSRF-Token': csrf.value
+    }
   })
   expect(refresh.ok()).toBeTruthy()
 
@@ -55,6 +58,7 @@ test('registers, verifies, logs in, rotates refresh token and logs out', async (
   const reusedOldRefresh = await isolated.post('/api/auth/refresh', {
     headers: {
       Cookie: `${oldRefresh.name}=${oldRefresh.value}; ${csrf.name}=${csrf.value}`,
+      Origin: appBaseUrl,
       'X-CSRF-Token': csrf.value
     }
   })
@@ -64,15 +68,20 @@ test('registers, verifies, logs in, rotates refresh token and logs out', async (
   const logout = await page.request.post('/api/auth/logout', {
     headers: {
       Authorization: `Bearer ${loginBody.result.accessToken}`,
+      Origin: appBaseUrl,
       'X-CSRF-Token': newCsrf.value
     }
   })
   expect(logout.ok()).toBeTruthy()
 
   const refreshAfterLogout = await page.request.post('/api/auth/refresh', {
-    headers: { 'X-CSRF-Token': newCsrf.value }
+    headers: {
+      Origin: appBaseUrl,
+      'X-CSRF-Token': newCsrf.value
+    }
   })
-  expect(refreshAfterLogout.status()).toBe(401)
+  expect(refreshAfterLogout.status()).toBe(403)
+  expect(await refreshAfterLogout.json()).toMatchObject({ code: 1057 })
 })
 
 async function waitForVerificationToken(email) {

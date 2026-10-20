@@ -46,6 +46,9 @@ app:
   email:
     maximum-attempts: ${EMAIL_MAX_ATTEMPTS:3}
     retry-initial-delay-ms: ${EMAIL_RETRY_INITIAL_DELAY_MS:100}
+  rehearsal:
+    image-storage:
+      fail-delete: ${REHEARSAL_IMAGE_STORAGE_FAIL_DELETE:false}
 
 jwt:
   signerKey: ${JWT_SIGNER_KEY}
