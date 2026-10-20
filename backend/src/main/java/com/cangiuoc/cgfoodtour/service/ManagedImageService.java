@@ -24,13 +24,13 @@ public class ManagedImageService {
     private static final int MAXIMUM_IMAGE_HEIGHT = 4096;
     private static final long MAXIMUM_IMAGE_PIXELS = 16_000_000L;
 
-    private final CloudinaryService cloudinaryService;
+    private final ImageStorageService imageStorageService;
     private final MediaCleanupQueueService cleanupQueueService;
 
     public ManagedImage upload(MultipartFile file, String folder, long maximumBytes) {
         validate(file, maximumBytes);
         try {
-            Map result = cloudinaryService.uploadImage(file, folder);
+            Map<String, Object> result = imageStorageService.uploadImage(file, folder);
             String url = (String) result.get("secure_url");
             String publicId = (String) result.get("public_id");
             if (url == null || publicId == null) throw new AppException(ErrorCode.UPLOAD_FAILED);
@@ -44,7 +44,7 @@ public class ManagedImageService {
     public void deleteBestEffort(String publicId) {
         if (publicId == null || publicId.isBlank()) return;
         try {
-            cloudinaryService.deleteImage(publicId);
+            imageStorageService.deleteImage(publicId);
         } catch (Exception exception) {
             log.error("Cloudinary cleanup must be retried for public id {}", publicId, exception);
             try {

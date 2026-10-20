@@ -1,6 +1,6 @@
 services:
   db:
-    image: mysql:8.4
+    image: mysql:8.0
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: cgfoodtour
@@ -39,6 +39,7 @@ services:
       JWT_SIGNER_KEY: ${JWT_SIGNER_KEY}
       OTP_PEPPER: ${OTP_PEPPER}
       REGISTRATION_IP_PEPPER: ${REGISTRATION_IP_PEPPER}
+      REHEARSAL_IMAGE_STORAGE_FAIL_DELETE: ${REHEARSAL_IMAGE_STORAGE_FAIL_DELETE:-false}
     networks: [cgfoodtour]
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/api/actuator/health/readiness"]
@@ -60,6 +61,11 @@ services:
     ports:
       - "127.0.0.1:8081:8080"
     networks: [cgfoodtour]
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:8080/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
 networks:
   cgfoodtour:

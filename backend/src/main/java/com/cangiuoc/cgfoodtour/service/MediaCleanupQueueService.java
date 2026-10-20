@@ -24,7 +24,7 @@ public class MediaCleanupQueueService {
             Duration.ofHours(6), Duration.ofHours(24)
     };
     private final MediaCleanupTaskRepository repository;
-    private final CloudinaryService cloudinaryService;
+    private final ImageStorageService imageStorageService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void enqueue(String publicId, Exception cause) {
@@ -49,7 +49,7 @@ public class MediaCleanupQueueService {
                 .findTop100ByStatusAndNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(
                         MediaCleanupStatus.PENDING, now)) {
             try {
-                cloudinaryService.deleteImage(task.getPublicId());
+                imageStorageService.deleteImage(task.getPublicId());
                 repository.delete(task);
             } catch (Exception exception) {
                 int attempts = task.getAttempts() + 1;
