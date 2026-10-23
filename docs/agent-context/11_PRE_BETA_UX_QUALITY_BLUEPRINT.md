@@ -1,6 +1,6 @@
 # Blueprint 11 — Pre-beta UX and Quality Polish
 
-> Trạng thái: PROPOSED — thực hiện sau các P0 release gate  
+> Trạng thái: IMPLEMENTED LOCALLY — còn Lighthouse/Web Vitals trên staging HTTPS
 > Ưu tiên: P1/P2  
 > Phạm vi duy nhất: chất lượng giao diện và trải nghiệm trước beta
 
@@ -56,13 +56,13 @@ Loại bỏ các điểm gây khó hiểu, thiếu nhất quán hoặc tạo c�
 
 ## 4. Tiêu chí hoàn thành
 
-- [ ] Không còn native prompt/alert trong luồng quản trị chính.
-- [ ] Không còn hook warning mức correctness chưa xử lý.
-- [ ] Auth/store/admin flows dùng được bằng bàn phím.
-- [ ] Giao diện ổn định từ 320 px trở lên.
-- [ ] Logo/fallback assets được tối ưu và self-host.
+- [x] Không còn native prompt/alert trong luồng quản trị chính.
+- [x] Không còn hook warning mức correctness chưa xử lý.
+- [x] Auth/store/admin flows dùng được bằng bàn phím.
+- [x] Giao diện ổn định từ 320 px trở lên.
+- [x] Logo/fallback assets được tối ưu và self-host.
 - [ ] Có số liệu performance staging và không có regression đáng kể.
-- [ ] UX issues còn lại được phân loại, không chặn closed beta.
+- [x] UX issues còn lại được phân loại, không chặn closed beta.
 
 ## 5. Rollback
 
