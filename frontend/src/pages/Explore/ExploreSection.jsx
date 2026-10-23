@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import StoreCard from '@/components/common/StoreCard'
 import CategoryIcon from '@/components/common/CategoryIcon'
+import { Input } from '@/components/ui'
 
 export default function ExploreSection({
   stores,
@@ -210,16 +211,14 @@ export default function ExploreSection({
       {/* Control Panel: Integrated Search & Interactive Category Tiles */}
       <div className="brutalist-card bg-white p-4 sm:p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-4">
         {/* Search Bar */}
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" />
-          <input
-            type="text"
-            placeholder="Tìm tên món ăn, quán ăn, tên đường tại Cần Giuộc..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="brutalist-input brutalist-input-has-icon"
-          />
-        </div>
+        <Input
+          type="text"
+          placeholder="Tìm tên món ăn, quán ăn, tên đường tại Cần Giuộc..."
+          aria-label="Tìm kiếm món ăn, quán ăn, tên đường tại Cần Giuộc"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          leftAdornment={<Search className="w-4 h-4 text-neutral-500" />}
+        />
 
         {/* Fast Chips Filter Bar */}
         <div className="flex flex-wrap items-center gap-2 pt-1 border-t-2 border-neutral-100">

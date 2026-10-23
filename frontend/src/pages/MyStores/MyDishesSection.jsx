@@ -1,6 +1,7 @@
 import React from 'react'
 import { PlusCircle, Info, Utensils } from 'lucide-react'
 import { FOOD_FALLBACK_IMAGE } from '@/utils/imageAssets'
+import { FormField, Input, NativeSelect, Button } from '@/components/ui'
 
 export default function MyDishesSection({
   myStores,
@@ -72,82 +73,70 @@ export default function MyDishesSection({
               <PlusCircle className="w-5 h-5 text-[#ff3e3e]" /> Thêm Món Ăn Mới
             </h3>
 
-            <form onSubmit={handleCreateFoodItem} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-xs uppercase font-extrabold tracking-wider block">Chọn Quán Ăn</label>
-                <select
-                  required
+            <form onSubmit={handleCreateFoodItem} className="space-y-5">
+              <FormField id="dish-store-id" label="Chọn Quán Ăn" required>
+                <NativeSelect
                   value={foodStoreId}
                   onChange={(e) => setFoodStoreId(e.target.value)}
-                  className="brutalist-input"
-                >
-                  <option value="">-- Chọn quán ăn của bạn --</option>
-                  {availableStores.map((st) => (
-                    <option key={st.id} value={st.id}>
-                      {st.name} {st.status === 'APPROVED' ? '(Đã duyệt)' : st.status === 'PENDING' ? '(Chờ duyệt)' : '(Tạm ẩn)'}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  placeholder="-- Chọn quán ăn của bạn --"
+                  options={availableStores.map((st) => ({
+                    value: st.id,
+                    label: `${st.name} ${st.status === 'APPROVED' ? '(Đã duyệt)' : st.status === 'PENDING' ? '(Chờ duyệt)' : '(Tạm ẩn)'}`
+                  }))}
+                />
+              </FormField>
 
-              <div className="space-y-2">
-                <label className="text-xs uppercase font-extrabold tracking-wider block">Tên Món Ăn</label>
-                <input
+              <FormField id="dish-name" label="Tên Món Ăn" required>
+                <Input
                   type="text"
-                  required
                   placeholder="Ví dụ: Bánh Mì Thịt Nướng"
                   value={foodName}
                   onChange={(e) => setFoodName(e.target.value)}
-                  className="brutalist-input"
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <label className="text-xs uppercase font-extrabold tracking-wider block">Giá Bán (VND)</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    required
-                    placeholder="0"
-                    value={foodPrice === 0 ? '' : foodPrice / 1000}
-                    onChange={(e) => setFoodPrice(e.target.value === '' ? 0 : parseInt(e.target.value, 10) * 1000 || 0)}
-                    className="brutalist-input pr-16"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-xs text-neutral-400 pointer-events-none">
-                    .000đ
-                  </div>
-                </div>
-              </div>
+              <FormField id="dish-price" label="Giá Bán (VND)" hint="Đơn vị tính bằng nghìn đồng (.000 đ)" required>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={foodPrice === 0 ? '' : foodPrice / 1000}
+                  onChange={(e) => setFoodPrice(e.target.value === '' ? 0 : parseInt(e.target.value, 10) * 1000 || 0)}
+                  rightAdornment={<span className="font-black text-xs text-[var(--color-ink-muted)] pointer-events-none select-none">.000đ</span>}
+                />
+              </FormField>
 
-              <div className="space-y-2">
-                <label className="text-xs uppercase font-extrabold tracking-wider block">Đường Dẫn Hình Ảnh Món Ăn</label>
-                <input
+              <FormField id="dish-image" label="Đường Dẫn Hình Ảnh Món Ăn" optional>
+                <Input
                   type="text"
                   placeholder="https://example.com/anh-mon-an.jpg"
                   value={foodImage}
                   onChange={(e) => setFoodImage(e.target.value)}
-                  className="brutalist-input"
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <label className="text-xs uppercase font-extrabold tracking-wider block">Mô Tả Ngắn</label>
+              <FormField id="dish-desc" label="Mô Tả Ngắn" required>
                 <textarea
+                  id="dish-desc"
                   required
                   placeholder="Thịt nướng xém cạnh thơm nức mũi, đầy đủ dưa chua hành ngò..."
                   value={foodDesc}
                   onChange={(e) => setFoodDesc(e.target.value)}
-                  className="brutalist-input"
+                  className="w-full bg-[var(--color-surface)] text-[var(--color-ink)] border-2 border-[var(--color-border)] rounded-lg px-3.5 py-2.5 text-sm font-medium focus:outline-none focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-2 transition-colors duration-150"
                   rows={3}
                 />
-              </div>
+              </FormField>
 
-              <button
+              <Button
                 type="submit"
-                className="w-full brutalist-btn-red py-3 text-sm font-black"
+                variant="action"
+                fullWidth
+                size="lg"
+                isLoading={loading}
+                loadingText="Đang thêm món..."
+                className="mt-2"
               >
                 Xác Nhận Thêm Món Ăn
-              </button>
+              </Button>
             </form>
           </div>
 

@@ -40,9 +40,10 @@ export default function ImageViewerModal({ src, alt = 'Hình ảnh', caption = '
               target="_blank"
               rel="noreferrer"
               title="Mở ảnh gốc trong tab mới"
-              className="p-2 bg-white text-black border-2 border-black rounded-xl hover:bg-neutral-100 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center justify-center text-xs font-black"
+              aria-label="Mở ảnh gốc trong tab mới"
+              className="min-w-11 min-h-11 w-11 h-11 p-2 bg-white text-black border-2 border-black rounded-xl hover:bg-neutral-100 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center justify-center text-xs font-black focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-2"
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-5 h-5" />
             </a>
 
             {/* Close Button */}
@@ -51,7 +52,7 @@ export default function ImageViewerModal({ src, alt = 'Hình ảnh', caption = '
               type="button"
               aria-label="Đóng trình xem ảnh"
               title="Đóng xem ảnh (Phím Esc)"
-              className="p-2 bg-white text-black border-2 border-black rounded-xl hover:bg-red-50 hover:text-red-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center justify-center cursor-pointer"
+              className="min-w-11 min-h-11 w-11 h-11 p-2 bg-white text-black border-2 border-black rounded-xl hover:bg-red-50 hover:text-red-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center justify-center cursor-pointer focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-2"
             >
               <X className="w-5 h-5" />
             </button>

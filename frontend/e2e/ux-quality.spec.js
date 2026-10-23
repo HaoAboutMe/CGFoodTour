@@ -42,6 +42,38 @@ test('auth modal closes with Escape and restores keyboard focus', async ({ page 
 })
 
 test('store card and detail drawer support keyboard navigation', async ({ page }) => {
+  await page.route('**/v1/stores**', async (route) => {
+    const url = route.request().url()
+    const mockStore = {
+      id: 'test-store-1',
+      name: 'Quán Thử Nghiệm',
+      address: 'Thị trấn Cần Giuộc',
+      status: 'APPROVED',
+      latitude: 10.6,
+      longitude: 106.67
+    }
+    if (url.includes('/test-store-1')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 1000, result: mockStore })
+      })
+      return
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        code: 1000,
+        result: {
+          content: [mockStore],
+          totalPages: 1,
+          totalElements: 1,
+          last: true
+        }
+      })
+    })
+  })
   await page.goto('/explore')
   const storeCard = page.getByRole('button', { name: /Xem chi tiết quán/i }).first()
   await expect(storeCard).toBeVisible()
@@ -80,4 +112,37 @@ test('admin delete modal validates input, closes with Escape and restores focus'
   await page.keyboard.press('Escape')
   await expect(dialog).toBeHidden()
   await expect(deleteButton).toBeFocused()
+})
+
+test('production DOM contains no manual OAuth tokens or simulated GPS controls', async ({ page }) => {
+  await page.goto('/explore')
+
+  // Check Auth modal DOM
+  const loginButton = page.getByRole('button', { name: /Đăng Nhập/i }).first()
+  await loginButton.click()
+  const authDialog = page.getByRole('dialog', { name: /^Đăng Nhập$/i })
+  await expect(authDialog).toBeVisible()
+
+  // Verify technical English badge replaced and manual token details absent
+  await expect(page.locator('text=Security Gateway')).toHaveCount(0)
+  await expect(page.locator('text=Đăng Nhập An Toàn')).toBeVisible()
+  await expect(page.locator('text=OAuth Tokens thủ công')).toHaveCount(0)
+  await expect(page.locator('textarea[placeholder*="eyJhbGci"]')).toHaveCount(0)
+  await expect(page.locator('text=Token Kích Hoạt (UUID)')).toHaveCount(0)
+
+  // Close Auth modal
+  await page.keyboard.press('Escape')
+  await expect(authDialog).toBeHidden()
+
+  // Check Store Detail Drawer DOM
+  const storeCard = page.getByRole('button', { name: /Xem chi tiết quán/i }).first()
+  if (await storeCard.isVisible()) {
+    await storeCard.click()
+    const drawer = page.getByRole('dialog', { name: /Chi tiết quán/i })
+    await expect(drawer).toBeVisible()
+
+    // Verify simulated GPS controls are absent
+    await expect(page.locator('text=Vĩ Độ Của Bạn')).toHaveCount(0)
+    await expect(page.locator('text=Kinh Độ Của Bạn')).toHaveCount(0)
+  }
 })

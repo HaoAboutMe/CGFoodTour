@@ -31,7 +31,7 @@ import {
 import StoreActionModal from '@/components/modals/StoreActionModal'
 import AccountStatusModal from '@/components/modals/AccountStatusModal'
 import ConfirmActionModal from '@/components/modals/ConfirmActionModal'
-import CustomSelect from '@/components/common/CustomSelect'
+import { NativeSelect } from '@/components/ui'
 import CategoryIcon from '@/components/common/CategoryIcon'
 import CategoryIconPicker from '@/components/common/CategoryIconPicker'
 import ImageViewerModal from '@/components/modals/ImageViewerModal'
@@ -421,7 +421,7 @@ export default function AdminSection({
               </div>
               <div className="relative z-10 space-y-2 max-w-xl">
                 <span className="brutalist-badge bg-white text-black border-2 border-black font-black uppercase text-xs px-3 py-1">
-                  Dashboard Overview
+                  Tổng Quan Quản Trị
                 </span>
                 <h2 className="text-2xl sm:text-4xl font-black uppercase tracking-tight text-white drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]">
                   Bảng Tổng Quan Quản Trị
@@ -525,7 +525,7 @@ export default function AdminSection({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-4 border-black pb-3">
                 <div>
                   <h3 className="text-lg font-black uppercase text-black flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-[#ff3e3e]" /> Tác Vụ Cần Xử Lý Gấp (Needs Attention)
+                    <AlertTriangle className="w-5 h-5 text-[#ff3e3e]" /> Tác Vụ Cần Xử Lý Gấp
                   </h3>
                   <p className="text-xs font-semibold text-neutral-500">
                     Danh sách quán ăn mới đăng ký chờ duyệt hoặc yêu cầu mở lại quán.
@@ -751,16 +751,20 @@ export default function AdminSection({
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs font-black uppercase text-neutral-500 shrink-0">Danh Mục:</span>
-                <CustomSelect
+                <label htmlFor="admin-store-category-filter" className="text-xs font-black uppercase text-neutral-500 shrink-0">
+                  Danh Mục:
+                </label>
+                <NativeSelect
+                  id="admin-store-category-filter"
+                  aria-label="Lọc quán theo danh mục"
                   value={storeCategoryFilter}
-                  onChange={(val) => setStoreCategoryFilter(val)}
+                  onChange={(e) => setStoreCategoryFilter(e.target.value)}
                   options={[
                     { value: 'ALL', label: 'Tất Cả Danh Mục' },
                     ...categories.map((c) => ({ value: String(c.id), label: c.name }))
                   ]}
-                  dropdownAlign="right"
-                  width="w-44 sm:w-52"
+                  containerClassName="w-44 sm:w-52"
+                  className="rounded-full text-xs font-black uppercase border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
                 />
               </div>
             </div>
@@ -812,12 +816,12 @@ export default function AdminSection({
                         <div>
                           {st.status === 'APPROVED' ? (
                             <span className="brutalist-badge bg-[#e6fcf5] text-[#0ca678] border-[#0ca678]">
-                              APPROVED (Công khai)
+                              Đã Duyệt (Công khai)
                             </span>
                           ) : st.status === 'HIDDEN' ? (
                             <div className="space-y-1">
                               <span className="brutalist-badge bg-[#fff9db] text-[#b45309] border-[#b45309]">
-                                HIDDEN (Đã Ẩn)
+                                Đang Ẩn
                               </span>
                               {st.recoveryRequested && (
                                 <div className="text-[10px] font-bold text-indigo-900 bg-indigo-50 p-1.5 border border-indigo-300 rounded italic mt-1">
@@ -827,11 +831,11 @@ export default function AdminSection({
                             </div>
                           ) : st.status === 'REJECTED' ? (
                             <span className="brutalist-badge bg-[#fff5f5] text-[#c92a2a] border-[#c92a2a]">
-                              REJECTED (Bị từ chối)
+                              Bị Từ Chối
                             </span>
                           ) : (
                             <span className="brutalist-badge bg-[#eef2ff] text-[#4338ca] border-[#4338ca]">
-                              PENDING (Chờ duyệt)
+                              Chờ Duyệt
                             </span>
                           )}
                         </div>
@@ -973,16 +977,21 @@ export default function AdminSection({
               {/* Search user & Role Filter */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase text-neutral-500 shrink-0">Vai Trò:</span>
-                  <CustomSelect
+                  <label htmlFor="admin-user-role-filter" className="text-xs font-black uppercase text-neutral-500 shrink-0">
+                    Vai Trò:
+                  </label>
+                  <NativeSelect
+                    id="admin-user-role-filter"
+                    aria-label="Lọc người dùng theo vai trò"
                     value={userRoleFilter}
-                    onChange={(val) => setUserRoleFilter(val)}
+                    onChange={(e) => setUserRoleFilter(e.target.value)}
                     options={[
                       { value: 'ALL', label: 'Tất Cả Roles' },
                       { value: 'ADMIN', label: 'ADMIN (Quản trị)' },
                       { value: 'USER', label: 'USER (Người dùng)' }
                     ]}
-                    width="w-40 sm:w-48"
+                    containerClassName="w-40 sm:w-48"
+                    className="rounded-full text-xs font-black uppercase border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
                   />
                 </div>
 
@@ -1327,18 +1336,22 @@ export default function AdminSection({
                     <Folder className="w-5 h-5 text-[#ff3e3e]" /> Danh Sách Danh Mục Ẩm Thực
                   </h3>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-black uppercase text-neutral-500 shrink-0">Sắp xếp:</span>
-                    <CustomSelect
+                    <label htmlFor="admin-category-sort-by" className="text-xs font-black uppercase text-neutral-500 shrink-0">
+                      Sắp xếp:
+                    </label>
+                    <NativeSelect
+                      id="admin-category-sort-by"
+                      aria-label="Sắp xếp danh sách danh mục"
                       value={categorySortBy}
-                      onChange={(val) => setCategorySortBy(val)}
+                      onChange={(e) => setCategorySortBy(e.target.value)}
                       options={[
                         { value: 'ID_ASC', label: 'ID Tăng Dần (1-9)' },
                         { value: 'ID_DESC', label: 'ID Giảm Dần (9-1)' },
                         { value: 'NAME_ASC', label: 'Tên A → Z' },
                         { value: 'NAME_DESC', label: 'Tên Z → A' }
                       ]}
-                      dropdownAlign="right"
-                      width="w-44 sm:w-52"
+                      containerClassName="w-44 sm:w-52"
+                      className="rounded-full text-xs font-black uppercase border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
                     />
                   </div>
                 </div>
@@ -1882,19 +1895,19 @@ export default function AdminSection({
                       <span className="font-extrabold text-neutral-500">Trạng thái hiện tại:</span>
                       {viewingStore.status === 'APPROVED' ? (
                         <span className="brutalist-badge bg-[#e6fcf5] text-[#0ca678] border-[#0ca678] text-[10px]">
-                          APPROVED (Công khai)
+                          Đã Duyệt (Công khai)
                         </span>
                       ) : viewingStore.status === 'HIDDEN' ? (
                         <span className="brutalist-badge bg-[#fff9db] text-[#b45309] border-[#b45309] text-[10px]">
-                          HIDDEN (Đã ẩn)
+                          Đang Ẩn
                         </span>
                       ) : viewingStore.status === 'REJECTED' ? (
                         <span className="brutalist-badge bg-[#fff5f5] text-[#c92a2a] border-[#c92a2a] text-[10px]">
-                          REJECTED (Bị từ chối)
+                          Bị Từ Chối
                         </span>
                       ) : (
                         <span className="brutalist-badge bg-[#eef2ff] text-[#4338ca] border-[#4338ca] text-[10px]">
-                          PENDING (Chờ duyệt)
+                          Chờ Duyệt
                         </span>
                       )}
                     </p>

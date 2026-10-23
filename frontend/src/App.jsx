@@ -175,10 +175,6 @@ export default function App() {
   const [foodImage, setFoodImage] = useState('')
   const [foodDesc, setFoodDesc] = useState('')
 
-  // Form Fields - Rate & Report Closed
-  const [gpsLat, setGpsLat] = useState('10.603417')
-  const [gpsLng, setGpsLng] = useState('106.669812')
-
   // Random Pick & Leaderboard Result
   const [randomResult, setRandomResult] = useState(null)
   const [leaderboard, setLeaderboard] = useState([])
@@ -1201,7 +1197,7 @@ export default function App() {
   // Popup Facebook SDK Login
   function handleFacebookSDKLogin() {
     if (typeof window.FB === 'undefined') {
-      showToast('Facebook SDK chưa sẵn sàng. Vui lòng thử dán token thủ công.', 'error')
+      showToast('Facebook SDK chưa sẵn sàng. Vui lòng thử lại sau giây lát.', 'error')
       return
     }
     try {
@@ -1770,10 +1766,57 @@ export default function App() {
       setShowAuthModal(true)
       return
     }
+
+    if (!('geolocation' in navigator) || !navigator.geolocation) {
+      showToast('Trình duyệt của bạn không hỗ trợ định vị GPS.', 'error')
+      return
+    }
+
+    const position = await new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ pos, error: null }),
+        (err) => resolve({ pos: null, error: err }),
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      )
+    })
+
+    if (position.error) {
+      const code = position.error.code
+      if (code === 1) {
+        showToast('Vui lòng cấp quyền truy cập vị trí GPS trong trình duyệt để xác thực khoảng cách tới quán.', 'error')
+      } else if (code === 2) {
+        showToast('Không thể xác định vị trí hiện tại. Vui lòng bật định vị GPS trên thiết bị.', 'error')
+      } else if (code === 3) {
+        showToast('Quá thời gian xác định vị trí GPS. Vui lòng thử lại.', 'error')
+      } else {
+        showToast('Không thể lấy thông tin vị trí GPS. Vui lòng thử lại.', 'error')
+      }
+      return
+    }
+
+    const { latitude, longitude } = position.pos?.coords || {}
+    if (
+      typeof latitude !== 'number' ||
+      typeof longitude !== 'number' ||
+      Number.isNaN(latitude) ||
+      Number.isNaN(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      showToast('Tọa độ GPS nhận được không hợp lệ.', 'error')
+      return
+    }
+
     setLoading(true)
     const res = await makeRequest('POST', `/v1/stores/${storeId}/report-closed`, {
-      latitude: parseFloat(gpsLat),
-      longitude: parseFloat(gpsLng)
+      latitude,
+      longitude
     })
     setLoading(false)
 
@@ -2380,10 +2423,6 @@ export default function App() {
         handleSubmitRating={handleSubmitRating}
         handleReportClosedToday={handleReportClosedToday}
         handleToggleSaveStore={handleToggleSaveStore}
-        gpsLat={gpsLat}
-        setGpsLat={setGpsLat}
-        gpsLng={gpsLng}
-        setGpsLng={setGpsLng}
       />
 
       {import.meta.env.DEV && DevConsole && isAdmin() && (
