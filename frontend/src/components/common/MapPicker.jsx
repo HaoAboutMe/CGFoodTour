@@ -1,3 +1,4 @@
+/* oxlint-disable react-hooks/exhaustive-deps -- Leaflet map is initialized once per mounted modal */
 import React, { useState, useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -27,6 +28,8 @@ export default function MapPicker({ initialLat, initialLng, onSelect, onClose, s
   const defaultLng = parseFloat(initialLng) || 106.671389
 
   // Map initialization
+  // Leaflet owns this instance for the modal lifetime. Recreating it when a
+  // callback identity changes leaks map handlers and duplicates tiles.
   useEffect(() => {
     if (!mapContainerRef.current) return
 

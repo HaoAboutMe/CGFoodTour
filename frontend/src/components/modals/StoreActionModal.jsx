@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import { useId, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AlertTriangle, EyeOff, RotateCcw, Trash2, X, CheckCircle2 } from 'lucide-react'
+import { useDialogFocus } from '@/hooks/useDialogFocus'
 
 /**
  * Modal confirm + action reason for Store Hide/Recover/Hard Delete/Approve
@@ -18,13 +19,9 @@ export default function StoreActionModal({
 }) {
   const [reason, setReason] = useState('')
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (isOpen) {
-      setReason('')
-      setError('')
-    }
-  }, [isOpen])
+  const titleId = useId()
+  const descriptionId = useId()
+  const dialogRef = useDialogFocus(isOpen, loading ? null : onClose)
 
   if (!isOpen || !store) return null
 
@@ -109,17 +106,20 @@ export default function StoreActionModal({
 
   return createPortal(
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-      <div className="bg-white border-4 border-black p-6 md:p-8 max-w-md w-full shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative space-y-6">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} tabIndex={-1} className="bg-white border-4 border-black p-6 md:p-8 max-w-md w-full shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between border-b-3 border-black pb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 border-2 border-black bg-neutral-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
               {config.icon}
             </div>
-            <h3 className="text-xl font-black uppercase tracking-tight">{config.title}</h3>
+            <h3 id={titleId} className="text-xl font-black uppercase tracking-tight">{config.title}</h3>
           </div>
           <button
             onClick={onClose}
+            type="button"
+            disabled={loading}
+            aria-label="Đóng cửa sổ xác nhận"
             className="p-1 border-2 border-black hover:bg-neutral-100 transition-colors"
           >
             <X className="w-5 h-5" />
@@ -128,7 +128,7 @@ export default function StoreActionModal({
 
         {/* Content */}
         <div className="space-y-4">
-          <p className="text-sm font-semibold text-neutral-700 leading-relaxed">
+          <p id={descriptionId} className="text-sm font-semibold text-neutral-700 leading-relaxed">
             {config.description}
           </p>
 

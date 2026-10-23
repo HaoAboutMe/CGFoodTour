@@ -1,5 +1,15 @@
 import React from 'react'
-import { X, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
+import {
+  Dialog,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogContent,
+  FormField,
+  Input,
+  Button
+} from '@/components/ui'
 
 export default function AuthModal({
   showAuthModal,
@@ -14,14 +24,8 @@ export default function AuthModal({
   setShowPassword,
   handleLogin,
   handleFacebookSDKLogin,
-  socialGoogleToken,
-  setSocialGoogleToken,
-  handleGoogleLoginSubmit,
-  socialFacebookToken,
   googleSdkReady,
   facebookSdkReady,
-  setSocialFacebookToken,
-  handleFacebookLoginSubmit,
   regUsername,
   setRegUsername,
   regEmail,
@@ -116,79 +120,97 @@ export default function AuthModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 sm:p-4">
-      <div className={`w-full ${authMode === 'register' ? 'max-w-xl sm:max-w-2xl' : 'max-w-md'} brutalist-card bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative max-h-[92vh] overflow-y-auto overflow-x-hidden animate-fade-in-up transition-all duration-300`}>
-        {/* Close Button */}
-        <button
-          onClick={() => setShowAuthModal(false)}
-          className="absolute top-4 right-4 p-2 bg-white border-2 border-black hover:bg-neutral-100 text-black transition-colors cursor-pointer z-10 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
-        >
-          <X className="w-4 h-4" />
-        </button>
+    <Dialog
+      isOpen={showAuthModal}
+      onClose={() => {
+        if (!loading) setShowAuthModal(false)
+      }}
+      role="dialog"
+      size={authMode === 'register' ? '2xl' : 'md'}
+      closeOnBackdropClick={false}
+      closeOnEscape={!loading}
+      className="max-h-[92vh] overflow-y-auto overflow-x-hidden brutalist-card bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative transition-all duration-300"
+    >
+      <DialogHeader
+        showCloseButton={true}
+        closeButtonLabel="Đóng cửa sổ đăng nhập"
+        isCloseDisabled={loading}
+        className="border-b-4 border-black pb-3 mb-4"
+      >
+        <div className="text-center space-y-1 pl-6 sm:pl-8">
+          <span className="brutalist-badge bg-[#ff3e3e] text-white">Đăng Nhập An Toàn</span>
+          <DialogTitle className="text-2xl font-black uppercase text-black mt-2">
+            {authMode === 'login' && 'Đăng Nhập'}
+            {authMode === 'register' && 'Tạo Tài Khoản'}
+            {authMode === 'verify' && 'Xác Thực Email'}
+            {authMode === 'forgot' && (forgotStep === 1 ? 'Quên Mật Khẩu' : forgotStep === 2 ? 'Xác thực OTP' : 'Đặt lại mật khẩu')}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            {authMode === 'login' && 'Cửa sổ đăng nhập tài khoản Cần Giuộc FoodTour'}
+            {authMode === 'register' && 'Cửa sổ đăng ký tài khoản thành viên mới'}
+            {authMode === 'verify' && 'Cửa sổ kích hoạt tài khoản bằng token'}
+            {authMode === 'forgot' && 'Cửa sổ lấy lại mật khẩu tài khoản qua OTP'}
+          </DialogDescription>
+        </div>
+      </DialogHeader>
 
-        <div className="p-5 sm:p-8 space-y-5 sm:space-y-6">
-          {/* Header */}
-          <div className="text-center space-y-1 border-b-4 border-black pb-3">
-            <span className="brutalist-badge bg-[#ff3e3e] text-white">Security Gateway</span>
-            <h3 className="text-2xl font-black uppercase text-black mt-2">
-              {authMode === 'login' && 'Đăng Nhập'}
-              {authMode === 'register' && 'Tạo Tài Khoản'}
-              {authMode === 'verify' && 'Xác Thực Email'}
-              {authMode === 'forgot' && (forgotStep === 1 ? 'Quên Mật Khẩu' : forgotStep === 2 ? 'Xác thực OTP' : 'Đặt lại mật khẩu')}
-            </h3>
-          </div>
-
-          {/* Helper Component for Social Auth Buttons */}
+      <DialogContent className="p-0">
           {/* Login Form */}
           {authMode === 'login' && (
             <div className="space-y-6">
               <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-xs uppercase font-extrabold tracking-wider block">Địa Chỉ Email</label>
-                  <input
+                <FormField id="login-email" label="Địa Chỉ Email" required>
+                  <Input
+                    id="login-email"
                     type="email"
                     required
                     placeholder="yourname@gmail.com"
+                    autoComplete="username"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    className="brutalist-input"
                   />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs uppercase font-extrabold tracking-wider block">Mật Khẩu</label>
+                </FormField>
+
+                <FormField id="login-password" label="Mật Khẩu" required>
+                  <Input
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    rightAdornment={
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                        className="p-1 text-neutral-500 hover:text-black cursor-pointer focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] rounded"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4 stroke-[2.5]" /> : <Eye className="w-4 h-4 stroke-[2.5]" />}
+                      </button>
+                    }
+                  />
+                  <div className="flex justify-end mt-1">
                     <button
                       type="button"
                       onClick={() => setAuthMode('forgot')}
-                      className="text-[10px] uppercase font-black text-[#ff3e3e] hover:underline"
+                      className="text-[10px] uppercase font-black text-[#ff3e3e] hover:underline cursor-pointer"
                     >
                       Quên mật khẩu?
                     </button>
                   </div>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      placeholder="••••••••"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      className="brutalist-input pr-12"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-black cursor-pointer"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-                <button
+                </FormField>
+
+                <Button
                   type="submit"
-                  className="w-full brutalist-btn-red py-3 text-sm font-black"
+                  variant="action"
+                  fullWidth
+                  isLoading={loading}
+                  loadingText="Đang xác thực..."
                 >
                   Xác Thực Tài Khoản ↗
-                </button>
+                </Button>
               </form>
 
               {/* Divider */}
@@ -240,46 +262,6 @@ export default function AuthModal({
                   </svg>
                   <span>Tiếp Tục Với Facebook</span>
                 </button>
-
-                {/* Manual Paste Tokens Details */}
-                <details className="text-[10px] text-neutral-600 font-extrabold cursor-pointer">
-                  <summary className="hover:text-black">Hoặc nhập OAuth Tokens thủ công (Dev mode)</summary>
-                  <div className="mt-3 space-y-3 bg-[#f7f6f2] p-4 border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#111111]">
-                    <div className="space-y-1">
-                      <label className="text-[9px] uppercase font-black text-black">Google ID Token JWT</label>
-                      <textarea
-                        value={socialGoogleToken}
-                        onChange={(e) => setSocialGoogleToken(e.target.value)}
-                        placeholder="eyJhbGciOiJSUzI1Ni..."
-                        rows={2}
-                        className="w-full bg-white border-2 border-black rounded-lg p-2 text-[10px] focus:outline-none font-mono"
-                      />
-                      <button
-                        onClick={handleGoogleLoginSubmit}
-                        className="w-full brutalist-btn-red py-1 px-3 text-[9px] font-black"
-                      >
-                        Gửi Google Token
-                      </button>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[9px] uppercase font-black text-black">Facebook Access Token</label>
-                      <textarea
-                        value={socialFacebookToken}
-                        onChange={(e) => setSocialFacebookToken(e.target.value)}
-                        placeholder="EAACW..."
-                        rows={2}
-                        className="w-full bg-white border-2 border-black rounded-lg p-2 text-[10px] focus:outline-none font-mono"
-                      />
-                      <button
-                        onClick={handleFacebookLoginSubmit}
-                        className="w-full brutalist-btn-red py-1 px-3 text-[9px] font-black"
-                      >
-                        Gửi Facebook Token
-                      </button>
-                    </div>
-                  </div>
-                </details>
               </div>
 
               <p className="text-center text-xs font-bold text-neutral-600">
@@ -299,143 +281,161 @@ export default function AuthModal({
             <div className="space-y-6">
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                  <div className="space-y-1.5">
-                    <label className="text-xs uppercase font-extrabold tracking-wider block">Username</label>
-                    <input
+                  <FormField
+                    id="reg-username"
+                    label="Username"
+                    hint="(3-20 ký tự, không dấu / khoảng trắng)"
+                    required
+                    isInvalid={Boolean(regUsername && (regUsername.length < 3 || !/^[a-z0-9_]+$/.test(regUsername)))}
+                  >
+                    <Input
+                      id="reg-username"
                       type="text"
                       required
                       maxLength={20}
                       placeholder="foodlover"
+                      autoComplete="username"
                       value={regUsername}
                       onChange={(e) => setRegUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                      className={`brutalist-input ${
-                        regUsername
-                          ? regUsername.length >= 3 && /^[a-z0-9_]+$/.test(regUsername)
-                            ? 'border-[#00ca4e] focus:bg-[#e6fcf0]'
-                            : 'border-[#ff3e3e] focus:bg-[#ffebeb]'
+                      className={
+                        regUsername && regUsername.length >= 3 && /^[a-z0-9_]+$/.test(regUsername)
+                          ? '!border-[#00ca4e] focus:bg-[#e6fcf0]'
                           : ''
-                      }`}
+                      }
                     />
-                    <span className="text-[10px] text-neutral-500 font-bold block">(3-20 ký tự, không dấu / khoảng trắng)</span>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs uppercase font-extrabold tracking-wider block">Email</label>
-                    <input
+                  </FormField>
+                  <FormField id="reg-email" label="Email" required>
+                    <Input
+                      id="reg-email"
                       type="email"
                       required
                       maxLength={50}
                       placeholder="yourname@gmail.com"
+                      autoComplete="email"
                       value={regEmail}
                       onChange={(e) => setRegEmail(e.target.value)}
-                      className="brutalist-input"
                     />
-                  </div>
+                  </FormField>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                  <div className="space-y-1.5">
-                    <label className="text-xs uppercase font-extrabold tracking-wider block">Họ</label>
-                    <input
+                  <FormField id="reg-firstname" label="Họ" required>
+                    <Input
+                      id="reg-firstname"
                       type="text"
                       maxLength={30}
                       placeholder="Nguyễn"
+                      autoComplete="given-name"
                       value={regFirstname}
                       onChange={(e) => setRegFirstname(e.target.value)}
-                      className="brutalist-input"
                     />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs uppercase font-extrabold tracking-wider block">Tên</label>
-                    <input
+                  </FormField>
+                  <FormField id="reg-lastname" label="Tên" required>
+                    <Input
+                      id="reg-lastname"
                       type="text"
                       maxLength={30}
                       placeholder="Văn A"
+                      autoComplete="family-name"
                       value={regLastname}
                       onChange={(e) => setRegLastname(e.target.value)}
-                      className="brutalist-input"
                     />
-                  </div>
+                  </FormField>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                  <div className="space-y-1.5">
-                    <label className="text-xs uppercase font-extrabold tracking-wider block">Mật Khẩu</label>
-                    <div className="relative">
-                      <input
-                        type={showRegPassword ? 'text' : 'password'}
-                        required
-                        minLength={8}
-                        maxLength={72}
-                        placeholder="••••••••"
-                        value={regPassword}
-                        onChange={(e) => setRegPassword(e.target.value)}
-                        className="brutalist-input pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowRegPassword(!showRegPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-black cursor-pointer"
-                      >
-                        {showRegPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
+                  <FormField id="reg-password" label="Mật Khẩu" hint="Tối thiểu 8 ký tự" required>
+                    <Input
+                      id="reg-password"
+                      type={showRegPassword ? 'text' : 'password'}
+                      required
+                      minLength={8}
+                      maxLength={72}
+                      placeholder="••••••••"
+                      autoComplete="new-password"
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      rightAdornment={
+                        <button
+                          type="button"
+                          onClick={() => setShowRegPassword(!showRegPassword)}
+                          aria-label={showRegPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                          className="p-1 text-neutral-500 hover:text-black cursor-pointer focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] rounded"
+                        >
+                          {showRegPassword ? <EyeOff className="w-4 h-4 stroke-[2.5]" /> : <Eye className="w-4 h-4 stroke-[2.5]" />}
+                        </button>
+                      }
+                    />
+                  </FormField>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs uppercase font-extrabold tracking-wider block">Xác Nhận Mật Khẩu</label>
-                    <div className="relative">
-                      <input
-                        type={showRegConfirmPassword ? 'text' : 'password'}
-                        required
-                        placeholder="••••••••"
-                        value={regConfirmPassword}
-                        onChange={(e) => setRegConfirmPassword(e.target.value)}
-                        className={`brutalist-input pr-10 ${
-                          regConfirmPassword
-                            ? regPassword === regConfirmPassword
-                              ? 'border-[#00ca4e] focus:bg-[#e6fcf0]'
-                              : 'border-[#ff3e3e] focus:bg-[#ffebeb]'
-                            : ''
-                        }`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-black cursor-pointer"
-                      >
-                        {showRegConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
+                  <FormField
+                    id="reg-confirm-password"
+                    label="Xác Nhận Mật Khẩu"
+                    required
+                    isInvalid={Boolean(regConfirmPassword && regPassword !== regConfirmPassword)}
+                  >
+                    <Input
+                      id="reg-confirm-password"
+                      type={showRegConfirmPassword ? 'text' : 'password'}
+                      required
+                      placeholder="••••••••"
+                      autoComplete="new-password"
+                      value={regConfirmPassword}
+                      onChange={(e) => setRegConfirmPassword(e.target.value)}
+                      className={
+                        regConfirmPassword && regPassword === regConfirmPassword
+                          ? '!border-[#00ca4e] focus:bg-[#e6fcf0]'
+                          : ''
+                      }
+                      rightAdornment={
+                        <button
+                          type="button"
+                          onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
+                          aria-label={showRegConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                          className="p-1 text-neutral-500 hover:text-black cursor-pointer focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] rounded"
+                        >
+                          {showRegConfirmPassword ? <EyeOff className="w-4 h-4 stroke-[2.5]" /> : <Eye className="w-4 h-4 stroke-[2.5]" />}
+                        </button>
+                      }
+                    />
+                  </FormField>
                 </div>
 
                 {regConfirmPassword && (
-                  <p className={`text-[10px] font-black uppercase tracking-wider ${
-                    regPassword === regConfirmPassword ? 'text-[#00ca4e]' : 'text-[#ff3e3e]'
-                  }`}>
+                  <p
+                    role="status"
+                    aria-live="polite"
+                    className={`text-[10px] font-black uppercase tracking-wider ${
+                      regPassword === regConfirmPassword ? 'text-[#00ca4e]' : 'text-[#ff3e3e]'
+                    }`}
+                  >
                     {regPassword === regConfirmPassword ? 'Mật khẩu trùng khớp' : 'Mật khẩu không trùng khớp'}
                   </p>
                 )}
 
-                <div className="space-y-1.5">
-                  <label className="text-xs uppercase font-extrabold tracking-wider block">Ngày Sinh</label>
-                  <input
+                <FormField id="reg-dob" label="Ngày Sinh" hint="Phải từ đủ 18 tuổi" required>
+                  <Input
+                    id="reg-dob"
                     type="date"
                     required
+                    autoComplete="bday"
                     value={regDob}
                     max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().slice(0, 10)}
                     onChange={(e) => setRegDob(e.target.value)}
-                    className="brutalist-input"
                   />
-                </div>
+                </FormField>
 
-                <button
+                <Button
                   type="submit"
+                  variant="action"
+                  fullWidth
                   disabled={loading || !regPassword || regPassword !== regConfirmPassword || regUsername.length < 3}
-                  className="w-full brutalist-btn-red py-3 text-sm font-black disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                  isLoading={loading}
+                  loadingText="Đang gửi email xác thực..."
+                  className="mt-2"
                 >
-                  {loading ? 'Đang gửi email xác thực...' : 'Hoàn Tất Đăng Ký ↗'}
-                </button>
+                  Hoàn Tất Đăng Ký ↗
+                </Button>
               </form>
 
               {/* Divider */}
@@ -529,32 +529,37 @@ export default function AuthModal({
                   <p className="text-xs font-semibold text-neutral-600 leading-relaxed">
                     Nhập email đã đăng ký của bạn. Hệ thống sẽ gửi một mã OTP gồm 6 chữ số để xác thực yêu cầu đặt lại mật khẩu.
                   </p>
-                  <div className="space-y-2">
-                    <label className="text-xs uppercase font-extrabold tracking-wider block">Địa Chỉ Email</label>
-                    <input
+                  <FormField id="forgot-email" label="Địa Chỉ Email" required>
+                    <Input
+                      id="forgot-email"
                       type="email"
                       required
                       placeholder="yourname@gmail.com"
+                      autoComplete="email"
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
-                      className="brutalist-input"
                     />
-                  </div>
-                  <button
+                  </FormField>
+                  <Button
                     type="submit"
+                    variant="action"
+                    fullWidth
                     disabled={loading}
-                    className="w-full brutalist-btn-red py-3 text-sm font-black disabled:opacity-50 disabled:cursor-not-allowed"
+                    isLoading={loading}
+                    loadingText="Đang gửi OTP..."
                   >
-                    {loading ? 'Đang gửi OTP...' : 'Gửi OTP Đặt Lại Mật Khẩu ↗'}
-                  </button>
+                    Gửi OTP Đặt Lại Mật Khẩu ↗
+                  </Button>
 
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    fullWidth
                     onClick={() => setAuthMode('login')}
-                    className="w-full text-center text-xs font-black uppercase text-neutral-600 hover:text-black mt-2"
+                    className="mt-2 text-xs font-black uppercase text-neutral-600 hover:text-black"
                   >
                     Quay Lại Đăng Nhập
-                  </button>
+                  </Button>
                 </form>
               )}
 
@@ -565,8 +570,15 @@ export default function AuthModal({
                     Mã OTP đã được gửi đến: <span className="text-black font-black">{resetEmail}</span>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs uppercase font-extrabold tracking-wider block text-center">Mã OTP (6 chữ số)</label>
-                    <div className="flex justify-center gap-2" onPaste={handleOtpPaste}>
+                    <label id="otp-group-label" className="text-xs uppercase font-extrabold tracking-wider block text-center">
+                      Mã OTP (6 chữ số)
+                    </label>
+                    <div
+                      role="group"
+                      aria-labelledby="otp-group-label"
+                      className="flex justify-center gap-2"
+                      onPaste={handleOtpPaste}
+                    >
                       {[0, 1, 2, 3, 4, 5].map((index) => {
                         const val = resetOtp[index] || ''
                         return (
@@ -578,6 +590,8 @@ export default function AuthModal({
                             pattern="[0-9]*"
                             maxLength={1}
                             required
+                            aria-label={`Chữ số thứ ${index + 1}`}
+                            autoComplete={index === 0 ? 'one-time-code' : 'off'}
                             value={val}
                             onChange={(e) => handleOtpDigitChange(index, e.target.value)}
                             onKeyDown={(e) => handleOtpKeyDown(index, e)}
@@ -587,18 +601,21 @@ export default function AuthModal({
                       })}
                     </div>
                   </div>
-                  <button
+                  <Button
                     type="submit"
-                    className="w-full brutalist-btn-red py-3 text-sm font-black"
+                    variant="action"
+                    fullWidth
+                    isLoading={loading}
+                    loadingText="Đang xác thực..."
                   >
                     Xác Thực OTP ↗
-                  </button>
+                  </Button>
 
                   <div className="flex justify-between items-center text-xs font-bold mt-2">
                     <button
                       type="button"
                       onClick={() => setForgotStep(1)}
-                      className="text-neutral-600 hover:text-black uppercase"
+                      className="text-neutral-600 hover:text-black uppercase cursor-pointer"
                     >
                       ← Nhập lại Email
                     </button>
@@ -606,7 +623,7 @@ export default function AuthModal({
                       type="button"
                       disabled={loading}
                       onClick={() => handleForgotPassword()}
-                      className="text-[#ff3e3e] hover:underline uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="text-[#ff3e3e] hover:underline uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       {loading ? 'Đang gửi...' : 'Gửi Lại Mã OTP'}
                     </button>
@@ -621,57 +638,70 @@ export default function AuthModal({
                     <div>Tài khoản: <span className="text-black font-black">{resetEmail}</span></div>
                     <div>Xác thực OTP: <span className="text-[#00ca4e] font-black">Hợp lệ</span></div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-xs uppercase font-extrabold tracking-wider block">Mật Khẩu Mới</label>
-                    <input
+                  <FormField id="reset-password" label="Mật Khẩu Mới" hint="Tối thiểu 8 ký tự" required>
+                    <Input
+                      id="reset-password"
                       type="password"
                       required
                       minLength={8}
                       placeholder="••••••••"
+                      autoComplete="new-password"
                       value={resetPassword}
                       onChange={(e) => setResetPassword(e.target.value)}
-                      className="brutalist-input"
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs uppercase font-extrabold tracking-wider block">Xác Nhận Mật Khẩu Mới</label>
-                    <input
+                  </FormField>
+                  <FormField
+                    id="reset-confirm-password"
+                    label="Xác Nhận Mật Khẩu Mới"
+                    required
+                    isInvalid={Boolean(resetConfirmPassword && resetPassword !== resetConfirmPassword)}
+                  >
+                    <Input
+                      id="reset-confirm-password"
                       type="password"
                       required
                       placeholder="••••••••"
+                      autoComplete="new-password"
                       value={resetConfirmPassword}
                       onChange={(e) => setResetConfirmPassword(e.target.value)}
-                      className={`brutalist-input ${
-                        resetConfirmPassword
-                          ? resetPassword === resetConfirmPassword
-                            ? 'border-[#00ca4e] focus:bg-[#e6fcf0]'
-                            : 'border-[#ff3e3e] focus:bg-[#ffebeb]'
+                      className={
+                        resetConfirmPassword && resetPassword === resetConfirmPassword
+                          ? '!border-[#00ca4e] focus:bg-[#e6fcf0]'
                           : ''
-                      }`}
+                      }
                     />
                     {resetConfirmPassword && (
-                      <p className={`text-[10px] font-black uppercase tracking-wider ${
-                        resetPassword === resetConfirmPassword ? 'text-[#00ca4e]' : 'text-[#ff3e3e]'
-                      }`}>
+                      <p
+                        role="status"
+                        aria-live="polite"
+                        className={`text-[10px] font-black uppercase tracking-wider mt-1.5 ${
+                          resetPassword === resetConfirmPassword ? 'text-[#00ca4e]' : 'text-[#ff3e3e]'
+                        }`}
+                      >
                         {resetPassword === resetConfirmPassword ? 'Mật khẩu trùng khớp' : 'Mật khẩu không trùng khớp'}
                       </p>
                     )}
-                  </div>
-                  <button
+                  </FormField>
+                  <Button
                     type="submit"
-                    disabled={!resetPassword || resetPassword !== resetConfirmPassword}
-                    className="w-full brutalist-btn-red py-3 text-sm font-black disabled:opacity-50 disabled:cursor-not-allowed"
+                    variant="action"
+                    fullWidth
+                    disabled={!resetPassword || resetPassword !== resetConfirmPassword || loading}
+                    isLoading={loading}
+                    loadingText="Đang đổi mật khẩu..."
                   >
                     Đổi Mật Khẩu & Đăng Nhập ↗
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    fullWidth
                     onClick={() => setForgotStep(2)}
-                    className="w-full text-center text-xs font-black uppercase text-neutral-600 hover:text-black mt-2"
+                    className="mt-2 text-xs font-black uppercase text-neutral-600 hover:text-black"
                   >
                     ← Quay Lại Nhập OTP
-                  </button>
+                  </Button>
                 </form>
               )}
             </div>
@@ -684,60 +714,70 @@ export default function AuthModal({
                 <p className="text-xs font-semibold text-neutral-600 leading-relaxed">
                   Mở liên kết được gửi trong email, hoặc dán token xác thực từ liên kết đó vào bên dưới.
                 </p>
-                <div className="space-y-2">
-                  <label className="text-xs uppercase font-extrabold tracking-wider block">Token Kích Hoạt (UUID)</label>
-                  <input
+                <FormField id="verify-token" label="Mã Kích Hoạt Từ Email" required>
+                  <Input
+                    id="verify-token"
                     type="text"
                     required
-                    placeholder="Dán token xác thực từ email"
+                    placeholder="Dán mã kích hoạt từ email"
                     value={verifyTokenVal}
                     onChange={(e) => setVerifyTokenVal(e.target.value)}
-                    className="brutalist-input"
                   />
-                </div>
-                <button
+                </FormField>
+                <Button
                   type="submit"
-                  className="w-full brutalist-btn-red py-3 text-sm font-black"
+                  variant="action"
+                  fullWidth
+                  isLoading={loading}
+                  loadingText="Đang kích hoạt..."
                 >
-                  Xác Nhận Kích Hoạt Token
-                </button>
+                  Kích Hoạt Tài Khoản
+                </Button>
               </form>
 
               {/* Resend Link form container */}
               <details open className="text-[10px] text-neutral-600 font-extrabold cursor-pointer">
                 <summary className="hover:text-black">Bạn cần gửi lại liên kết kích hoạt?</summary>
                 <div className="mt-3 space-y-3 bg-[#f7f6f2] p-4 border-2 border-black rounded shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                  <div className="space-y-2">
-                    <label className="text-[9px] uppercase font-black text-black">Địa Chỉ Email</label>
-                    <input
+                  <FormField id="resend-email" label="Địa Chỉ Email Nhận Lại Mã">
+                    <Input
+                      id="resend-email"
                       type="email"
                       value={resendEmail}
                       onChange={(e) => setResendEmail(e.target.value)}
                       placeholder="yourname@gmail.com"
-                      className="brutalist-input py-2"
+                      autoComplete="email"
+                      className="py-2"
                     />
-                  </div>
-                  <button
+                  </FormField>
+                  <Button
+                    type="button"
+                    variant="action"
+                    size="sm"
+                    fullWidth
+                    disabled={loading || !resendEmail}
+                    isLoading={loading}
+                    loadingText="Đang gửi email..."
                     onClick={handleResendVerification}
-                    disabled={loading}
-                    className="w-full brutalist-btn-red py-1.5 px-3 text-[9px] font-black disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="text-xs"
                   >
-                    {loading ? 'Đang gửi email...' : 'Gửi Lại Kích Hoạt'}
-                  </button>
+                    Gửi Lại Kích Hoạt
+                  </Button>
                 </div>
               </details>
 
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                fullWidth
                 onClick={() => setAuthMode('login')}
                 className="w-full text-center text-xs font-black uppercase text-neutral-600 hover:text-black"
               >
                 Quay Lại Đăng Nhập
-              </button>
+              </Button>
             </div>
           )}
-        </div>
-      </div>
-    </div>
-  )
-}
+        </DialogContent>
+      </Dialog>
+    )
+  }

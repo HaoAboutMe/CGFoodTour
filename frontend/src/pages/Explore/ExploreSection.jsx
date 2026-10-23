@@ -4,7 +4,6 @@ import {
   Sparkles,
   RefreshCw,
   Compass,
-  Utensils,
   LayoutGrid,
   ListFilter,
   Search,
@@ -16,6 +15,7 @@ import {
 } from 'lucide-react'
 import StoreCard from '@/components/common/StoreCard'
 import CategoryIcon from '@/components/common/CategoryIcon'
+import { Input } from '@/components/ui'
 
 export default function ExploreSection({
   stores,
@@ -26,13 +26,6 @@ export default function ExploreSection({
   setSearchQuery,
   loadGlobalData,
   setActiveStore,
-  handleRandomPick,
-  rollingRandom,
-  randomResult,
-  setRandomResult,
-  switchTab,
-  loadLeaderboard,
-  leaderboard,
   handleToggleSaveStore,
   hasMoreServerStores = false,
   loadMoreServerStores,
@@ -46,6 +39,7 @@ export default function ExploreSection({
   const [openNowActive, setOpenNowActive] = useState(false)
   const [userCoords, setUserCoords] = useState(null)
   const [locationLoading, setLocationLoading] = useState(false)
+  const [locationError, setLocationError] = useState('')
   const [visibleCount, setVisibleCount] = useState(9) // Infinite batching starting at 9
   const [showCategorySheet, setShowCategorySheet] = useState(false)
   const [categorySearch, setCategorySearch] = useState('')
@@ -104,6 +98,7 @@ export default function ExploreSection({
   function handleToggleNearMe() {
     if (nearMeActive) {
       setNearMeActive(false)
+      setLocationError('')
       return
     }
 
@@ -113,20 +108,22 @@ export default function ExploreSection({
     }
 
     if (!navigator.geolocation) {
-      alert('Trình duyệt của bạn không hỗ trợ định vị GPS.')
+      setLocationError('Trình duyệt của bạn không hỗ trợ định vị GPS.')
       return
     }
 
+    setLocationError('')
     setLocationLoading(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
         setNearMeActive(true)
+        setLocationError('')
         setLocationLoading(false)
       },
       (err) => {
         console.warn('Geolocation was not available:', err)
-        alert('Không thể lấy vị trí. Vui lòng cấp quyền GPS hoặc chọn vị trí thủ công.')
+        setLocationError('Không thể lấy vị trí. Vui lòng cấp quyền GPS rồi thử lại.')
         setNearMeActive(false)
         setLocationLoading(false)
       },
@@ -214,16 +211,14 @@ export default function ExploreSection({
       {/* Control Panel: Integrated Search & Interactive Category Tiles */}
       <div className="brutalist-card bg-white p-4 sm:p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-4">
         {/* Search Bar */}
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" />
-          <input
-            type="text"
-            placeholder="Tìm tên món ăn, quán ăn, tên đường tại Cần Giuộc..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="brutalist-input brutalist-input-has-icon"
-          />
-        </div>
+        <Input
+          type="text"
+          placeholder="Tìm tên món ăn, quán ăn, tên đường tại Cần Giuộc..."
+          aria-label="Tìm kiếm món ăn, quán ăn, tên đường tại Cần Giuộc"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          leftAdornment={<Search className="w-4 h-4 text-neutral-500" />}
+        />
 
         {/* Fast Chips Filter Bar */}
         <div className="flex flex-wrap items-center gap-2 pt-1 border-t-2 border-neutral-100">
@@ -303,6 +298,15 @@ export default function ExploreSection({
             )
           })()}
         </div>
+
+        {locationError && (
+          <div role="alert" className="flex items-start justify-between gap-3 border-2 border-red-500 bg-red-50 p-3 text-xs font-bold text-red-700">
+            <span>{locationError}</span>
+            <button type="button" onClick={() => setLocationError('')} aria-label="Đóng thông báo vị trí" className="min-h-11 min-w-11 border-2 border-red-500 bg-white p-2">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
 
         {/* Complete Category Badges */}
         <div className="pt-2 border-t-2 border-neutral-100">

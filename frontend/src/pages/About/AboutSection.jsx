@@ -1,5 +1,5 @@
 import React from 'react'
-import { Compass, Mail, MapPin, ShieldCheck, Utensils, Store, Sparkles, ArrowRight, Heart } from 'lucide-react'
+import { Compass, Mail, MapPin, ShieldCheck, Utensils, Store, Heart } from 'lucide-react'
 
 export default function AboutSection({ switchTab, setShowAuthModal, setAuthMode, currentUser }) {
   return (

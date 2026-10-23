@@ -1,24 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Shield, LogOut, Menu, X, User, Store, ChevronDown, Info, Bookmark } from 'lucide-react'
-import logo1024 from '@/assets/logo_1024.webp'
+import { Shield, LogOut, User, Store, ChevronDown, Bookmark } from 'lucide-react'
+import logo128 from '@/assets/logo-128.webp'
+import { AVATAR_FALLBACK_IMAGE } from '@/utils/imageAssets'
 
 export default function Header({
   switchTab,
   activeTab,
   currentUser,
   isAdmin,
-  getUserRoleString,
   handleLogout,
   setShowAuthModal,
   setAuthMode
 }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
 
   const handleNavClick = (tab) => {
     switchTab(tab)
-    setMobileMenuOpen(false)
     setUserDropdownOpen(false)
   }
 
@@ -46,7 +44,9 @@ export default function Header({
           onClick={() => handleNavClick('explore')}
         >
           <img
-            src={logo1024}
+            src={logo128}
+            width="40"
+            height="40"
             alt="Cần Giuộc Food Tour"
             className="w-9 h-9 sm:w-10 sm:h-10 border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] object-cover bg-white select-none shrink-0"
           />
@@ -115,9 +115,11 @@ export default function Header({
                 <img
                   src={
                     currentUser.avatarUrl ||
-                    'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg'
+                    AVATAR_FALLBACK_IMAGE
                   }
                   alt="avatar"
+                  width="28"
+                  height="28"
                   className="w-7 h-7 border-2 border-black object-cover rounded-full"
                 />
                 <span className="hidden sm:inline font-black text-xs text-black max-w-[120px] truncate">
@@ -134,9 +136,11 @@ export default function Header({
                     <img
                       src={
                         currentUser.avatarUrl ||
-                        'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg'
+                        AVATAR_FALLBACK_IMAGE
                       }
                       alt="avatar"
+                      width="48"
+                      height="48"
                       className="w-12 h-12 border-2 border-black object-cover rounded-full shrink-0 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
                     />
                     <div className="flex-1 min-w-0">

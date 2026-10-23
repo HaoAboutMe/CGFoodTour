@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react'
-import { Bookmark, Search, Store, MapPin, Clock, ExternalLink, Trash2, Heart, ShieldAlert } from 'lucide-react'
+import { Bookmark, Search, Store, MapPin, Clock, ExternalLink, Trash2, Heart } from 'lucide-react'
 import { checkStoreOpenStatus } from '@/utils/timeUtils'
+import { STORE_FALLBACK_IMAGE } from '@/utils/imageAssets'
 
 export default function SavedStoresSection({
   savedStores = [],
@@ -117,9 +118,10 @@ export default function SavedStoresSection({
                   <img
                     src={
                       store.bannerImageUrl ||
-                      'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80'
+                      STORE_FALLBACK_IMAGE
                     }
                     alt={store.name}
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   {/* Status Overlay */}

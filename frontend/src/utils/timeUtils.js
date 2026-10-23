@@ -80,7 +80,7 @@ export function checkStoreOpenStatus(store) {
         statusClass: 'bg-[#fff5f5] text-[#c92a2a] border-[#c92a2a]'
       }
     }
-  } catch (e) {
+  } catch {
     return {
       isOpen: true,
       statusText: 'Đang Mở',

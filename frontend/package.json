@@ -7,11 +7,17 @@
     "dev": "vite",
     "build": "vite build && npm run verify:build",
     "verify:build": "node scripts/verify-production-build.mjs",
-    "lint": "oxlint",
+    "optimize:assets": "node scripts/optimize-assets.mjs",
+    "lint": "oxlint --deny-warnings",
+    "test": "node --test src/utils/*.test.js src/components/**/*.test.mjs scripts/*.test.mjs",
+    "test:primitives": "node --test src/components/ui/primitives.test.mjs",
+    "test:modal": "node --test src/components/modals/ConfirmActionModal.test.mjs",
     "test:redaction": "node --test src/utils/redactSensitiveData.test.js",
     "test:ui-errors": "node --test src/utils/apiErrorMessages.test.js",
     "test:maps": "node --test src/utils/googleMapsUrl.test.js",
     "test:store-url": "node --test src/utils/storeUrl.test.js",
+    "test:modal-validation": "node --test src/utils/destructiveAction.test.js",
+    "test:tokens": "node --test src/utils/designTokens.test.js",
     "test:build-contract": "node --test scripts/frontend-build-contract.test.mjs",
     "test:nginx-contract": "node --test scripts/nginx-contract.test.mjs",
     "test:e2e": "playwright test",
@@ -33,6 +39,6 @@
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
     "oxlint": "^1.79.0",
-    "vite": "^8.2.2"
+    "vite": "^8.2.4"
   }
 }

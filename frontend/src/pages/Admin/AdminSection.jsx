@@ -14,18 +14,13 @@ import {
   EyeOff,
   RotateCcw,
   X,
-  Utensils,
-  Coffee,
-  IceCream,
   Menu,
   CheckCircle2,
   AlertTriangle,
   Search,
-  ExternalLink,
   ChevronRight,
   ChevronDown,
   ChevronUp,
-  Eye,
   Clock,
   Phone,
   DollarSign,
@@ -35,11 +30,13 @@ import {
 } from 'lucide-react'
 import StoreActionModal from '@/components/modals/StoreActionModal'
 import AccountStatusModal from '@/components/modals/AccountStatusModal'
-import CustomSelect from '@/components/common/CustomSelect'
+import ConfirmActionModal from '@/components/modals/ConfirmActionModal'
+import { NativeSelect } from '@/components/ui'
 import CategoryIcon from '@/components/common/CategoryIcon'
 import CategoryIconPicker from '@/components/common/CategoryIconPicker'
 import ImageViewerModal from '@/components/modals/ImageViewerModal'
 import { getSafeGoogleMapsUrl } from '@/utils/googleMapsUrl'
+import { AVATAR_FALLBACK_IMAGE, FOOD_FALLBACK_IMAGE, STORE_FALLBACK_IMAGE } from '@/utils/imageAssets'
 
 export default function AdminSection({
   isUserAdmin,
@@ -51,18 +48,7 @@ export default function AdminSection({
   catIcon,
   setCatIcon,
   handleCreateCategory,
-  foodStoreId,
-  setFoodStoreId,
   stores = [],
-  foodName,
-  setFoodName,
-  foodPrice,
-  setFoodPrice,
-  foodImage,
-  setFoodImage,
-  foodDesc,
-  setFoodDesc,
-  handleCreateFoodItem,
   adminPendingStores = [],
   adminStoreSummary = {},
   handleAdminApprove,
@@ -118,6 +104,7 @@ export default function AdminSection({
   const [accountActionUser, setAccountActionUser] = useState(null)
   const [accountActionType, setAccountActionType] = useState(null)
   const [expandedUserIds, setExpandedUserIds] = useState([])
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   function loadStorePage(page) {
     loadAdminPendingStores({
@@ -375,7 +362,7 @@ export default function AdminSection({
           <div
             onClick={() =>
               setPreviewImage({
-                src: currentUser?.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg',
+                src: currentUser?.avatarUrl || AVATAR_FALLBACK_IMAGE,
                 alt: adminFullName,
                 caption: `Avatar Admin: ${adminFullName} (${currentUser?.email || ''})`
               })
@@ -384,7 +371,7 @@ export default function AdminSection({
             title="Bấm để xem ảnh đại diện Admin"
           >
             <img
-              src={currentUser?.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg'}
+              src={currentUser?.avatarUrl || AVATAR_FALLBACK_IMAGE}
               alt="Admin Avatar"
               className="w-10 h-10 rounded-full border-2 border-black object-cover shrink-0 group-hover:brightness-90 transition-all"
             />
@@ -434,7 +421,7 @@ export default function AdminSection({
               </div>
               <div className="relative z-10 space-y-2 max-w-xl">
                 <span className="brutalist-badge bg-white text-black border-2 border-black font-black uppercase text-xs px-3 py-1">
-                  Dashboard Overview
+                  Tổng Quan Quản Trị
                 </span>
                 <h2 className="text-2xl sm:text-4xl font-black uppercase tracking-tight text-white drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]">
                   Bảng Tổng Quan Quản Trị
@@ -538,7 +525,7 @@ export default function AdminSection({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-4 border-black pb-3">
                 <div>
                   <h3 className="text-lg font-black uppercase text-black flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-[#ff3e3e]" /> Tác Vụ Cần Xử Lý Gấp (Needs Attention)
+                    <AlertTriangle className="w-5 h-5 text-[#ff3e3e]" /> Tác Vụ Cần Xử Lý Gấp
                   </h3>
                   <p className="text-xs font-semibold text-neutral-500">
                     Danh sách quán ăn mới đăng ký chờ duyệt hoặc yêu cầu mở lại quán.
@@ -580,7 +567,7 @@ export default function AdminSection({
                           >
                             <div className="flex items-center gap-3">
                               <img
-                                src={st.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'}
+                                src={st.bannerImageUrl || STORE_FALLBACK_IMAGE}
                                 alt={st.name}
                                 className="w-10 h-10 border-2 border-black object-cover rounded shrink-0 group-hover:brightness-95 transition-all"
                               />
@@ -644,7 +631,7 @@ export default function AdminSection({
                           >
                             <div className="flex items-center gap-3">
                               <img
-                                src={st.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'}
+                                src={st.bannerImageUrl || STORE_FALLBACK_IMAGE}
                                 alt={st.name}
                                 className="w-10 h-10 border-2 border-black object-cover rounded shrink-0 group-hover:brightness-95 transition-all"
                               />
@@ -764,16 +751,20 @@ export default function AdminSection({
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs font-black uppercase text-neutral-500 shrink-0">Danh Mục:</span>
-                <CustomSelect
+                <label htmlFor="admin-store-category-filter" className="text-xs font-black uppercase text-neutral-500 shrink-0">
+                  Danh Mục:
+                </label>
+                <NativeSelect
+                  id="admin-store-category-filter"
+                  aria-label="Lọc quán theo danh mục"
                   value={storeCategoryFilter}
-                  onChange={(val) => setStoreCategoryFilter(val)}
+                  onChange={(e) => setStoreCategoryFilter(e.target.value)}
                   options={[
                     { value: 'ALL', label: 'Tất Cả Danh Mục' },
                     ...categories.map((c) => ({ value: String(c.id), label: c.name }))
                   ]}
-                  dropdownAlign="right"
-                  width="w-44 sm:w-52"
+                  containerClassName="w-44 sm:w-52"
+                  className="rounded-full text-xs font-black uppercase border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
                 />
               </div>
             </div>
@@ -807,7 +798,7 @@ export default function AdminSection({
                     <div>
                       <div className="h-36 w-full border-b-2 border-black relative bg-neutral-200 overflow-hidden">
                         <img
-                          src={st.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'}
+                          src={st.bannerImageUrl || STORE_FALLBACK_IMAGE}
                           alt={st.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
@@ -825,12 +816,12 @@ export default function AdminSection({
                         <div>
                           {st.status === 'APPROVED' ? (
                             <span className="brutalist-badge bg-[#e6fcf5] text-[#0ca678] border-[#0ca678]">
-                              APPROVED (Công khai)
+                              Đã Duyệt (Công khai)
                             </span>
                           ) : st.status === 'HIDDEN' ? (
                             <div className="space-y-1">
                               <span className="brutalist-badge bg-[#fff9db] text-[#b45309] border-[#b45309]">
-                                HIDDEN (Đã Ẩn)
+                                Đang Ẩn
                               </span>
                               {st.recoveryRequested && (
                                 <div className="text-[10px] font-bold text-indigo-900 bg-indigo-50 p-1.5 border border-indigo-300 rounded italic mt-1">
@@ -840,11 +831,11 @@ export default function AdminSection({
                             </div>
                           ) : st.status === 'REJECTED' ? (
                             <span className="brutalist-badge bg-[#fff5f5] text-[#c92a2a] border-[#c92a2a]">
-                              REJECTED (Bị từ chối)
+                              Bị Từ Chối
                             </span>
                           ) : (
                             <span className="brutalist-badge bg-[#eef2ff] text-[#4338ca] border-[#4338ca]">
-                              PENDING (Chờ duyệt)
+                              Chờ Duyệt
                             </span>
                           )}
                         </div>
@@ -986,16 +977,21 @@ export default function AdminSection({
               {/* Search user & Role Filter */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase text-neutral-500 shrink-0">Vai Trò:</span>
-                  <CustomSelect
+                  <label htmlFor="admin-user-role-filter" className="text-xs font-black uppercase text-neutral-500 shrink-0">
+                    Vai Trò:
+                  </label>
+                  <NativeSelect
+                    id="admin-user-role-filter"
+                    aria-label="Lọc người dùng theo vai trò"
                     value={userRoleFilter}
-                    onChange={(val) => setUserRoleFilter(val)}
+                    onChange={(e) => setUserRoleFilter(e.target.value)}
                     options={[
                       { value: 'ALL', label: 'Tất Cả Roles' },
                       { value: 'ADMIN', label: 'ADMIN (Quản trị)' },
                       { value: 'USER', label: 'USER (Người dùng)' }
                     ]}
-                    width="w-40 sm:w-48"
+                    containerClassName="w-40 sm:w-48"
+                    className="rounded-full text-xs font-black uppercase border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
                   />
                 </div>
 
@@ -1075,12 +1071,12 @@ export default function AdminSection({
                                       )}
                                     </button>
                                     <img
-                                      src={u.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg'}
+                                      src={u.avatarUrl || AVATAR_FALLBACK_IMAGE}
                                       alt="avatar"
                                       onClick={(e) => {
                                         e.stopPropagation()
                                         setPreviewImage({
-                                          src: u.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg',
+                                          src: u.avatarUrl || AVATAR_FALLBACK_IMAGE,
                                           alt: u.username,
                                           caption: `Avatar Người Dùng: @${u.username} (${u.email || 'N/A'})`
                                         })
@@ -1163,7 +1159,7 @@ export default function AdminSection({
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() => handleAdminDeleteUser(u)}
+                                      onClick={() => setDeleteTarget({ type: 'USER', item: u })}
                                       disabled={u.id === currentUser?.id}
                                       className="px-2.5 py-1.5 bg-[#fff5f5] hover:bg-[#ffe0e0] text-[#ff3e3e] font-black text-[11px] uppercase border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] flex items-center gap-1.5 cursor-pointer transition-all"
                                     >
@@ -1230,7 +1226,7 @@ export default function AdminSection({
                                               >
                                                 <div className="flex items-start gap-2.5">
                                                   <img
-                                                    src={st.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'}
+                                                    src={st.bannerImageUrl || STORE_FALLBACK_IMAGE}
                                                     alt={st.name}
                                                     className="w-12 h-12 border-2 border-black object-cover rounded-lg shrink-0 group-hover:brightness-95 transition-all"
                                                   />
@@ -1340,18 +1336,22 @@ export default function AdminSection({
                     <Folder className="w-5 h-5 text-[#ff3e3e]" /> Danh Sách Danh Mục Ẩm Thực
                   </h3>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-black uppercase text-neutral-500 shrink-0">Sắp xếp:</span>
-                    <CustomSelect
+                    <label htmlFor="admin-category-sort-by" className="text-xs font-black uppercase text-neutral-500 shrink-0">
+                      Sắp xếp:
+                    </label>
+                    <NativeSelect
+                      id="admin-category-sort-by"
+                      aria-label="Sắp xếp danh sách danh mục"
                       value={categorySortBy}
-                      onChange={(val) => setCategorySortBy(val)}
+                      onChange={(e) => setCategorySortBy(e.target.value)}
                       options={[
                         { value: 'ID_ASC', label: 'ID Tăng Dần (1-9)' },
                         { value: 'ID_DESC', label: 'ID Giảm Dần (9-1)' },
                         { value: 'NAME_ASC', label: 'Tên A → Z' },
                         { value: 'NAME_DESC', label: 'Tên Z → A' }
                       ]}
-                      dropdownAlign="right"
-                      width="w-44 sm:w-52"
+                      containerClassName="w-44 sm:w-52"
+                      className="rounded-full text-xs font-black uppercase border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
                     />
                   </div>
                 </div>
@@ -1397,7 +1397,7 @@ export default function AdminSection({
                                 <span>Sửa</span>
                               </button>
                               <button
-                                onClick={() => handleDeleteCategory(cat.id)}
+                                onClick={() => setDeleteTarget({ type: 'CATEGORY', item: cat })}
                                 className="px-2.5 py-1.5 bg-[#fff5f5] hover:bg-[#ffe0e0] text-[#ff3e3e] font-black text-[11px] uppercase border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] flex items-center gap-1.5 cursor-pointer transition-all"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1422,6 +1422,7 @@ export default function AdminSection({
 
       {/* Store Action Confirm Modal */}
       <StoreActionModal
+        key={adminActionModalStore ? `${adminActionModalType}-${adminActionModalStore.id}` : 'admin-store-action-closed'}
         isOpen={!!adminActionModalStore}
         actionType={adminActionModalType}
         store={adminActionModalStore}
@@ -1439,6 +1440,22 @@ export default function AdminSection({
           onConfirm={handleAccountActionConfirm}
         />
       )}
+
+      <ConfirmActionModal
+        key={deleteTarget ? `${deleteTarget.type}-${deleteTarget.item.id}` : 'delete-closed'}
+        isOpen={Boolean(deleteTarget)}
+        title={deleteTarget?.type === 'USER' ? 'Xóa tài khoản người dùng' : 'Xóa danh mục'}
+        description={deleteTarget?.type === 'USER'
+          ? `Toàn bộ tài khoản @${deleteTarget.item.username} và dữ liệu công khai liên quan sẽ bị xóa. Audit xóa tài khoản vẫn được giữ theo chính sách hệ thống.`
+          : `Danh mục "${deleteTarget?.item.name || ''}" sẽ bị xóa. Thao tác sẽ thất bại nếu vẫn còn quán đang sử dụng danh mục này.`}
+        confirmLabel={deleteTarget?.type === 'USER' ? 'Xóa tài khoản' : 'Xóa danh mục'}
+        expectedText={deleteTarget?.type === 'USER' ? deleteTarget.item.username : ''}
+        reasonRequired={deleteTarget?.type === 'USER'}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={({ confirmation, reason }) => deleteTarget?.type === 'USER'
+          ? handleAdminDeleteUser(deleteTarget.item, confirmation, reason)
+          : handleDeleteCategory(deleteTarget.item.id)}
+      />
 
       {/* Admin Rejection Modal */}
       {rejectingStore && createPortal(
@@ -1684,7 +1701,7 @@ export default function AdminSection({
               <div
                 onClick={() =>
                   setPreviewImage({
-                    src: viewingStore.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60',
+                    src: viewingStore.bannerImageUrl || STORE_FALLBACK_IMAGE,
                     alt: viewingStore.name,
                     caption: `Ảnh Banner Quán: ${viewingStore.name}`
                   })
@@ -1695,7 +1712,7 @@ export default function AdminSection({
                 <img
                   src={
                     viewingStore.bannerImageUrl ||
-                    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'
+                    STORE_FALLBACK_IMAGE
                   }
                   alt={viewingStore.name}
                   className="w-full h-full object-cover group-hover:brightness-90 transition-all"
@@ -1824,7 +1841,7 @@ export default function AdminSection({
                           key={food.id}
                           onClick={() =>
                             setPreviewImage({
-                              src: food.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60',
+                              src: food.imageUrl || FOOD_FALLBACK_IMAGE,
                               alt: food.name,
                               caption: `Món: ${food.name} (${food.price?.toLocaleString()}đ)`
                             })
@@ -1836,7 +1853,7 @@ export default function AdminSection({
                             <img
                               src={
                                 food.imageUrl ||
-                                'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60'
+                                FOOD_FALLBACK_IMAGE
                               }
                               alt={food.name}
                               className="w-16 h-16 border-2 border-black rounded-lg object-cover group-hover/food:brightness-90 transition-all"
@@ -1878,19 +1895,19 @@ export default function AdminSection({
                       <span className="font-extrabold text-neutral-500">Trạng thái hiện tại:</span>
                       {viewingStore.status === 'APPROVED' ? (
                         <span className="brutalist-badge bg-[#e6fcf5] text-[#0ca678] border-[#0ca678] text-[10px]">
-                          APPROVED (Công khai)
+                          Đã Duyệt (Công khai)
                         </span>
                       ) : viewingStore.status === 'HIDDEN' ? (
                         <span className="brutalist-badge bg-[#fff9db] text-[#b45309] border-[#b45309] text-[10px]">
-                          HIDDEN (Đã ẩn)
+                          Đang Ẩn
                         </span>
                       ) : viewingStore.status === 'REJECTED' ? (
                         <span className="brutalist-badge bg-[#fff5f5] text-[#c92a2a] border-[#c92a2a] text-[10px]">
-                          REJECTED (Bị từ chối)
+                          Bị Từ Chối
                         </span>
                       ) : (
                         <span className="brutalist-badge bg-[#eef2ff] text-[#4338ca] border-[#4338ca] text-[10px]">
-                          PENDING (Chờ duyệt)
+                          Chờ Duyệt
                         </span>
                       )}
                     </p>

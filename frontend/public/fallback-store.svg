@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="title description">
+  <title id="title">Ảnh quán ăn mặc định</title>
+  <desc id="description">Minh họa một quán ăn tại Cần Giuộc</desc>
+  <rect width="800" height="500" fill="#fff9db"/>
+  <path d="M150 210h500v210H150z" fill="#fff" stroke="#111" stroke-width="18"/>
+  <path d="M125 210l55-105h440l55 105z" fill="#ff3e3e" stroke="#111" stroke-width="18" stroke-linejoin="round"/>
+  <path d="M220 105v105m90-105v105m90-105v105m90-105v105m90-105v105" stroke="#111" stroke-width="14"/>
+  <path d="M205 285h150v135H205zm240 0h150v78H445z" fill="#e6fcf5" stroke="#111" stroke-width="16"/>
+  <circle cx="325" cy="350" r="8" fill="#ff3e3e"/>
+  <text x="400" y="470" text-anchor="middle" font-family="Arial,sans-serif" font-size="30" font-weight="800" fill="#111">CẦN GIUỘC FOOD TOUR</text>
+</svg>

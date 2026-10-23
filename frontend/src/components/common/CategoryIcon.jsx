@@ -1,7 +1,7 @@
+/* oxlint-disable react/only-export-components -- icon catalogue is shared with its picker */
 import React from 'react'
 import {
   Utensils,
-  UtensilsCrossed,
   Soup,
   Coffee,
   CupSoda,

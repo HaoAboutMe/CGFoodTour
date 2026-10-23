@@ -40,17 +40,13 @@ export default function BottomNav({
     return () => window.removeEventListener('scroll', handleScroll)
   }, [lastScrollY])
 
-  // Reset visibility when changing tabs
-  useEffect(() => {
-    setIsVisible(true)
-  }, [activeTab])
-
   const handleTabClick = (tabKey, requiresAuth = false) => {
     if (requiresAuth && !currentUser) {
       setAuthMode('login')
       setShowAuthModal(true)
       return
     }
+    setIsVisible(true)
     switchTab(tabKey)
   }
 

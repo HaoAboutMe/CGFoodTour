@@ -10,7 +10,10 @@ const FORBIDDEN = [
   { label: 'Facebook OAuth placeholder', pattern: /YOUR_(?:FB_ID|FACEBOOK_APP_ID)/i },
   { label: 'generic unreplaced placeholder', pattern: /CHANGE_ME/i },
   { label: 'embedded JWT-like token', pattern: /eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}/ },
-  { label: 'embedded private key', pattern: /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/ }
+  { label: 'embedded private key', pattern: /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/ },
+  { label: 'manual OAuth token dev control', pattern: /Hoặc nhập OAuth Tokens thủ công/ },
+  { label: 'simulated GPS coordinate controls', pattern: /(?:Vĩ|Kinh) Độ Của Bạn/ },
+  { label: 'technical security gateway badge', pattern: />Security Gateway</ }
 ]
 
 async function listFiles(directory) {

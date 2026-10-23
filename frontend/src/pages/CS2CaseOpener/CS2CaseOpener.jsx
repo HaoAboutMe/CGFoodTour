@@ -1,3 +1,4 @@
+/* oxlint-disable react/set-state-in-effect -- eligible-store changes intentionally reset the carousel state machine */
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import {
@@ -20,25 +21,23 @@ import {
   ChevronRight,
   Filter,
   Layers,
-  Star,
-  DollarSign,
   Clock,
   Trash2,
   X
 } from 'lucide-react'
 import CategoryIcon from '@/components/common/CategoryIcon'
-import StoreCard from '@/components/common/StoreCard'
 import { checkStoreOpenStatus } from '@/utils/timeUtils'
+import { STORE_FALLBACK_IMAGE } from '@/utils/imageAssets'
 
 const getStoreImageUrl = (store) => {
-  if (!store) return 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80'
+  if (!store) return STORE_FALLBACK_IMAGE
   return (
     store.bannerImageUrl ||
     store.imageUrl ||
     store.avatarUrl ||
     store.bannerUrl ||
     store.image ||
-    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80'
+    STORE_FALLBACK_IMAGE
   )
 }
 
@@ -101,7 +100,7 @@ export default function CS2CaseOpener({
       if (AudioCtx) {
         audioCtxRef.current = new AudioCtx()
       }
-    } catch (e) {
+    } catch {
       console.warn('Web Audio API not supported', e)
     }
     return () => {
@@ -137,7 +136,7 @@ export default function CS2CaseOpener({
 
       osc.start()
       osc.stop(ctx.currentTime + 0.03)
-    } catch (e) {
+    } catch {
       // Audio fallback silent guard
     }
   }
@@ -243,6 +242,8 @@ export default function CS2CaseOpener({
 
   // Pre-fill initial 3D Carousel Reel when eligible stores or mode changes
   useEffect(() => {
+    // This effect deliberately resets the animation machine when its eligible
+    // dataset changes; these values cannot be derived while a spin is running.
     if (eligibleStores.length > 0) {
       const initialPool = buildNonAdjacentReel(eligibleStores, 30)
       setReelPool(initialPool)
@@ -450,7 +451,7 @@ export default function CS2CaseOpener({
                                 alt={store.name}
                                 onError={(e) => {
                                   e.currentTarget.onerror = null
-                                  e.currentTarget.src = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80'
+                                  e.currentTarget.src = STORE_FALLBACK_IMAGE
                                 }}
                                 className="w-full h-full object-cover"
                               />
@@ -791,7 +792,7 @@ export default function CS2CaseOpener({
                             alt={s.name}
                             onError={(e) => {
                               e.currentTarget.onerror = null
-                              e.currentTarget.src = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=100&auto=format&fit=crop&q=60'
+                              e.currentTarget.src = STORE_FALLBACK_IMAGE
                             }}
                             className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg object-cover border border-white/20 shrink-0"
                           />
@@ -878,7 +879,7 @@ export default function CS2CaseOpener({
                             alt={s.name}
                             onError={(e) => {
                               e.currentTarget.onerror = null
-                              e.currentTarget.src = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300&auto=format&fit=crop&q=60'
+                              e.currentTarget.src = STORE_FALLBACK_IMAGE
                             }}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
@@ -1084,7 +1085,7 @@ export default function CS2CaseOpener({
                       alt={winnerStore.name}
                       onError={(e) => {
                         e.currentTarget.onerror = null
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80'
+                        e.currentTarget.src = STORE_FALLBACK_IMAGE
                       }}
                       className="w-full h-full object-cover"
                     />
