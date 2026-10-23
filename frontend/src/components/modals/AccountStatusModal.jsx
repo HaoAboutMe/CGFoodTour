@@ -1,11 +1,15 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Lock, Unlock, X } from 'lucide-react'
+import { useDialogFocus } from '@/hooks/useDialogFocus'
 
 export default function AccountStatusModal({ user, actionType, onClose, onConfirm }) {
   const [reason, setReason] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const titleId = useId()
+  const descriptionId = useId()
+  const dialogRef = useDialogFocus(Boolean(user && actionType), submitting ? null : onClose)
 
   if (!user || !actionType) return null
 
@@ -27,7 +31,7 @@ export default function AccountStatusModal({ user, actionType, onClose, onConfir
 
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fade-in">
-      <div className="relative w-full max-w-md space-y-5 border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} tabIndex={-1} className="relative w-full max-w-md space-y-5 border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
         <div className="flex items-center justify-between border-b-3 border-black pb-4">
           <div className="flex items-center gap-3">
             <div className={`border-2 border-black p-2 ${isDisable ? 'bg-amber-100' : 'bg-emerald-100'}`}>
@@ -35,7 +39,7 @@ export default function AccountStatusModal({ user, actionType, onClose, onConfir
                 ? <Lock className="h-6 w-6 text-amber-700" />
                 : <Unlock className="h-6 w-6 text-emerald-700" />}
             </div>
-            <h3 className="text-xl font-black uppercase">
+            <h3 id={titleId} className="text-xl font-black uppercase">
               {isDisable ? 'Khóa Tài Khoản' : 'Mở Khóa Tài Khoản'}
             </h3>
           </div>
@@ -50,7 +54,7 @@ export default function AccountStatusModal({ user, actionType, onClose, onConfir
           </button>
         </div>
 
-        <p className="text-sm font-semibold leading-relaxed text-neutral-700">
+        <p id={descriptionId} className="text-sm font-semibold leading-relaxed text-neutral-700">
           {isDisable
             ? <>Tài khoản <strong>@{user.username}</strong> sẽ bị khóa, toàn bộ phiên đăng nhập hiện tại bị thu hồi và các quán của người dùng sẽ tạm ẩn khỏi khu vực công khai.</>
             : <>Tài khoản <strong>@{user.username}</strong> sẽ được mở khóa. Các quán đã được duyệt trước đó có thể xuất hiện công khai trở lại.</>}

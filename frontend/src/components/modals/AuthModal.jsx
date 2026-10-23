@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useId } from 'react'
 import { X, Eye, EyeOff } from 'lucide-react'
+import { useDialogFocus } from '@/hooks/useDialogFocus'
 
 export default function AuthModal({
   showAuthModal,
@@ -64,6 +65,8 @@ export default function AuthModal({
   loading,
   showToast
 }) {
+  const titleId = useId()
+  const dialogRef = useDialogFocus(showAuthModal, loading ? null : () => setShowAuthModal(false))
   if (!showAuthModal) return null
 
   // Handle OTP digit changes
@@ -117,10 +120,13 @@ export default function AuthModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 sm:p-4">
-      <div className={`w-full ${authMode === 'register' ? 'max-w-xl sm:max-w-2xl' : 'max-w-md'} brutalist-card bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative max-h-[92vh] overflow-y-auto overflow-x-hidden animate-fade-in-up transition-all duration-300`}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className={`w-full ${authMode === 'register' ? 'max-w-xl sm:max-w-2xl' : 'max-w-md'} brutalist-card bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative max-h-[92vh] overflow-y-auto overflow-x-hidden animate-fade-in-up transition-all duration-300`}>
         {/* Close Button */}
         <button
           onClick={() => setShowAuthModal(false)}
+          type="button"
+          disabled={loading}
+          aria-label="Đóng cửa sổ đăng nhập"
           className="absolute top-4 right-4 p-2 bg-white border-2 border-black hover:bg-neutral-100 text-black transition-colors cursor-pointer z-10 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
         >
           <X className="w-4 h-4" />
@@ -130,7 +136,7 @@ export default function AuthModal({
           {/* Header */}
           <div className="text-center space-y-1 border-b-4 border-black pb-3">
             <span className="brutalist-badge bg-[#ff3e3e] text-white">Security Gateway</span>
-            <h3 className="text-2xl font-black uppercase text-black mt-2">
+            <h3 id={titleId} className="text-2xl font-black uppercase text-black mt-2">
               {authMode === 'login' && 'Đăng Nhập'}
               {authMode === 'register' && 'Tạo Tài Khoản'}
               {authMode === 'verify' && 'Xác Thực Email'}

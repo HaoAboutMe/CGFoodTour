@@ -4,7 +4,6 @@ import {
   Sparkles,
   RefreshCw,
   Compass,
-  Utensils,
   LayoutGrid,
   ListFilter,
   Search,
@@ -26,13 +25,6 @@ export default function ExploreSection({
   setSearchQuery,
   loadGlobalData,
   setActiveStore,
-  handleRandomPick,
-  rollingRandom,
-  randomResult,
-  setRandomResult,
-  switchTab,
-  loadLeaderboard,
-  leaderboard,
   handleToggleSaveStore,
   hasMoreServerStores = false,
   loadMoreServerStores,
@@ -46,6 +38,7 @@ export default function ExploreSection({
   const [openNowActive, setOpenNowActive] = useState(false)
   const [userCoords, setUserCoords] = useState(null)
   const [locationLoading, setLocationLoading] = useState(false)
+  const [locationError, setLocationError] = useState('')
   const [visibleCount, setVisibleCount] = useState(9) // Infinite batching starting at 9
   const [showCategorySheet, setShowCategorySheet] = useState(false)
   const [categorySearch, setCategorySearch] = useState('')
@@ -104,6 +97,7 @@ export default function ExploreSection({
   function handleToggleNearMe() {
     if (nearMeActive) {
       setNearMeActive(false)
+      setLocationError('')
       return
     }
 
@@ -113,20 +107,22 @@ export default function ExploreSection({
     }
 
     if (!navigator.geolocation) {
-      alert('Trình duyệt của bạn không hỗ trợ định vị GPS.')
+      setLocationError('Trình duyệt của bạn không hỗ trợ định vị GPS.')
       return
     }
 
+    setLocationError('')
     setLocationLoading(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
         setNearMeActive(true)
+        setLocationError('')
         setLocationLoading(false)
       },
       (err) => {
         console.warn('Geolocation was not available:', err)
-        alert('Không thể lấy vị trí. Vui lòng cấp quyền GPS hoặc chọn vị trí thủ công.')
+        setLocationError('Không thể lấy vị trí. Vui lòng cấp quyền GPS rồi thử lại.')
         setNearMeActive(false)
         setLocationLoading(false)
       },
@@ -303,6 +299,15 @@ export default function ExploreSection({
             )
           })()}
         </div>
+
+        {locationError && (
+          <div role="alert" className="flex items-start justify-between gap-3 border-2 border-red-500 bg-red-50 p-3 text-xs font-bold text-red-700">
+            <span>{locationError}</span>
+            <button type="button" onClick={() => setLocationError('')} aria-label="Đóng thông báo vị trí" className="min-h-11 min-w-11 border-2 border-red-500 bg-white p-2">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
 
         {/* Complete Category Badges */}
         <div className="pt-2 border-t-2 border-neutral-100">

@@ -5,6 +5,8 @@ import { checkStoreOpenStatus } from '@/utils/timeUtils'
 import ImageViewerModal from '@/components/modals/ImageViewerModal'
 import { getSafeGoogleMapsUrl } from '@/utils/googleMapsUrl'
 import { canShareStore, storePath } from '@/utils/storeUrl'
+import { useDialogFocus } from '@/hooks/useDialogFocus'
+import { FOOD_FALLBACK_IMAGE, STORE_FALLBACK_IMAGE } from '@/utils/imageAssets'
 
 export default function StoreDetailDrawer({
   activeStore,
@@ -20,6 +22,8 @@ export default function StoreDetailDrawer({
 }) {
   const [previewImage, setPreviewImage] = useState(null)
   const [shareFeedback, setShareFeedback] = useState('')
+  const closeDrawer = () => onClose ? onClose() : setActiveStore(null)
+  const drawerRef = useDialogFocus(Boolean(activeStore && !previewImage), closeDrawer)
 
   // Prevent background page scrolling when store detail is open
   useEffect(() => {
@@ -95,10 +99,10 @@ export default function StoreDetailDrawer({
   return createPortal(
     <div className="fixed inset-0 z-[9999] bg-black/60 flex justify-end items-end sm:items-stretch">
       {/* Close click backdrop */}
-      <div className="fixed inset-0 bg-black/60 cursor-pointer" onClick={() => onClose ? onClose() : setActiveStore(null)} />
+      <div className="fixed inset-0 bg-black/60 cursor-pointer" aria-hidden="true" onClick={closeDrawer} />
 
       {/* Drawer content (Bottom-sheet on mobile, Right slide-in on desktop) */}
-      <div className="w-full sm:max-w-lg bg-white border-t-4 sm:border-t-0 sm:border-l-4 border-black h-[90vh] sm:h-full rounded-t-3xl sm:rounded-none overflow-y-auto no-scrollbar relative z-10 shadow-2xl animate-slide-in-right">
+      <div ref={drawerRef} role="dialog" aria-modal="true" aria-label={`Chi tiết quán ${activeStore.name}`} tabIndex={-1} className="w-full sm:max-w-lg bg-white border-t-4 sm:border-t-0 sm:border-l-4 border-black h-[90vh] sm:h-full rounded-t-3xl sm:rounded-none overflow-y-auto no-scrollbar relative z-10 shadow-2xl animate-slide-in-right">
         {/* Sticky Top Close Button (Stays visible on top-right at all scroll positions) */}
         <div className="sticky top-3 right-3 z-50 flex h-0 items-start justify-end gap-2 px-4 pointer-events-none">
           {isShareable && (
@@ -129,6 +133,7 @@ export default function StoreDetailDrawer({
             }}
             className="w-9 h-9 shrink-0 flex items-center justify-center bg-white border-2 border-black rounded-full hover:bg-neutral-100 text-black transition-colors cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] pointer-events-auto"
             title="Đóng cửa sổ chi tiết"
+            aria-label="Đóng cửa sổ chi tiết"
           >
             <X className="w-4 h-4" />
           </button>
@@ -141,7 +146,7 @@ export default function StoreDetailDrawer({
           <div
             onClick={() =>
               setPreviewImage({
-                src: activeStore.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60',
+                src: activeStore.bannerImageUrl || STORE_FALLBACK_IMAGE,
                 alt: activeStore.name,
                 caption: `Ảnh Quán Ăn: ${activeStore.name}`
               })
@@ -152,7 +157,7 @@ export default function StoreDetailDrawer({
             <img
               src={
                 activeStore.bannerImageUrl ||
-                'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'
+                STORE_FALLBACK_IMAGE
               }
               alt={activeStore.name}
               className="w-full h-full object-cover group-hover:brightness-90 transition-all"
@@ -272,7 +277,7 @@ export default function StoreDetailDrawer({
                       key={food.id}
                       onClick={() =>
                         setPreviewImage({
-                          src: food.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60',
+                          src: food.imageUrl || FOOD_FALLBACK_IMAGE,
                           alt: food.name,
                           caption: `Món: ${food.name} (${food.price?.toLocaleString()}đ)`
                         })
@@ -284,9 +289,10 @@ export default function StoreDetailDrawer({
                         <img
                           src={
                             food.imageUrl ||
-                            'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60'
+                            FOOD_FALLBACK_IMAGE
                           }
                           alt={food.name}
+                          loading="lazy"
                           className="w-16 h-16 border-2 border-black rounded-lg object-cover group-hover/food:brightness-90 transition-all"
                         />
                         <div className="absolute inset-0 bg-black/30 rounded-lg flex items-center justify-center opacity-0 group-hover/food:opacity-100 transition-opacity pointer-events-none">

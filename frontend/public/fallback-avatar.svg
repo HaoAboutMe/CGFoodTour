@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-labelledby="title">
+  <title id="title">Ảnh đại diện mặc định</title>
+  <rect width="200" height="200" rx="100" fill="#fff9db"/>
+  <circle cx="100" cy="75" r="38" fill="#ff3e3e" stroke="#111" stroke-width="10"/>
+  <path d="M35 190c5-55 30-80 65-80s60 25 65 80" fill="#ff3e3e" stroke="#111" stroke-width="10"/>
+</svg>

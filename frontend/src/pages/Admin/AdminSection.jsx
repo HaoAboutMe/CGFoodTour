@@ -14,18 +14,13 @@ import {
   EyeOff,
   RotateCcw,
   X,
-  Utensils,
-  Coffee,
-  IceCream,
   Menu,
   CheckCircle2,
   AlertTriangle,
   Search,
-  ExternalLink,
   ChevronRight,
   ChevronDown,
   ChevronUp,
-  Eye,
   Clock,
   Phone,
   DollarSign,
@@ -35,11 +30,13 @@ import {
 } from 'lucide-react'
 import StoreActionModal from '@/components/modals/StoreActionModal'
 import AccountStatusModal from '@/components/modals/AccountStatusModal'
+import ConfirmActionModal from '@/components/modals/ConfirmActionModal'
 import CustomSelect from '@/components/common/CustomSelect'
 import CategoryIcon from '@/components/common/CategoryIcon'
 import CategoryIconPicker from '@/components/common/CategoryIconPicker'
 import ImageViewerModal from '@/components/modals/ImageViewerModal'
 import { getSafeGoogleMapsUrl } from '@/utils/googleMapsUrl'
+import { AVATAR_FALLBACK_IMAGE, FOOD_FALLBACK_IMAGE, STORE_FALLBACK_IMAGE } from '@/utils/imageAssets'
 
 export default function AdminSection({
   isUserAdmin,
@@ -51,18 +48,7 @@ export default function AdminSection({
   catIcon,
   setCatIcon,
   handleCreateCategory,
-  foodStoreId,
-  setFoodStoreId,
   stores = [],
-  foodName,
-  setFoodName,
-  foodPrice,
-  setFoodPrice,
-  foodImage,
-  setFoodImage,
-  foodDesc,
-  setFoodDesc,
-  handleCreateFoodItem,
   adminPendingStores = [],
   adminStoreSummary = {},
   handleAdminApprove,
@@ -118,6 +104,7 @@ export default function AdminSection({
   const [accountActionUser, setAccountActionUser] = useState(null)
   const [accountActionType, setAccountActionType] = useState(null)
   const [expandedUserIds, setExpandedUserIds] = useState([])
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   function loadStorePage(page) {
     loadAdminPendingStores({
@@ -375,7 +362,7 @@ export default function AdminSection({
           <div
             onClick={() =>
               setPreviewImage({
-                src: currentUser?.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg',
+                src: currentUser?.avatarUrl || AVATAR_FALLBACK_IMAGE,
                 alt: adminFullName,
                 caption: `Avatar Admin: ${adminFullName} (${currentUser?.email || ''})`
               })
@@ -384,7 +371,7 @@ export default function AdminSection({
             title="Bấm để xem ảnh đại diện Admin"
           >
             <img
-              src={currentUser?.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg'}
+              src={currentUser?.avatarUrl || AVATAR_FALLBACK_IMAGE}
               alt="Admin Avatar"
               className="w-10 h-10 rounded-full border-2 border-black object-cover shrink-0 group-hover:brightness-90 transition-all"
             />
@@ -580,7 +567,7 @@ export default function AdminSection({
                           >
                             <div className="flex items-center gap-3">
                               <img
-                                src={st.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'}
+                                src={st.bannerImageUrl || STORE_FALLBACK_IMAGE}
                                 alt={st.name}
                                 className="w-10 h-10 border-2 border-black object-cover rounded shrink-0 group-hover:brightness-95 transition-all"
                               />
@@ -644,7 +631,7 @@ export default function AdminSection({
                           >
                             <div className="flex items-center gap-3">
                               <img
-                                src={st.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'}
+                                src={st.bannerImageUrl || STORE_FALLBACK_IMAGE}
                                 alt={st.name}
                                 className="w-10 h-10 border-2 border-black object-cover rounded shrink-0 group-hover:brightness-95 transition-all"
                               />
@@ -807,7 +794,7 @@ export default function AdminSection({
                     <div>
                       <div className="h-36 w-full border-b-2 border-black relative bg-neutral-200 overflow-hidden">
                         <img
-                          src={st.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'}
+                          src={st.bannerImageUrl || STORE_FALLBACK_IMAGE}
                           alt={st.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
@@ -1075,12 +1062,12 @@ export default function AdminSection({
                                       )}
                                     </button>
                                     <img
-                                      src={u.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg'}
+                                      src={u.avatarUrl || AVATAR_FALLBACK_IMAGE}
                                       alt="avatar"
                                       onClick={(e) => {
                                         e.stopPropagation()
                                         setPreviewImage({
-                                          src: u.avatarUrl || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg',
+                                          src: u.avatarUrl || AVATAR_FALLBACK_IMAGE,
                                           alt: u.username,
                                           caption: `Avatar Người Dùng: @${u.username} (${u.email || 'N/A'})`
                                         })
@@ -1163,7 +1150,7 @@ export default function AdminSection({
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() => handleAdminDeleteUser(u)}
+                                      onClick={() => setDeleteTarget({ type: 'USER', item: u })}
                                       disabled={u.id === currentUser?.id}
                                       className="px-2.5 py-1.5 bg-[#fff5f5] hover:bg-[#ffe0e0] text-[#ff3e3e] font-black text-[11px] uppercase border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] flex items-center gap-1.5 cursor-pointer transition-all"
                                     >
@@ -1230,7 +1217,7 @@ export default function AdminSection({
                                               >
                                                 <div className="flex items-start gap-2.5">
                                                   <img
-                                                    src={st.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'}
+                                                    src={st.bannerImageUrl || STORE_FALLBACK_IMAGE}
                                                     alt={st.name}
                                                     className="w-12 h-12 border-2 border-black object-cover rounded-lg shrink-0 group-hover:brightness-95 transition-all"
                                                   />
@@ -1397,7 +1384,7 @@ export default function AdminSection({
                                 <span>Sửa</span>
                               </button>
                               <button
-                                onClick={() => handleDeleteCategory(cat.id)}
+                                onClick={() => setDeleteTarget({ type: 'CATEGORY', item: cat })}
                                 className="px-2.5 py-1.5 bg-[#fff5f5] hover:bg-[#ffe0e0] text-[#ff3e3e] font-black text-[11px] uppercase border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] flex items-center gap-1.5 cursor-pointer transition-all"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1422,6 +1409,7 @@ export default function AdminSection({
 
       {/* Store Action Confirm Modal */}
       <StoreActionModal
+        key={adminActionModalStore ? `${adminActionModalType}-${adminActionModalStore.id}` : 'admin-store-action-closed'}
         isOpen={!!adminActionModalStore}
         actionType={adminActionModalType}
         store={adminActionModalStore}
@@ -1439,6 +1427,22 @@ export default function AdminSection({
           onConfirm={handleAccountActionConfirm}
         />
       )}
+
+      <ConfirmActionModal
+        key={deleteTarget ? `${deleteTarget.type}-${deleteTarget.item.id}` : 'delete-closed'}
+        isOpen={Boolean(deleteTarget)}
+        title={deleteTarget?.type === 'USER' ? 'Xóa tài khoản người dùng' : 'Xóa danh mục'}
+        description={deleteTarget?.type === 'USER'
+          ? `Toàn bộ tài khoản @${deleteTarget.item.username} và dữ liệu công khai liên quan sẽ bị xóa. Audit xóa tài khoản vẫn được giữ theo chính sách hệ thống.`
+          : `Danh mục "${deleteTarget?.item.name || ''}" sẽ bị xóa. Thao tác sẽ thất bại nếu vẫn còn quán đang sử dụng danh mục này.`}
+        confirmLabel={deleteTarget?.type === 'USER' ? 'Xóa tài khoản' : 'Xóa danh mục'}
+        expectedText={deleteTarget?.type === 'USER' ? deleteTarget.item.username : ''}
+        reasonRequired={deleteTarget?.type === 'USER'}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={({ confirmation, reason }) => deleteTarget?.type === 'USER'
+          ? handleAdminDeleteUser(deleteTarget.item, confirmation, reason)
+          : handleDeleteCategory(deleteTarget.item.id)}
+      />
 
       {/* Admin Rejection Modal */}
       {rejectingStore && createPortal(
@@ -1684,7 +1688,7 @@ export default function AdminSection({
               <div
                 onClick={() =>
                   setPreviewImage({
-                    src: viewingStore.bannerImageUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60',
+                    src: viewingStore.bannerImageUrl || STORE_FALLBACK_IMAGE,
                     alt: viewingStore.name,
                     caption: `Ảnh Banner Quán: ${viewingStore.name}`
                   })
@@ -1695,7 +1699,7 @@ export default function AdminSection({
                 <img
                   src={
                     viewingStore.bannerImageUrl ||
-                    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'
+                    STORE_FALLBACK_IMAGE
                   }
                   alt={viewingStore.name}
                   className="w-full h-full object-cover group-hover:brightness-90 transition-all"
@@ -1824,7 +1828,7 @@ export default function AdminSection({
                           key={food.id}
                           onClick={() =>
                             setPreviewImage({
-                              src: food.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60',
+                              src: food.imageUrl || FOOD_FALLBACK_IMAGE,
                               alt: food.name,
                               caption: `Món: ${food.name} (${food.price?.toLocaleString()}đ)`
                             })
@@ -1836,7 +1840,7 @@ export default function AdminSection({
                             <img
                               src={
                                 food.imageUrl ||
-                                'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60'
+                                FOOD_FALLBACK_IMAGE
                               }
                               alt={food.name}
                               className="w-16 h-16 border-2 border-black rounded-lg object-cover group-hover/food:brightness-90 transition-all"

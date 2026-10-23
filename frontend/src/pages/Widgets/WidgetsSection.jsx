@@ -3,15 +3,10 @@ import { Trophy } from 'lucide-react'
 import CS2StoreCardCTA from '@/components/common/CS2StoreCardCTA'
 
 export default function WidgetsSection({
-  handleRandomPick,
-  rollingRandom,
-  randomResult,
-  setRandomResult,
   setActiveStore,
   loadLeaderboard,
   leaderboard,
   stores = [],
-  categories = [],
   switchTab
 }) {
   return (

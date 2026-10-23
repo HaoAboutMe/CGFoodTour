@@ -21,5 +21,9 @@ test('reapplies security headers in locations that define cache headers', () => 
   assert.match(nginx, /location = \/index\.html \{[\s\S]*?include \/etc\/nginx\/snippets\/security-headers\.conf;[\s\S]*?add_header Cache-Control/)
   assert.match(headers, /Content-Security-Policy/)
   assert.match(headers, /fonts\.googleapis\.com/)
-  assert.match(headers, /images\.unsplash\.com/)
+  assert.doesNotMatch(headers, /images\.unsplash\.com/)
+  assert.match(headers, /img-src 'self'/)
+  // The same image is used by HTTP rehearsal and HTTPS production. This
+  // directive makes WebKit upgrade local assets to HTTPS before TLS exists.
+  assert.doesNotMatch(headers, /upgrade-insecure-requests/)
 })

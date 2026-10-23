@@ -7,11 +7,13 @@
     "dev": "vite",
     "build": "vite build && npm run verify:build",
     "verify:build": "node scripts/verify-production-build.mjs",
-    "lint": "oxlint",
+    "optimize:assets": "node scripts/optimize-assets.mjs",
+    "lint": "oxlint --deny-warnings",
     "test:redaction": "node --test src/utils/redactSensitiveData.test.js",
     "test:ui-errors": "node --test src/utils/apiErrorMessages.test.js",
     "test:maps": "node --test src/utils/googleMapsUrl.test.js",
     "test:store-url": "node --test src/utils/storeUrl.test.js",
+    "test:modal-validation": "node --test src/utils/destructiveAction.test.js",
     "test:build-contract": "node --test scripts/frontend-build-contract.test.mjs",
     "test:nginx-contract": "node --test scripts/nginx-contract.test.mjs",
     "test:e2e": "playwright test",
@@ -33,6 +35,6 @@
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
     "oxlint": "^1.79.0",
-    "vite": "^8.2.2"
+    "vite": "^8.2.4"
   }
 }

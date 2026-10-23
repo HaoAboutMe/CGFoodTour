@@ -304,7 +304,7 @@ export default function App() {
         'meta[property="og:title"]': activeStore.name,
         'meta[property="og:description"]': description,
         'meta[property="og:url"]': canonical,
-        'meta[property="og:image"]': activeStore.bannerImageUrl || `${window.location.origin}/logo_1024.webp`,
+        'meta[property="og:image"]': activeStore.bannerImageUrl || `${window.location.origin}/logo-512.webp`,
       }
       Object.entries(values).forEach(([selector, content]) => {
         let element = document.head.querySelector(selector)
@@ -346,6 +346,7 @@ export default function App() {
     document.head.querySelector('meta[property="og:title"]')?.setAttribute('content', document.title)
     document.head.querySelector('meta[property="og:description"]')?.setAttribute('content', description)
     document.head.querySelector('meta[property="og:url"]')?.setAttribute('content', canonical)
+    document.head.querySelector('meta[property="og:image"]')?.setAttribute('content', `${window.location.origin}/logo-512.webp`)
     let canonicalLink = document.head.querySelector('link[rel="canonical"]')
     if (!canonicalLink) {
       canonicalLink = document.createElement('link')
@@ -1471,7 +1472,6 @@ export default function App() {
 
   // Delete Category (Admin)
   async function handleDeleteCategory(id) {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa danh mục này? Các quán ăn liên kết với danh mục này sẽ bị ảnh hưởng.")) return
     setLoading(true)
     const res = await makeRequest('DELETE', `/v1/categories/${id}`)
     setLoading(false)
@@ -1479,8 +1479,10 @@ export default function App() {
     if (res.success) {
       showToast('Xóa danh mục thành công!', 'success')
       loadGlobalData()
+      return true
     } else {
       showToast(getVietnameseApiError(res.error, 'Không thể xóa danh mục.'), 'error')
+      return false
     }
   }
 
@@ -1717,7 +1719,6 @@ export default function App() {
 
   // Delete Food Item
   async function handleDeleteFoodItem(foodId) {
-    if (!window.confirm('Bạn có chắc muốn xóa món ăn này không?')) return
     setLoading(true)
     const res = await makeRequest('DELETE', `/v1/food-items/${foodId}`)
     setLoading(false)
@@ -1725,8 +1726,10 @@ export default function App() {
     if (res.success) {
       showToast('Món ăn đã được xóa thành công!', 'success')
       loadGlobalData()
+      return true
     } else {
       showToast(getVietnameseApiError(res.error, 'Không thể xóa món ăn.'), 'error')
+      return false
     }
   }
 
@@ -1904,14 +1907,7 @@ export default function App() {
   }
 
   // Admin View - Delete user account
-  async function handleAdminDeleteUser(user) {
-    const confirmation = window.prompt(`Nhập chính xác username "${user.username}" để xác nhận xóa toàn bộ tài khoản và dữ liệu liên quan:`)
-    if (confirmation === null) return
-    const reason = window.prompt('Nhập lý do xóa tài khoản:')
-    if (!reason?.trim()) {
-      showToast('Lý do xóa tài khoản không được để trống.', 'error')
-      return
-    }
+  async function handleAdminDeleteUser(user, confirmation, reason) {
     setLoading(true)
     const res = await makeRequest('DELETE', `/users/${user.id}`, { confirmation, reason: reason.trim() })
     setLoading(false)
@@ -1919,8 +1915,10 @@ export default function App() {
     if (res.success) {
       showToast('Xóa tài khoản người dùng thành công.', 'success')
       loadAdminUsers()
+      return true
     } else {
       showToast(getVietnameseApiError(res.error, 'Xóa tài khoản thất bại.'), 'error')
+      return false
     }
   }
 

@@ -1,10 +1,16 @@
 import React from 'react'
 import { Trophy, MapPin, Clock, Bookmark } from 'lucide-react'
 import { checkStoreOpenStatus } from '@/utils/timeUtils'
+import { STORE_FALLBACK_IMAGE } from '@/utils/imageAssets'
 
 function StoreCard({ store, setActiveStore, viewMode = 'grid', onToggleSave }) {
   if (!store) return null
   const statusInfo = checkStoreOpenStatus(store)
+  const openStoreFromKeyboard = (event) => {
+    if (event.target !== event.currentTarget || !['Enter', ' '].includes(event.key)) return
+    event.preventDefault()
+    setActiveStore?.(store)
+  }
 
   return (
     <>
@@ -13,6 +19,10 @@ function StoreCard({ store, setActiveStore, viewMode = 'grid', onToggleSave }) {
       {/* ========================================================================= */}
       <div
         onClick={() => setActiveStore && setActiveStore(store)}
+        onKeyDown={openStoreFromKeyboard}
+        role="button"
+        tabIndex={0}
+        aria-label={`Xem chi tiết quán ${store.name}`}
         className="md:hidden brutalist-card bg-white cursor-pointer p-2.5 relative flex items-center gap-3 w-full rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#111111] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_#111111] transition-all select-none group"
       >
         {/* 📌 Mobile Top-Right Dedicated Floating Bookmark Button (Larger & Prominent) */}
@@ -40,9 +50,10 @@ function StoreCard({ store, setActiveStore, viewMode = 'grid', onToggleSave }) {
           <img
             src={
               store.bannerImageUrl ||
-              'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300&auto=format&fit=crop&q=60'
+              STORE_FALLBACK_IMAGE
             }
             alt={store.name}
+            loading="lazy"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
 
@@ -108,6 +119,10 @@ function StoreCard({ store, setActiveStore, viewMode = 'grid', onToggleSave }) {
       {viewMode === 'compact' ? (
         <div
           onClick={() => setActiveStore && setActiveStore(store)}
+          onKeyDown={openStoreFromKeyboard}
+          role="button"
+          tabIndex={0}
+          aria-label={`Xem chi tiết quán ${store.name}`}
           className="hidden md:flex brutalist-card bg-white cursor-pointer p-3 relative flex-col justify-between gap-2.5 w-full rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#111111] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_#111111] transition-all select-none group h-full"
         >
           {/* Category Badge & Bookmark pinned to Top-Right Corner */}
@@ -141,9 +156,10 @@ function StoreCard({ store, setActiveStore, viewMode = 'grid', onToggleSave }) {
               <img
                 src={
                   store.bannerImageUrl ||
-                  'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&auto=format&fit=crop&q=60'
+                  STORE_FALLBACK_IMAGE
                 }
                 alt={store.name}
+                loading="lazy"
                 className="w-16 h-16 border-2 border-black rounded-lg object-cover"
               />
               {!statusInfo.isOpen && (
@@ -186,6 +202,10 @@ function StoreCard({ store, setActiveStore, viewMode = 'grid', onToggleSave }) {
       ) : (
         <div
           onClick={() => setActiveStore(store)}
+          onKeyDown={openStoreFromKeyboard}
+          role="button"
+          tabIndex={0}
+          aria-label={`Xem chi tiết quán ${store.name}`}
           className="hidden md:flex brutalist-card bg-white cursor-pointer overflow-hidden flex-col justify-between group relative w-full h-full min-h-[340px]"
         >
           <div className="flex-1 flex flex-col justify-between min-h-0">
@@ -194,9 +214,10 @@ function StoreCard({ store, setActiveStore, viewMode = 'grid', onToggleSave }) {
               <img
                 src={
                   store.bannerImageUrl ||
-                  'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'
+                  STORE_FALLBACK_IMAGE
                 }
                 alt={store.name}
+                loading="lazy"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
 

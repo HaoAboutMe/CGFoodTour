@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Camera, Shield, User, Eye, EyeOff } from 'lucide-react'
+import { AVATAR_FALLBACK_IMAGE } from '@/utils/imageAssets'
 
 export default function ProfileSection({
   currentUser,
@@ -85,7 +86,7 @@ export default function ProfileSection({
           <form onSubmit={handleUploadAvatar} className="flex flex-col md:flex-row items-center gap-6 bg-[#f7f6f2] p-6 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
             <div className="relative group shrink-0">
               <img
-                src={avatarPreview || 'https://res.cloudinary.com/demo/image/upload/v1620000000/sample.jpg'}
+                src={avatarPreview || AVATAR_FALLBACK_IMAGE}
                 alt="avatar preview"
                 className="w-24 h-24 rounded-lg border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] object-cover"
               />

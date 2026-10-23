@@ -1,5 +1,6 @@
 import React from 'react'
 import { PlusCircle, Info, Utensils } from 'lucide-react'
+import { FOOD_FALLBACK_IMAGE } from '@/utils/imageAssets'
 
 export default function MyDishesSection({
   myStores,
@@ -122,7 +123,7 @@ export default function MyDishesSection({
                 <label className="text-xs uppercase font-extrabold tracking-wider block">Đường Dẫn Hình Ảnh Món Ăn</label>
                 <input
                   type="text"
-                  placeholder="https://images.unsplash.com/photo-..."
+                  placeholder="https://example.com/anh-mon-an.jpg"
                   value={foodImage}
                   onChange={(e) => setFoodImage(e.target.value)}
                   className="brutalist-input"
@@ -175,9 +176,10 @@ export default function MyDishesSection({
                       <img
                         src={
                           food.imageUrl ||
-                          'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60'
+                          FOOD_FALLBACK_IMAGE
                         }
                         alt={food.name}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                     </div>

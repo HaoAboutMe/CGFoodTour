@@ -1,10 +1,12 @@
+/* oxlint-disable react/only-export-components -- parser remains a tested compatibility export */
 import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Store, Plus, Edit2, Trash2, X, ChevronLeft, MapPin, PlusCircle, Utensils, EyeOff, RotateCcw, HelpCircle, Link as LinkIcon, CheckCircle2, Bookmark } from 'lucide-react'
 import MySubmissionsSection from './MySubmissionsSection'
-import MapPicker from '@/components/common/MapPicker'
 import StoreActionModal from '@/components/modals/StoreActionModal'
+import ConfirmActionModal from '@/components/modals/ConfirmActionModal'
 import CategoryIcon from '@/components/common/CategoryIcon'
+import { FOOD_FALLBACK_IMAGE, STORE_FALLBACK_IMAGE } from '@/utils/imageAssets'
 
 // Hoisted RegExp patterns per Vercel Best Practices (js-hoist-regexp)
 const RE_3D_4D = /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/
@@ -117,8 +119,6 @@ export default function MyStoresSection({
   const [isAddingNew, setIsAddingNew] = useState(false)
   const [activeSubTab, setActiveSubTab] = useState('stores') // 'stores' or 'submissions'
   const [managingDishesForStore, setManagingDishesForStore] = useState(null)
-  const [isMapPickerOpen, setIsMapPickerOpen] = useState(false)
-  const [mapPickerTarget, setMapPickerTarget] = useState(null) // 'add' or 'edit'
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadingFood, setUploadingFood] = useState(false)
   const [pendingBannerFile, setPendingBannerFile] = useState(null)
@@ -132,6 +132,7 @@ export default function MyStoresSection({
   const [editingFood, setEditingFood] = useState(null)
   const [actionModalStore, setActionModalStore] = useState(null)
   const [actionModalType, setActionModalType] = useState(null) // 'HIDE', 'RECOVER', 'HARD_DELETE'
+  const [foodToDelete, setFoodToDelete] = useState(null)
 
   const [isGmapsGuideOpen, setIsGmapsGuideOpen] = useState(false)
   const [guideTab, setGuideTab] = useState('pc') // 'pc' or 'mobile'
@@ -168,13 +169,7 @@ export default function MyStoresSection({
     if (!editingStore && storeMapUrl && storeMapUrl !== addGmapsUrl) {
       setAddGmapsUrl(storeMapUrl)
     }
-  }, [storeMapUrl, editingStore])
-
-  useEffect(() => {
-    if (createStep === 2 && addGmapsUrl && addGmapsUrl.trim() && (!storeLat || !storeLng) && !parsingGmapsUrl) {
-      processGmapsUrlInput(addGmapsUrl, false)
-    }
-  }, [createStep])
+  }, [storeMapUrl, editingStore, addGmapsUrl])
 
   const validateCreateStep = (step) => {
     setCreateStepError('')
@@ -348,7 +343,7 @@ export default function MyStoresSection({
       setFoodImage('')
       setFoodDesc('')
     }
-  }, [editingFood])
+  }, [editingFood, setFoodName, setFoodPrice, setFoodImage, setFoodDesc])
 
   if (loading) {
     return (
@@ -1548,9 +1543,10 @@ export default function MyStoresSection({
                       <img
                         src={
                           food.imageUrl ||
-                          'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60'
+                          FOOD_FALLBACK_IMAGE
                         }
                         alt={food.name}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -1576,7 +1572,7 @@ export default function MyStoresSection({
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDeleteFoodItem(food.id)}
+                          onClick={() => setFoodToDelete(food)}
                           className="w-10 h-10 rounded-full border-2 border-black bg-white text-red-500 hover:bg-red-50 shadow-[4px_4px_0px_0px_#111111] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#111111] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#111111] transition-all flex items-center justify-center shrink-0"
                           title="Xóa món"
                         >
@@ -1625,9 +1621,10 @@ export default function MyStoresSection({
                         <img
                           src={
                             st.bannerImageUrl ||
-                            'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'
+                            STORE_FALLBACK_IMAGE
                           }
                           alt={st.name}
+                          loading="lazy"
                           className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300"
                         />
                       </div>
@@ -1791,9 +1788,10 @@ export default function MyStoresSection({
                         <img
                           src={
                             st.bannerImageUrl ||
-                            'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=60'
+                            STORE_FALLBACK_IMAGE
                           }
                           alt={st.name}
+                          loading="lazy"
                           className="w-full h-full object-cover group-hover/desktop:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute top-3 left-3">
@@ -1974,6 +1972,7 @@ export default function MyStoresSection({
 
       {/* Action Modal for Soft Delete / Recover / Hard Delete */}
       <StoreActionModal
+        key={actionModalStore ? `${actionModalType}-${actionModalStore.id}` : 'owner-store-action-closed'}
         isOpen={!!actionModalStore}
         onClose={() => {
           setActionModalStore(null)
@@ -1983,6 +1982,16 @@ export default function MyStoresSection({
         store={actionModalStore}
         actionType={actionModalType}
         isStaffOrAdmin={false}
+      />
+
+      <ConfirmActionModal
+        key={foodToDelete ? `food-${foodToDelete.id}` : 'food-delete-closed'}
+        isOpen={Boolean(foodToDelete)}
+        title="Xóa món ăn"
+        description={`Món "${foodToDelete?.name || ''}" sẽ bị xóa khỏi thực đơn. Thao tác này không thể hoàn tác.`}
+        confirmLabel="Xóa món"
+        onClose={() => setFoodToDelete(null)}
+        onConfirm={() => handleDeleteFoodItem(foodToDelete.id)}
       />
 
       {showDiscardEditModal && createPortal(
