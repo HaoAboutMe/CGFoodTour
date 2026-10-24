@@ -1537,6 +1537,24 @@ export default function App() {
     setEditingStore(store)
   }
 
+  async function handleOpenOwnedStore(storeId) {
+    const response = await makeRequest('GET', `/v1/stores/mine/${encodeURIComponent(storeId)}`)
+    if (response.success && response.data?.result) {
+      openActiveStore(response.data.result)
+      return
+    }
+    showToast(getVietnameseApiError(response?.error, 'Không thể mở thông tin quán.'), 'error')
+  }
+
+  async function handleEditOwnedStore(storeId) {
+    const response = await makeRequest('GET', `/v1/stores/mine/${encodeURIComponent(storeId)}`)
+    if (response.success && response.data?.result) {
+      setEditingStore(response.data.result)
+      return
+    }
+    showToast(getVietnameseApiError(response?.error, 'Không thể tải quán để chỉnh sửa.'), 'error')
+  }
+
   // Update Store (Owner / Admin)
   async function handleUpdateStore(e, bannerFile = null) {
     e.preventDefault()
@@ -1586,8 +1604,10 @@ export default function App() {
       showToast('Đã tạm ẩn quán ăn!', 'success')
       await loadGlobalData()
       if (activeTab === 'admin') await loadAdminPendingStores()
+      return res.data || true
     } else {
       showToast(getVietnameseApiError(res.error, 'Không thể ẩn quán ăn.'), 'error')
+      return false
     }
   }
 
@@ -1598,8 +1618,10 @@ export default function App() {
       showToast('Đã khôi phục quán ăn!', 'success')
       await loadGlobalData()
       if (activeTab === 'admin') await loadAdminPendingStores()
+      return res.data || true
     } else {
       showToast(getVietnameseApiError(res.error, 'Không thể khôi phục quán ăn.'), 'error')
+      return false
     }
   }
 
@@ -2092,7 +2114,7 @@ export default function App() {
       )}
 
       {/* Main Container */}
-      <main className={activeTab === 'admin' ? 'h-full w-full p-0 pb-20 md:pb-0 animate-fade-in-up' : 'max-w-7xl mx-auto px-4 md:px-8 pt-24 sm:pt-28 md:pt-32 pb-24 md:pb-8 animate-fade-in-up'}>
+      <main className={activeTab === 'admin' ? 'h-full w-full p-0 pb-20 md:pb-0 animate-fade-in-up' : 'max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1536px] mx-auto px-4 md:px-6 lg:px-8 pt-24 sm:pt-28 md:pt-32 pb-24 md:pb-8 animate-fade-in-up'}>
 
         {/* LOADING INDICATOR */}
         {loading && (
@@ -2276,8 +2298,9 @@ export default function App() {
               handleUploadStoreBanner={handleUploadStoreBanner}
               handleUploadFoodImage={handleUploadFoodImage}
               loadGlobalData={loadGlobalData}
-              adminUsersPage={adminUsersPage}
-              adminStoresPage={adminStoresPage}
+              makeRequest={makeRequest}
+              handleOpenOwnedStore={handleOpenOwnedStore}
+              handleEditOwnedStore={handleEditOwnedStore}
             />
           </Suspense>
         )}
@@ -2341,6 +2364,8 @@ export default function App() {
               loadAdminUsers={loadAdminUsers}
               loadAdminPendingStores={loadAdminPendingStores}
               loadGlobalData={loadGlobalData}
+              adminUsersPage={adminUsersPage}
+              adminStoresPage={adminStoresPage}
             />
             {!ownedStoresPage.last && (
               <button className="brutalist-btn-white mx-auto block mt-4" onClick={() => loadMyStores(ownedStoresPage.page + 1, true)}>

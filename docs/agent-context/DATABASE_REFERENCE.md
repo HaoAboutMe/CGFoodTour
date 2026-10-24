@@ -6,7 +6,7 @@
 - Test: H2 in-memory, `MODE=MySQL`, `ddl-auto=update` (`src/test/resources/application.yaml`).
 - Dev template: MySQL, `ddl-auto=update`.
 - Production: `ddl-auto=validate`.
-- Không có SQL schema, Flyway hay Liquibase. Tên join-table/constraint không khai báo rõ phụ thuộc naming strategy của Hibernate/schema đã có.
+- Schema production được quản lý bằng Flyway tại `backend/src/main/resources/db/migration`; `V1` tạo baseline và `V2` bổ sung Owner store history. Production dùng `ddl-auto=validate`, không dựa vào Hibernate để tự đổi schema.
 
 Do đó, bảng dưới đây mô tả model JPA chứ không khẳng định schema production thật.
 
@@ -83,7 +83,7 @@ UUID PK; lazy FK User và Store; saved timestamp. Unique `(user_id, store_id)`.
 
 ### StoreAuditLog
 
-Long identity PK; scalar store/actor snapshot, role, action type, reason, timestamp. Không có FK, nhằm có thể giữ lịch sử sau khi entity bị xóa, nhưng implementation hard-delete hiện xóa log theo `storeId`.
+Long identity PK; scalar store/owner/actor snapshot, role, action type, reason, trạng thái trước/sau, cờ `ownerVisible` và timestamp. Không có FK để giữ tombstone sau khi Store bị xóa. API Owner chỉ truy vấn `ownerIdSnapshot` của principal và không serialize entity/PII của actor. Khi hard-delete User, owner snapshot và actor PII liên quan được anonymize.
 
 ## 4. Repository queries
 
@@ -95,7 +95,7 @@ Long identity PK; scalar store/actor snapshot, role, action type, reason, timest
 | Rating | find unique user/store; count by store/level; delete by store |
 | DailyReport | find unique per day; count store/day; delete by store |
 | SavedStore | exists/find user/store; list by savedAt desc; count/delete |
-| Audit | list by store newest; delete by store |
+| Audit | list by store newest; specification phân trang/filter theo Owner; anonymize actor/owner snapshot |
 | OTP | valid by email+OTP+unused+expiry; delete all by email |
 | User | unique lookups username/email/facebookId |
 
@@ -114,7 +114,7 @@ Spring Data repository methods tự có transaction semantics, nhưng multi-step
 
 1. Rating counters được tính qua ba COUNT rồi lưu Store. Concurrent requests có thể lost update; không có `@Version`/lock.
 2. Bookmark counter increment/decrement riêng với unique save row; concurrent toggle có thể conflict hoặc lệch counter.
-3. Hard delete xóa child theo thứ tự thủ công. Nó lưu audit rồi xóa toàn bộ audit của store, làm mất bằng chứng hard-delete.
+3. Hard delete xóa child theo thứ tự thủ công và giữ audit/tombstone không có FK; cần duy trì chính sách retention và cleanup riêng khi được phê duyệt.
 4. Category delete không cascade được mô tả; store FK có thể chặn và handler hiện có thể lộ DB root cause.
 5. User delete không dọn owner/save/role join/verification data trong code; kết quả phụ thuộc FK/cascade schema chưa xác minh.
 6. `InvalidatedToken` và OTP cũ/used không có cleanup job.

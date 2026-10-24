@@ -230,6 +230,18 @@ public class StoreService {
         return PageResponse.from(storePage, content);
     }
 
+    @Transactional(readOnly = true)
+    public StoreResponse getMyStore(String id, String email) {
+        User owner = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        Store store = storeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
+        if (store.getOwner() == null || !owner.getId().equals(store.getOwner().getId())) {
+            throw new AppException(ErrorCode.STORE_NOT_FOUND);
+        }
+        return toStoreResponse(store, email);
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional(readOnly = true)
     public PageResponse<StoreResponse> getAdminStores(String email, String status, Integer categoryId,
@@ -269,6 +281,7 @@ public class StoreService {
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
 
+        String statusBefore = statusName(store.getStatus());
         storeMapper.updateStore(store, request);
         applyValidatedLocation(store, request);
         store.setCategory(category);
@@ -289,7 +302,10 @@ public class StoreService {
             StoreAction editAction = applyOwnerEditModerationState(store, user, userIsAdmin);
 
             Store saved = storeRepository.saveAndFlush(store);
-            if (editAction != null) audit(saved, user, userIsAdmin, editAction, null);
+            if (editAction != null) {
+                audit(saved, user, userIsAdmin, editAction, null,
+                        statusBefore, statusName(saved.getStatus()));
+            }
             if (uploaded != null) {
                 managedImageService.deleteAfterRollback(uploaded.publicId());
                 rollbackCleanupRegistered = true;
@@ -312,6 +328,7 @@ public class StoreService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         if (!storeVisibilityPolicy.canManage(store, user)) throw new AppException(ErrorCode.UNAUTHORIZED);
         boolean userIsAdmin = isAdmin(user);
+        String statusBefore = statusName(store.getStatus());
 
         String oldPublicId = store.getBannerImagePublicId();
         var uploaded = managedImageService.upload(file, "stores", 2L * 1024 * 1024);
@@ -321,7 +338,10 @@ public class StoreService {
             store.setBannerImagePublicId(uploaded.publicId());
             StoreAction editAction = applyOwnerEditModerationState(store, user, userIsAdmin);
             Store saved = storeRepository.saveAndFlush(store);
-            if (editAction != null) audit(saved, user, userIsAdmin, editAction, null);
+            if (editAction != null) {
+                audit(saved, user, userIsAdmin, editAction, null,
+                        statusBefore, statusName(saved.getStatus()));
+            }
             managedImageService.deleteAfterRollback(uploaded.publicId());
             rollbackCleanupRegistered = true;
             managedImageService.deleteAfterCommit(oldPublicId);
@@ -360,10 +380,12 @@ public class StoreService {
         }
 
         String reason = request != null ? request.getReason() : null;
+        String statusBefore = statusName(store.getStatus());
         storeTransitionPolicy.apply(store, StoreAction.HIDE,
                 new ActorContext(user, userIsAdmin, isOwner), reason);
         store = storeRepository.save(store);
-        audit(store, user, userIsAdmin, StoreAction.HIDE, reason);
+        audit(store, user, userIsAdmin, StoreAction.HIDE, reason,
+                statusBefore, statusName(store.getStatus()));
 
         // Send email to owner if performed by admin
         if (userIsAdmin && store.getOwner() != null && store.getOwner().getEmail() != null) {
@@ -391,10 +413,12 @@ public class StoreService {
         }
 
         String reason = request != null ? request.getReason() : null;
+        String statusBefore = statusName(store.getStatus());
         storeTransitionPolicy.apply(store, StoreAction.RECOVER,
                 new ActorContext(user, userIsAdmin, isOwner), reason);
         store = storeRepository.save(store);
-        audit(store, user, userIsAdmin, StoreAction.RECOVER, reason);
+        audit(store, user, userIsAdmin, StoreAction.RECOVER, reason,
+                statusBefore, statusName(store.getStatus()));
 
         return toStoreResponse(store);
     }
@@ -423,22 +447,14 @@ public class StoreService {
             throw new AppException(ErrorCode.RECOVERY_REQUEST_REASON_REQUIRED);
         }
 
+        String statusBefore = statusName(store.getStatus());
         store.setRecoveryRequested(true);
         store.setRecoveryRequestReason(reason);
         store.setRecoveryDeclineReason(null);
         store = storeRepository.save(store);
 
-        // Audit log
-        StoreAuditLog auditLog = StoreAuditLog.builder()
-                .storeId(store.getId())
-                .storeName(store.getName())
-                .actorId(user.getId())
-                .actorEmail(user.getEmail())
-                .actorRole(userIsAdmin ? "ADMIN" : "OWNER")
-                .actionType("REQUEST_RECOVERY")
-                .reason(reason)
-                .build();
-        storeAuditLogRepository.save(auditLog);
+        audit(store, user, userIsAdmin, StoreAction.REQUEST_RECOVERY, reason,
+                statusBefore, statusName(store.getStatus()));
 
         return toStoreResponse(store);
     }
@@ -464,22 +480,14 @@ public class StoreService {
             throw new AppException(ErrorCode.STORE_REASON_REQUIRED);
         }
 
+        String statusBefore = statusName(store.getStatus());
         store.setRecoveryRequested(false);
         store.setRecoveryDeclineReason(reason);
         // Note: Store status STAYS as HIDDEN and hiddenByAdmin STAYS as true!
         store = storeRepository.save(store);
 
-        // Audit log
-        StoreAuditLog auditLog = StoreAuditLog.builder()
-                .storeId(store.getId())
-                .storeName(store.getName())
-                .actorId(user.getId())
-                .actorEmail(user.getEmail())
-                .actorRole("ADMIN")
-                .actionType("REJECT_RECOVERY_REQUEST")
-                .reason(reason)
-                .build();
-        storeAuditLogRepository.save(auditLog);
+        audit(store, user, true, StoreAction.REJECT_RECOVERY_REQUEST, reason,
+                statusBefore, statusName(store.getStatus()));
 
         // Send notification email to owner
         if (store.getOwner() != null && store.getOwner().getEmail() != null) {
@@ -516,17 +524,8 @@ public class StoreService {
             throw new AppException(ErrorCode.STORE_REASON_REQUIRED);
         }
 
-        // Audit log
-        StoreAuditLog auditLog = StoreAuditLog.builder()
-                .storeId(store.getId())
-                .storeName(store.getName())
-                .actorId(user.getId())
-                .actorEmail(user.getEmail())
-                .actorRole(userIsAdmin ? "ADMIN" : "OWNER")
-                .actionType("HARD_DELETE")
-                .reason(reason)
-                .build();
-        storeAuditLogRepository.save(auditLog);
+        audit(store, user, userIsAdmin, StoreAction.HARD_DELETE, reason,
+                statusName(store.getStatus()), "DELETED");
 
         // Send email to owner if performed by admin
         if (userIsAdmin && store.getOwner() != null && store.getOwner().getEmail() != null) {
@@ -558,10 +557,12 @@ public class StoreService {
                 .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        String statusBefore = statusName(store.getStatus());
         storeTransitionPolicy.apply(store, StoreAction.APPROVE, new ActorContext(user, true, false), null);
 
         store = storeRepository.save(store);
-        audit(store, user, true, StoreAction.APPROVE, null);
+        audit(store, user, true, StoreAction.APPROVE, null,
+                statusBefore, statusName(store.getStatus()));
         return toStoreResponse(store);
     }
 
@@ -571,10 +572,12 @@ public class StoreService {
                 .orElseThrow(() -> new AppException(ErrorCode.STORE_NOT_FOUND));
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        String statusBefore = statusName(store.getStatus());
         storeTransitionPolicy.apply(store, StoreAction.REJECT, new ActorContext(user, true, false), reason);
 
         store = storeRepository.save(store);
-        audit(store, user, true, StoreAction.REJECT, reason);
+        audit(store, user, true, StoreAction.REJECT, reason,
+                statusBefore, statusName(store.getStatus()));
         return toStoreResponse(store);
     }
 
@@ -715,15 +718,28 @@ public class StoreService {
     }
 
     private void audit(Store store, User actor, boolean admin, StoreAction action, String reason) {
+        audit(store, actor, admin, action, reason, null, statusName(store.getStatus()));
+    }
+
+    private void audit(Store store, User actor, boolean admin, StoreAction action, String reason,
+                       String statusBefore, String statusAfter) {
         storeAuditLogRepository.save(StoreAuditLog.builder()
                 .storeId(store.getId())
                 .storeName(store.getName())
+                .ownerIdSnapshot(store.getOwner() == null ? null : store.getOwner().getId())
                 .actorId(actor == null ? null : actor.getId())
                 .actorEmail(actor == null ? null : actor.getEmail())
                 .actorRole(admin ? "ADMIN" : "OWNER")
                 .actionType(action.name())
                 .reason(reason)
+                .statusBefore(statusBefore)
+                .statusAfter(statusAfter)
+                .ownerVisible(true)
                 .build());
+    }
+
+    private String statusName(StoreStatus status) {
+        return status == null ? null : status.name();
     }
 
     private void afterCommit(Runnable action) {

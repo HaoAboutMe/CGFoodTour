@@ -31,19 +31,25 @@ class FlywayMigrationTest {
 
         var result = flyway.migrate();
 
-        assertEquals(1, result.migrationsExecuted);
+        assertEquals(2, result.migrationsExecuted);
         flyway.validate();
         try (Connection connection = MYSQL.createConnection("")) {
             Set<String> requiredTables = Set.of(
                     "user", "stores", "food_items", "store_ratings", "user_saved_stores",
                     "store_daily_reports", "verification_token", "password_reset_otp",
-                    "invalidated_token", "media_cleanup_tasks", "flyway_schema_history");
+                    "invalidated_token", "media_cleanup_tasks", "store_audit_logs", "flyway_schema_history");
             for (String table : requiredTables) {
                 assertTrue(tableExists(connection, table), "Missing migrated table: " + table);
             }
             assertTrue(indexExists(connection, "stores", "idx_stores_status_coordinates"));
             assertTrue(indexExists(connection, "store_ratings", "uq_user_store_rating"));
             assertTrue(indexExists(connection, "media_cleanup_tasks", "idx_media_cleanup_due"));
+            assertTrue(indexExists(connection, "store_audit_logs", "idx_store_audit_owner_created"));
+            assertTrue(indexExists(connection, "store_audit_logs", "idx_store_audit_store_created"));
+            assertTrue(columnExists(connection, "store_audit_logs", "owner_id_snapshot"));
+            assertTrue(columnExists(connection, "store_audit_logs", "status_before"));
+            assertTrue(columnExists(connection, "store_audit_logs", "status_after"));
+            assertTrue(columnExists(connection, "store_audit_logs", "owner_visible"));
         }
     }
 
@@ -61,6 +67,13 @@ class FlywayMigrationTest {
                 if (index.equalsIgnoreCase(result.getString("INDEX_NAME"))) return true;
             }
             return false;
+        }
+    }
+
+    private boolean columnExists(Connection connection, String table, String column) throws Exception {
+        try (ResultSet result = connection.getMetaData().getColumns(
+                connection.getCatalog(), null, table, column)) {
+            return result.next();
         }
     }
 }

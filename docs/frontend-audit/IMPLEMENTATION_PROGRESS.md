@@ -1,8 +1,8 @@
 # CG FoodTour — Frontend Implementation Progress
 
-> Tài liệu theo dõi tiến độ thực tế theo từng Phase dựa trên `docs/frontend-audit/FRONTEND_REDESIGN_BLUEPRINT.md`.  
-> Cập nhật lần cuối: 23/10/2026 (Hoàn thành Phase 0, Phase 1 và Phase 2 Final QA)  
-> Trạng thái hiện tại: **PHASE 2 COMPLETE & VERIFIED — WAITING FOR APPROVAL TO PROCEED TO PHASE 3**
+> Tài liệu theo dõi tiến độ thực tế theo từng Phase dựa trên `docs/frontend-audit/FRONTEND_REDESIGN_BLUEPRINT.md`.
+> Cập nhật lần cuối: 24/10/2026 (Hoàn thành Phase 0, 1, 2 và Phase 3A-3E)
+> Trạng thái hiện tại: **PHASE 3 IN PROGRESS (Phase 3E: My Stores & Dish Management Desktop UX Redesign — Ready for Visual Acceptance Review)**
 
 ---
 
@@ -82,7 +82,7 @@ Finished in 31ms on 54 files with 104 rules using 16 threads.
 - `npm run test:store-url`: 2/2 PASS
 - `npm run test:modal-validation`: 2/2 PASS
 - `npm run test:build-contract`: 3/3 PASS
-- `npm run test:nginx-contract`: 3/3 PASS  
+- `npm run test:nginx-contract`: 3/3 PASS
 **Tổng cộng:** 16/16 PASS (100%).
 
 ### 4.3. Production Build & Bundle Verification
@@ -624,7 +624,7 @@ Theo đúng lộ trình Phase 2, Batch 2D-2B sẽ tập trung vào **`AuthModal.
 
 ## 12. Phase 2: Design System Foundation — Batch 2D-2B.1: AuthModal Migration Planning
 
-> **Trạng thái:** Đã hoàn thành lập kế hoạch và audit (Sẵn sàng phê duyệt trước khi triển khai Batch 2D-2B.2).  
+> **Trạng thái:** Đã hoàn thành lập kế hoạch và audit (Sẵn sàng phê duyệt trước khi triển khai Batch 2D-2B.2).
 > **Nguyên tắc tuân thủ:** **Chỉ audit và tạo blueprint — Không chỉnh sửa source code (JSX, CSS, business logic) trong batch này.**
 
 ### 12.1. Deliverables Đã Tạo
@@ -655,7 +655,7 @@ Theo đúng lộ trình Phase 2, Batch 2D-2B sẽ tập trung vào **`AuthModal.
 
 ## 13. Phase 2: Design System Foundation — Batch 2D-2B.2A (AuthModal Form Accessibility Migration In-Place)
 
-> **Trạng thái:** Đã hoàn thành toàn diện Batch 2D-2B.2A (Sẵn sàng nghiệm thu để chuyển sang Batch 2D-2B.2B).  
+> **Trạng thái:** Đã hoàn thành toàn diện Batch 2D-2B.2A (Sẵn sàng nghiệm thu để chuyển sang Batch 2D-2B.2B).
 > **Phạm vi được phê duyệt:** Giữ nguyên modal container và `useDialogFocus` hiện tại. Chỉ chuyển đổi các form controls trong `AuthModal.jsx` sang Accessible Shared Primitives (`FormField`, `Input`, `Button`, `IconButton`).
 
 ### 13.1. Phạm Vi Triển Khai & Nguyên Tắc Tuân Thủ
@@ -764,7 +764,7 @@ Toàn bộ các kịch bản sau đã được viết và kiểm thử tự đ�
 
 ## 14. Phase 2: Design System Foundation — Batch 2D-2B.2B (AuthModal Dialog Shell Migration)
 
-> **Trạng thái:** Đã hoàn thành toàn diện Batch 2D-2B.2B (Sẵn sàng nghiệm thu).  
+> **Trạng thái:** Đã hoàn thành toàn diện Batch 2D-2B.2B (Sẵn sàng nghiệm thu).
 > **Phạm vi được phê duyệt:** Chuyển đổi khung modal xác thực hiện tại trong `AuthModal.jsx` sang `Dialog` primitive của Design System tại `frontend/src/components/ui/Dialog.jsx`.
 
 ### 14.1. Chi Tiết Triển Khai & Cải Tiến Kỹ Thuật
@@ -873,7 +873,7 @@ Sau khi Batch 2D-2B.2B được nghiệm thu, thành phần overlay phức tạp
 
 ## 15. Phase 2: Design System Foundation — Batch 2D-2C (StoreDetailDrawer Accessibility Migration)
 
-> **Trạng thái:** Đã hoàn thành toàn diện Batch 2D-2C (Sẵn sàng nghiệm thu để chuẩn bị bước vào Phase 2 Final QA).  
+> **Trạng thái:** Đã hoàn thành toàn diện Batch 2D-2C (Sẵn sàng nghiệm thu để chuẩn bị bước vào Phase 2 Final QA).
 > **Nguyên tắc tuân thủ:** Đây là batch migration component cuối cùng trước Phase 2 Final QA. Khắc phục dứt điểm các vấn đề accessibility quan trọng trong `StoreDetailDrawer` mà không phá vỡ giao diện Neo-Brutalist hay slide-in-right animation. **Không đánh dấu Phase 2 hoàn thành trước khi Final QA.**
 
 ### 15.1. Chi Tiết Triển Khai & Cải Tiến Kỹ Thuật
@@ -1013,8 +1013,8 @@ Toàn bộ 12 bài kiểm thử Playwright chuyên biệt trong [`e2e/store-deta
 
 ## 16. Phase 2 Final Quality Assurance & Closure (Nghiệm Thu Toàn Diện Phase 2)
 
-> **Báo cáo chi tiết:** [`docs/frontend-audit/PHASE_2_FINAL_QA_REPORT.md`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/docs/frontend-audit/PHASE_2_FINAL_QA_REPORT.md)  
-> **Thời điểm hoàn thành:** 23/10/2026  
+> **Báo cáo chi tiết:** [`docs/frontend-audit/PHASE_2_FINAL_QA_REPORT.md`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/docs/frontend-audit/PHASE_2_FINAL_QA_REPORT.md)
+> **Thời điểm hoàn thành:** 23/10/2026
 > **Đánh giá tổng thể:** **PASS (ĐẠT TOÀN BỘ TIÊU CHÍ PHASE 2 EXIT CRITERIA)**
 
 ### 16.1. Bảng Tổng Hợp Kiểm Thử Toàn Diện (Final Test Evidence Matrix)
@@ -1054,15 +1054,744 @@ Toàn bộ 12 bài kiểm thử Playwright chuyên biệt trong [`e2e/store-deta
 
 ---
 
-> **KẾT LUẬN NGHIỆM THU PHASE 2: PASS**  
+> **KẾT LUẬN NGHIỆM THU PHASE 2: PASS**
 > Hệ thống Design System Foundation và Accessible Primitives đã hoàn thiện ổn định, đóng Phase 2 và sẵn sàng tiến vào **Phase 3 — Desktop UX Redesign**.
 
+---
 
+## 17. Phase 3: Desktop UX Redesign Progress
 
+> **Tài liệu Blueprint:** [`docs/frontend-audit/PHASE_3_DESKTOP_REDESIGN_BLUEPRINT.md`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/docs/frontend-audit/PHASE_3_DESKTOP_REDESIGN_BLUEPRINT.md)
+> **Nhánh phát triển:** `feature/frontend-desktop-redesign` (tạo từ commit `bd29db0`)
+> **Trạng thái hiện tại:** **PHASE 3A COMPLETE (Planning & Blueprint Ready — Awaiting Product Owner Approval)**
 
+### 17.1. Tóm Tắt Khảo Sát Desktop UX Audit (Phase 3A)
+- **Explore Page:** Bố cục hiện tại bị kẹp trong `max-w-7xl` (1280px), thanh danh mục trượt ngang cảm ứng bất tiện cho chuột/bàn phím desktop, thiếu liên kết trực quan với bản đồ Cần Giuộc.
+- **StoreDetailDrawer:** Chiều rộng bị khóa cứng ở `sm:max-w-lg` (512px) trên mọi màn hình, lãng phí 73% diện tích trên màn hình 1440px/1920px. Nội dung thực đơn và đánh giá bị dồn 1 cột hẹp.
+- **My Stores & Dishes:** Form thêm/sửa quán dạng 1 cột cuộn dài 15+ trường; quản lý thực đơn chưa tận dụng được bề ngang màn hình lớn.
+- **Admin Dashboard:** Bảng duyệt quán bị tràn ngang, thiếu bộ lọc trạng thái nhanh và phân trang rõ ràng.
 
+### 17.2. Lộ Trình Triển Khai 6 Batches (Phase 3 Roadmap)
+- [x] **Batch 3A — Planning & Architecture Blueprint:** Khảo sát trực tiếp, phân tích Option A vs Option B cho Explore, xây dựng Blueprint chi tiết (0% code change).
+- [x] **Batch 3B — Explore Page Desktop Redesign (Option A+ Enhanced Desktop Explore Layout):**
+  - Container mở rộng linh hoạt: `max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1536px]` giúp giao diện thoáng đãng trên 1440px và 1920px mà vẫn kiểm soát độ rộng thẻ quán ăn dưới 380px.
+  - Control Deck hợp nhất: Search `Input` và `NativeSelect` danh mục đặt so    - **Cột Phải (7 cột trên `lg:col-span-7`): Thực đơn & Đánh giá thực khách (Tabs trên Desktop):**
+      - Header Tabs WAI-ARIA (`role="tablist"`): Hai tab "Thực Đơn" (kèm badge số món) và "Đánh Giá" (kèm badge tỷ lệ % hài lòng) cho phép chuyển đổi ngay lập tức mà không cần cuộn hết danh sách món.
+      - Tabpanel Thực Đơn (`role="tabpanel"`): Danh sách thẻ món ăn với ảnh đại diện, giá VND, mô tả, hỗ trợ click phóng to ảnh `ImageViewerModal`, kèm empty state trực quan khi chưa có món.
+      - Tabpanel Đánh Giá (`role="tabpanel"`): Thẻ tổng quan đánh giá cộng đồng (tỷ lệ hài lòng %, tổng lượt đánh giá, số người đã lưu) và cụm 3 nút đánh giá nhanh 1-chạm (Ngon, Bình Thường, Không Ngon) chuẩn touch target $\ge 44\text{px}$.
+    - **Bảo Lưu 100% Mobile & Tablet:** Dưới breakpoint `lg:`, ẩn tab bar desktop, toàn bộ bố cục tự động chuyển về 1 cột đơn duy nhất xếp chồng (`grid-cols-1`) sạch sẽ, không thay đổi trải nghiệm đã nghiệm thu.
+3. **Dedicated Action Footer ở đáy Drawer (Loại bỏ floating button gây che nội dung):**
+    - Loại bỏ hoàn toàn nút floating `fixed` cũ.
+    - Cấu trúc flex cột: `flex flex-col h-[90vh] sm:h-full overflow-hidden`.
+    - Vùng nội dung cuộn độc lập: `flex-1 min-h-0 overflow-y-auto no-scrollbar`.
+    - Dedicated Footer (`shrink-0 bg-white border-t-2 border-black z-20`): Chứa thông tin tên quán, danh mục, số lượt lưu và nút Lưu Quán / Đã Lưu với viền đen, bóng cứng neo cố định ở đáy.
+    - Xử lý safe-area padding cho mobile: `pb-[max(0.75rem,env(safe-area-inset-bottom))]`.
+    - Tích hợp focus trap: Shift+Tab từ nút đầu tiên quấn tròn xuống nút bookmark ở footer.
 
+#### 2. Kết Quả Kiểm Thử Toàn Diện Batch 3C UX Refinement (Test Evidence Matrix)
+| Bộ kiểm thử | Lệnh / Công cụ | Kết quả | Chi tiết xác minh |
+| :--- | :--- | :---: | :--- |
+| **Linter** | `npm run lint` (`oxlint --deny-warnings`) | **PASS** | **0 lỗi, 0 cảnh báo** trên 76 tệp nguồn. |
+| **Node Unit & Contract Tests** | `npm test` (`node --test`) | **33/33 PASS** | Toàn bộ 33 tests pass (WCAG contrast, tokens, contracts, redaction, security). |
+| **Production Build Gate** | `npm run build` | **PASS (436ms)** | Bundle tối ưu, `verify-production-build.mjs` pass 100%, zero bundle leak. |
+| **Store Detail Desktop E2E** | `e2e/store-detail-desktop.spec.js` | **16/16 PASS (24.7s)** | - Thang đo chiều rộng drawer theo 4 mốc (390px, 768px, 1280px, 1440px)<br>- Bố cục 2 cột side-by-side trên desktop vs 1 cột xếp chồng trên mobile<br>- Địa chỉ dài không bị cắt/mất chữ, wrapping tự nhiên, không ép hoa, không gạch chân<br>- Nút Google Maps riêng biệt với icon MapPin, target="_blank", rel="noopener noreferrer"<br>- Tab Thực đơn & Đánh giá (WAI-ARIA roles, phím mũi tên, active states, badge số lượng)<br>- Menu 0 món (empty state), 3 món, 20 món và 50 món (truy cập đánh giá tức thì không cần cuộn)<br>- Dedicated Action Footer giữ vị trí ổn định, cuộn độc lập, không che nội dung<br>- Focus trap bao gồm nút bookmark ở footer<br>- Menu item zoom mở ImageViewerModal & phân cấp Escape 2 tầng<br>- Nút chia sẻ với phản hồi tooltip<br>- Mobile drawer bảo toàn (không có tab bar desktop, layout xếp chồng, safe-area padding)<br>- Zero horizontal overflow trên cả 6 viewports (1920, 1440, 1280, 768, 390, 320px) |
+| **Store Detail Drawer Contract** | `e2e/store-detail-drawer.spec.js` | **12/12 PASS (17.4s)** | WAI-ARIA role/modal semantics, touch target $\ge 44\text{px}$, focus trap cycling, Escape dismiss, nested overlay safety, AuthModal overlay, background inert/scroll lock, responsive 320-1440px. |
+| **Explore Desktop E2E** | `e2e/explore-desktop.spec.js` | **13/13 PASS (14.0s)** | Toàn bộ tính năng Control Deck, ViewMode, Dynamic resize cycle Batch 3B giữ vững 100%. |
+| **Visual Regression Suite** | `e2e/visual-regression.spec.js` | **12/12 PASS (14.1s)** | 12/12 tests PASS trên toàn bộ các viewports. |
+| **Shared Primitives E2E** | `e2e/primitives.spec.js` | **9/9 PASS (8.5s)** | Button, FormField, NativeSelect, Dialog, ConfirmActionModal. |
+| **UX & Quality E2E** | `e2e/ux-quality.spec.js` | **8 PASS / 1 SKIP (9.9s)** | Không tràn ngang; keyboard navigation; zero debug tokens. |
+| **AuthModal E2E** | `e2e/auth-modal.spec.js` | **15/15 PASS (22.6s)** | Toàn bộ 15 tests authentication flows và dialog accessibility bảo toàn. |
+| **Tổng kết E2E Playwright** | `npx playwright test` | **85 PASS / 1 SKIP** | **85 tests passed trên Chromium**, 0 failed. |
 
+#### 3. Bằng Chứng Xác Minh Trợ Năng (Accessibility Foundation Preservation)
+- **WAI-ARIA Contracts:** `role="dialog"`, `aria-modal="true"`, `aria-labelledby="store-detail-title"`, `aria-describedby="store-detail-address"`.
+- **WAI-ARIA Tab Semantics:** `role="tablist"` với nhãn `aria-label="Phân loại nội dung chi tiết quán"`, `role="tab"` với `aria-selected`, `aria-controls`, `tabIndex={0/-1}`, hỗ trợ phím mũi tên `ArrowLeft` / `ArrowRight` chuyển tab và focus ngay lập tức, `role="tabpanel"` với `aria-labelledby`.
+- **Kích thước Touch Targets:** Nút Đóng (`X`), Nút Chia Sẻ, 3 Nút Đánh Giá Nhanh, Nút Báo Đóng Cửa, Tab Buttons và Nút Lưu Quán Footer đều đạt kích thước bấm $\ge 44 \times 44\text{px}$ (hoặc min-h 42-44px).
+- **Bẫy Tiêu Điểm (Focus Trap):** Vòng lặp `Tab` / `Shift+Tab` khép kín bên trong Drawer, bao gồm cả nút Lưu Quán Footer ở cuối chu trình. Khi mở Drawer, tiêu điểm tự động đặt vào nút Đóng (`X`).
+- **Phân Cấp Phím Escape (Nested Overlay Coordination):**
+  - Khi mở ảnh phóng to (`ImageViewerModal`, `z-[100000]`): Bấm Escape lần 1 chỉ đóng lightbox ảnh, Drawer vẫn mở nguyên vẹn. Bấm Escape lần 2 đóng Drawer và hoàn trả tiêu điểm về thẻ quán kích hoạt.
+  - Khi bấm Lưu Quán mà chưa đăng nhập (`AuthModal`, `z-[70]`): AuthModal mở đè lên Drawer mà không làm đóng Drawer; đóng AuthModal thì Drawer vẫn hiển thị nguyên vẹn.
+- **Cách Ly Nền & Khóa Cuộn:** Khi Drawer mở, các phần tử nền trong `#root` tự động được gắn `inert` và `aria-hidden="true"`, `document.body.style.overflow` đặt thành `hidden`. Khi đóng Drawer, toàn bộ trạng thái nền và khóa cuộn được khôi phục 100%.
 
+#### 4. Bằng Chứng So Sánh Screenshots Trước / Sau (Before / After Evidence)
+- **Bộ dữ liệu chuẩn kiểm thử:** Sử dụng cùng bộ dữ liệu quán ăn mẫu có đầy đủ ảnh banner, địa chỉ chi tiết, ghi chú landmark, số điện thoại, khung giờ, khoảng giá VND, 3 món ăn thực đơn kèm ảnh và tỷ lệ đánh giá.
+- **Thư mục ảnh Before (Trước khi sửa Batch 3C):**
+  - `frontend/e2e/screenshots/before-batch-3c/drawer-desktop-1920x1080.png`
+  - `frontend/e2e/screenshots/before-batch-3c/drawer-desktop-1440x900.png`
+  - `frontend/e2e/screenshots/before-batch-3c/drawer-desktop-1280x800.png`
+  - `frontend/e2e/screenshots/before-batch-3c/drawer-tablet-768x1024.png`
+  - `frontend/e2e/screenshots/before-batch-3c/drawer-mobile-390x844.png`
+  - `frontend/e2e/screenshots/before-batch-3c/drawer-mobile-320x568.png`
+- **Thư mục ảnh After (Sau khi triển khai Batch 3C UX Refinement):**
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-desktop-1920x1080.png`
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-desktop-1440x900.png`
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-desktop-1280x800.png`
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-tablet-768x1024.png`
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-mobile-390x844.png`
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-mobile-320x568.png`
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-long-address.png` (Địa chỉ dài với dấu tiếng Việt, chuỗi mở rộng)
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-menu-20-items.png` (Thực đơn 20 món ăn)
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-menu-50-items.png` (Thực đơn 50 món ăn)
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-active-tab-reviews.png` (Tab Đánh Giá đang active)
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-footer-scroll-mid.png` (Footer bookmark khi scroll giữa Drawer)
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-footer-scroll-bottom.png` (Footer bookmark khi scroll cuối Drawer)
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-low-height-window.png` (Cửa sổ chiều cao thấp 1440x500)
 
+#### 5. Chi Tiết Xử Lý 3 Vấn Đề UX Cụ Thể Trong Batch 3C Refinement
+1. **Vấn Đề 1: Địa Chỉ Chi Tiết & Tách Biệt Nút Bản Đồ:**
+   - *Hiện tượng cũ:* Địa chỉ dài bị ép thành chữ in hoa, gạch chân liên kết gây khó đọc, liên kết bản đồ là một khối chữ dài thiếu thẩm mỹ.
+   - *Giải pháp mới:*
+     - Giữ nguyên chữ hoa/thường nguyên bản của dữ liệu địa chỉ (`text-transform: none`).
+     - Bỏ gạch chân trên text địa chỉ (`text-decoration: none`).
+     - Tự nhiên wrapping bằng `min-w-0`, `whitespace-normal`, `break-words`, `[overflow-wrap:anywhere]`.
+     - Tuyệt đối không dùng `truncate` hay `line-clamp` làm mất dữ liệu người dùng.
+     - Tách riêng hành động xem bản đồ thành một action button Neo-Brutalist gọn gàng: "Xem trên Google Maps ↗" với icon `MapPin`, giữ nguyên `getSafeGoogleMapsUrl`, `target="_blank"`, `rel="noopener noreferrer"`.
+2. **Vấn Đề 2: Thực Đơn Dài & Tabs Phân Tách Đánh Giá Trên Desktop:**
+   - *Hiện tượng cũ:* Thực đơn và phần đánh giá render nối tiếp trong cùng một cột. Với quán có 20-50 món, người dùng phải cuộn rất xa mới thấy phần đánh giá.
+   - *Giải pháp mới:*
+     - Trên Desktop (`lg:`), tổ chức khu vực cột phải thành hai Tab: **Thực Đơn** và **Đánh Giá**.
+     - Chuẩn WAI-ARIA tab pattern (`role="tablist"`, `role="tab"`, `aria-selected`, `aria-controls`, `role="tabpanel"`, hỗ trợ phím mũi tên).
+     - Tab Thực Đơn hiển thị danh sách món ăn, kèm badge số lượng món (`0`, `3`, `20`, `50`) và empty state trực quan khi quán chưa có món.
+     - Tab Đánh Giá hiển thị thẻ tổng quan đánh giá cộng đồng (tỷ lệ hài lòng %, số lượt đánh giá, số người đã lưu) cùng cụm 3 nút đánh giá nhanh 1-chạm (Ngon, Bình Thường, Không Ngon).
+     - Người dùng có thể chuyển sang xem đánh giá ngay lập tức chỉ với 1 cú click, bất kể quán có bao nhiêu món.
+     - Không phát sinh request hay reload khi chuyển tab; bảo tồn giao diện xếp chồng liền mạch trên Mobile.
+3. **Vấn Đề 3: Nút Lưu Quán Che Nội Dung & Footer Cố Định Ở Đáy:**
+   - *Hiện tượng cũ:* Nút Lưu Quán dạng floating đè lên nội dung ở góc dưới bên phải, không ổn định khi cuộn.
+   - *Giải pháp mới:*
+     - Loại bỏ hoàn toàn nút floating `fixed` cũ.
+     - Tái cấu trúc Drawer thành container flex cột: `flex flex-col h-[90vh] sm:h-full overflow-hidden`.
+     - Vùng nội dung cuộn độc lập: `flex-1 min-h-0 overflow-y-auto no-scrollbar`.
+     - Thiết lập Dedicated Action Footer ở đáy Drawer (`shrink-0 bg-white border-t-2 border-black z-20`): chứa tên quán, danh mục, số lượt lưu và nút bấm Lưu Quán/Bỏ Lưu.
+     - Xử lý safe-area padding di động: `pb-[max(0.75rem,env(safe-area-inset-bottom))]`.
+     - Footer luôn neo vững chắc ở đáy Drawer ở mọi trạng thái cuộn (đầu trang, giữa trang, cuối trang), không bao giờ che khuất nội dung món ăn hay nút đánh giá.
+     - Nút Lưu Quán nằm trong focus trap của Drawer và có accessible name đầy đủ (`aria-label`).
+
+#### 6. Giới Hạn Đã Biết & Lưu Ý Kiến Trúc
+- **Map Action:** Tiếp tục duy trì trạng thái **DEFERRED — Requires Separate Approval** theo chỉ thị Phase 3 (không tự ý thêm mini-map hoặc library mới khi chưa có backend multi-pin data contract). Nút liên kết Google Maps an toàn (`getSafeGoogleMapsUrl`) tiếp tục phục vụ nhu cầu dẫn đường của thực khách.
+- **Đơn Vị Tiền Tệ:** Giữ nguyên 100% đơn vị VND (`.toLocaleString()đ`), không thay đổi sang đơn vị khác.
+
+#### 7. Kế Hoạch Cho Batch 3D — Admin Dashboard Redesign
+Sau khi Batch 3C UX Refinement được nghiệm thu chính thức:
+- **Mục tiêu:** Nâng cấp trang quản trị [frontend/src/pages/Admin/AdminSection.jsx](file:///d:/My_Workspace/Java_Code\CanGiuocFoodTour\CanGiuocFoodTour\frontend\src\pages\Admin\AdminSection.jsx) thành **Wide Data Table** chuẩn Desktop.
+- **Các hạng mục chính:**
+  - Bảng duyệt quán ăn rộng rãi với các cột rõ ràng: Ảnh & Tên quán, Chủ quán, Danh mục, Trạng thái kiểm duyệt, Ngày gửi, Hành động nhanh.
+  - Thanh công cụ lọc trạng thái và tìm kiếm tích hợp `NativeSelect` và `Input` primitives.
+  - Phân trang dạng trang số trực quan.
+  - Giữ nguyên 100% API duyệt/từ chối quán (`/v1/stores/{id}/approve`, `/v1/stores/{id}/reject`) và phân quyền Admin., không có clipping hay tràn viền -> **Thay đổi có chủ đích (Intentional Change)**.
+- **Tiêu chí thị giác và trợ năng:** Không có hiện tượng cắt chữ (clipping), không lệch alignment, độ tương phản chữ đạt WCAG AA, focus ring hiển thị rõ nét (`focus-visible:outline-2`).
+- **Cập nhật Golden Baselines:** Đã cập nhật đồng bộ các tệp baseline tại `frontend/e2e/visual-regression.spec.js-snapshots/` và `frontend/e2e/visual-baselines/`. Chạy lại suite đạt **12/12 PASS**.
+
+#### 4. Bằng Chứng Xác Minh StoreCard Render Dispatch
+- **Kiểm kê Call Sites:** `StoreCard.jsx` chỉ được sử dụng tại duy nhất `ExploreSection.jsx` (dòng 573 cho mobile, dòng 588 cho compact, dòng 600 cho grid). `CS2StoreCardCTA.jsx` là component độc lập tự kết xuất markup riêng.
+- **Xác minh Dynamic Resize:** Test tự động số 8 trong `explore-desktop.spec.js` đã kiểm chứng chu trình thay đổi viewport liên tục trên cùng phiên duyệt:
+  - 1440px: Hiển thị chính xác 3 grid cards, 0 mobile card.
+  - 768px: Hiển thị chính xác 3 grid cards, 0 mobile card.
+  - 390px: Hiển thị chính xác 3 mobile cards, 0 desktop card.
+  - 320px: Hiển thị chính xác 3 mobile cards, 0 desktop card.
+  - Trở lại 1440px: Hiển thị lại đầy đủ 3 grid cards, tương tác nút Bookmark và click mở StoreDetailDrawer hoạt động trơn tru.
+- **Tối ưu phòng thủ mã nguồn:** Chuẩn hóa `setActiveStore?.(store)` đồng bộ trong cả 3 hàm render để phòng ngừa trường hợp callback không được truyền vào.
+- **Lưu ý kiến trúc:** Cải tiến render dispatch giúp cấu trúc DOM sạch sẽ (1:1 với viewport container), loại bỏ các node DOM ẩn trùng lặp. Không đưa ra tuyên bố đo lường FPS khi chưa qua benchmark tải trọng nặng.
+
+#### 5. Bằng Chứng So Sánh Screenshots Trước / Sau (Before / After)
+- Baseline trước sửa: `frontend/e2e/screenshots/before-batch-3b/`
+- Kết quả sau sửa: `frontend/e2e/screenshots/after-batch-3b/`
+- Đầy đủ 6 viewports: `1920x1080`, `1440x900`, `1280x800`, `768x1024`, `390x844`, `320x568`.
+
+#### 6. Handoff & Điều Kiện Bắt Đầu Batch 3C
+- **Trạng thái Batch 3B:** **FINAL PASS — ĐÃ ĐÓNG BATCH 3B**.
+- **Chuyển giao sang Batch 3C:** Đã được phê duyệt chính thức và triển khai.
+
+---
+
+### 17.5. Báo Cáo Triển Khai & Kiểm Thử Nghiệm Thu Batch 3C UX Refinement (StoreDetailDrawer)
+
+> **Trạng thái:** **HOÀN THÀNH TOÀN DIỆN BATCH 3C UX REFINEMENT — SẴN SÀNG NGHIỆM THU**
+> **Tệp nguồn chính:** [`frontend/src/components/drawers/StoreDetailDrawer.jsx`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/src/components/drawers/StoreDetailDrawer.jsx)
+> **Bộ test bổ sung:** [`frontend/e2e/store-detail-desktop.spec.js`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/store-detail-desktop.spec.js)
+
+#### 1. Chi Tiết Xử Lý Ba Vấn Đề UX Cụ Thể Trong Batch 3C Refinement
+1. **Vấn Đề 1: Địa Chỉ Chi Tiết & Tách Biệt Nút Bản Đồ:**
+   - *Hiện tượng cũ:* Địa chỉ dài bị ép thành chữ in hoa, gạch chân liên kết gây khó đọc, liên kết bản đồ là một khối chữ dài thiếu thẩm mỹ.
+   - *Giải pháp mới:*
+     - Giữ nguyên chữ hoa/thường nguyên bản của dữ liệu địa chỉ (`text-transform: none`).
+     - Bỏ gạch chân trên text địa chỉ (`text-decoration: none`).
+     - Tự nhiên wrapping bằng `min-w-0`, `whitespace-normal`, `break-words`, `[overflow-wrap:anywhere]`.
+     - Tuyệt đối không dùng `truncate` hay `line-clamp` làm mất dữ liệu người dùng.
+     - Tách riêng hành động xem bản đồ thành một action button Neo-Brutalist gọn gàng: "Xem trên Google Maps ↗" với icon `MapPin`, giữ nguyên `getSafeGoogleMapsUrl`, `target="_blank"`, `rel="noopener noreferrer"`.
+2. **Vấn Đề 2: Thực Đơn Dài & Tabs Phân Tách Đánh Giá Trên Desktop:**
+   - *Hiện tượng cũ:* Thực đơn và phần đánh giá render nối tiếp trong cùng một cột. Với quán có 20-50 món, người dùng phải cuộn rất xa mới thấy phần đánh giá.
+   - *Giải pháp mới:*
+     - Trên Desktop (`lg:`), tổ chức khu vực cột phải thành hai Tab: **Thực Đơn** và **Đánh Giá**.
+     - Chuẩn WAI-ARIA tab pattern (`role="tablist"`, `role="tab"`, `aria-selected`, `aria-controls`, `role="tabpanel"`, hỗ trợ phím mũi tên `ArrowLeft` / `ArrowRight`).
+     - Tab Thực Đơn hiển thị danh sách món ăn, kèm badge số lượng món (`0`, `3`, `20`, `50`) và empty state trực quan khi quán chưa có món.
+     - Tab Đánh Giá hiển thị thẻ tổng quan đánh giá cộng đồng (tỷ lệ hài lòng %, số lượt đánh giá, số người đã lưu) cùng cụm 3 nút đánh giá nhanh 1-chạm (Ngon, Bình Thường, Không Ngon) chuẩn touch target $\ge 44\text{px}$.
+     - Người dùng có thể chuyển sang xem đánh giá ngay lập tức chỉ với 1 cú click, bất kể quán có bao nhiêu món.
+     - Không phát sinh request hay reload khi chuyển tab; bảo tồn giao diện xếp chồng liền mạch trên Mobile.
+3. **Vấn Đề 3: Nút Lưu Quán Che Nội Dung & Footer Cố Định Ở Đáy:**
+   - *Hiện tượng cũ:* Nút Lưu Quán dạng floating đè lên nội dung ở góc dưới bên phải, không ổn định khi cuộn.
+   - *Giải pháp mới:*
+     - Loại bỏ hoàn toàn nút floating `fixed` cũ.
+     - Tái cấu trúc Drawer thành container flex cột: `flex flex-col h-[90vh] sm:h-full overflow-hidden`.
+     - Vùng nội dung cuộn độc lập: `flex-1 min-h-0 overflow-y-auto no-scrollbar`.
+     - Thiết lập Dedicated Action Footer ở đáy Drawer (`shrink-0 bg-white border-t-2 border-black z-20`): chứa tên quán, danh mục, số lượt lưu và nút bấm Lưu Quán/Bỏ Lưu.
+     - Xử lý safe-area padding di động: `pb-[max(0.75rem,env(safe-area-inset-bottom))]`.
+     - Footer luôn neo vững chắc ở đáy Drawer ở mọi trạng thái cuộn (đầu trang, giữa trang, cuối trang), không bao giờ che khuất nội dung món ăn hay nút đánh giá.
+     - Nút Lưu Quán nằm trong focus trap của Drawer và có accessible name đầy đủ (`aria-label`).
+
+#### 2. Kết Quả Kiểm Thử Toàn Diện Batch 3C UX Refinement (Test Evidence Matrix)
+| Bộ kiểm thử | Lệnh / Công cụ | Kết quả | Chi tiết xác minh |
+| :--- | :--- | :---: | :--- |
+| **Linter** | `npm run lint` (`oxlint --deny-warnings`) | **PASS** | **0 lỗi, 0 cảnh báo** trên 76 tệp nguồn. |
+| **Node Unit & Contract Tests** | `npm test` (`node --test`) | **33/33 PASS** | Toàn bộ 33 tests pass (WCAG contrast, tokens, contracts, redaction, security). |
+| **Production Build Gate** | `npm run build` | **PASS (436ms)** | Bundle tối ưu, `verify-production-build.mjs` pass 100%, zero bundle leak. |
+| **Store Detail Desktop E2E** | `e2e/store-detail-desktop.spec.js` | **16/16 PASS (24.7s)** | - Thang đo chiều rộng drawer theo 4 mốc (390px, 768px, 1280px, 1440px)<br>- Bố cục 2 cột side-by-side trên desktop vs 1 cột xếp chồng trên mobile<br>- Địa chỉ dài không bị cắt/mất chữ, wrapping tự nhiên, không ép hoa, không gạch chân<br>- Nút Google Maps riêng biệt với icon MapPin, target="_blank", rel="noopener noreferrer"<br>- Tab Thực đơn & Đánh giá (WAI-ARIA roles, phím mũi tên, active states, badge số lượng)<br>- Menu 0 món (empty state), 3 món, 20 món và 50 món (truy cập đánh giá tức thì không cần cuộn)<br>- Dedicated Action Footer giữ vị trí ổn định, cuộn độc lập, không che nội dung<br>- Focus trap bao gồm nút bookmark ở footer<br>- Menu item zoom mở ImageViewerModal & phân cấp Escape 2 tầng<br>- Nút chia sẻ với phản hồi tooltip<br>- Mobile drawer bảo toàn (không có tab bar desktop, layout xếp chồng, safe-area padding)<br>- Zero horizontal overflow trên cả 6 viewports (1920, 1440, 1280, 768, 390, 320px) |
+| **Store Detail Drawer Contract** | `e2e/store-detail-drawer.spec.js` | **12/12 PASS (17.4s)** | WAI-ARIA role/modal semantics, touch target $\ge 44\text{px}$, focus trap cycling, Escape dismiss, nested overlay safety, AuthModal overlay, background inert/scroll lock, responsive 320-1440px. |
+| **Explore Desktop E2E** | `e2e/explore-desktop.spec.js` | **13/13 PASS (14.0s)** | Toàn bộ tính năng Control Deck, ViewMode, Dynamic resize cycle Batch 3B giữ vững 100%. |
+| **Visual Regression Suite** | `e2e/visual-regression.spec.js` | **12/12 PASS (14.1s)** | 12/12 tests PASS trên toàn bộ các viewports. |
+| **Shared Primitives E2E** | `e2e/primitives.spec.js` | **9/9 PASS (8.5s)** | Button, FormField, NativeSelect, Dialog, ConfirmActionModal. |
+| **UX & Quality E2E** | `e2e/ux-quality.spec.js` | **8 PASS / 1 SKIP (9.9s)** | Không tràn ngang; keyboard navigation; zero debug tokens. |
+| **AuthModal E2E** | `e2e/auth-modal.spec.js` | **15/15 PASS (22.6s)** | Toàn bộ 15 tests authentication flows và dialog accessibility bảo toàn. |
+| **Tổng kết E2E Playwright** | `npx playwright test` | **85 PASS / 1 SKIP** | **85 tests passed trên Chromium**, 0 failed. |
+
+#### 3. Bằng Chứng Xác Minh Trợ Năng (Accessibility Foundation Preservation)
+- **WAI-ARIA Contracts:** `role="dialog"`, `aria-modal="true"`, `aria-labelledby="store-detail-title"`, `aria-describedby="store-detail-address"`.
+- **WAI-ARIA Tab Semantics:** `role="tablist"` với nhãn `aria-label="Phân loại nội dung chi tiết quán"`, `role="tab"` với `aria-selected`, `aria-controls`, `tabIndex={0/-1}`, hỗ trợ phím mũi tên `ArrowLeft` / `ArrowRight` chuyển tab và focus ngay lập tức, `role="tabpanel"` với `aria-labelledby`.
+- **Kích thước Touch Targets:** Nút Đóng (`X`), Nút Chia Sẻ, 3 Nút Đánh Giá Nhanh, Nút Báo Đóng Cửa, Tab Buttons và Nút Lưu Quán Footer đều đạt kích thước bấm $\ge 44 \times 44\text{px}$ (hoặc min-h 42-44px).
+- **Bẫy Tiêu Điểm (Focus Trap):** Vòng lặp `Tab` / `Shift+Tab` khép kín bên trong Drawer, bao gồm cả nút Lưu Quán Footer ở cuối chu trình. Khi mở Drawer, tiêu điểm tự động đặt vào nút Đóng (`X`).
+- **Phân Cấp Phím Escape (Nested Overlay Coordination):**
+  - Khi mở ảnh phóng to (`ImageViewerModal`, `z-[100000]`): Bấm Escape lần 1 chỉ đóng lightbox ảnh, Drawer vẫn mở nguyên vẹn. Bấm Escape lần 2 đóng Drawer và hoàn trả tiêu điểm về thẻ quán kích hoạt.
+  - Khi bấm Lưu Quán mà chưa đăng nhập (`AuthModal`, `z-[70]`): AuthModal mở đè lên Drawer mà không làm đóng Drawer; đóng AuthModal thì Drawer vẫn hiển thị nguyên vẹn.
+- **Cách Ly Nền & Khóa Cuộn:** Khi Drawer mở, các phần tử nền trong `#root` tự động được gắn `inert` và `aria-hidden="true"`, `document.body.style.overflow` đặt thành `hidden`. Khi đóng Drawer, toàn bộ trạng thái nền và khóa cuộn được khôi phục 100%.
+
+#### 4. Bằng Chứng So Sánh Screenshots Trước / Sau (Before / After Evidence)
+- **Bộ dữ liệu chuẩn kiểm thử:** Sử dụng cùng bộ dữ liệu quán ăn mẫu có đầy đủ ảnh banner, địa chỉ chi tiết, ghi chú landmark, số điện thoại, khung giờ, khoảng giá VND, 3 món ăn thực đơn kèm ảnh và tỷ lệ đánh giá.
+- **Thư mục ảnh Before (Trước khi sửa Batch 3C):**
+  - `frontend/e2e/screenshots/before-batch-3c/drawer-desktop-1920x1080.png`
+  - `frontend/e2e/screenshots/before-batch-3c/drawer-desktop-1440x900.png`
+  - `frontend/e2e/screenshots/before-batch-3c/drawer-desktop-1280x800.png`
+  - `frontend/e2e/screenshots/before-batch-3c/drawer-tablet-768x1024.png`
+  - `frontend/e2e/screenshots/before-batch-3c/drawer-mobile-390x844.png`
+  - `frontend/e2e/screenshots/before-batch-3c/drawer-mobile-320x568.png`
+- **Thư mục ảnh After (Sau khi triển khai Batch 3C UX Refinement):**
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-desktop-1920x1080.png`
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-desktop-1440x900.png`
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-desktop-1280x800.png`
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-tablet-768x1024.png`
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-mobile-390x844.png`
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-mobile-320x568.png`
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-long-address.png` (Địa chỉ dài với dấu tiếng Việt, chuỗi mở rộng)
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-menu-20-items.png` (Thực đơn 20 món ăn)
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-menu-50-items.png` (Thực đơn 50 món ăn)
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-active-tab-reviews.png` (Tab Đánh Giá đang active)
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-footer-scroll-mid.png` (Footer bookmark khi scroll giữa Drawer)
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-footer-scroll-bottom.png` (Footer bookmark khi scroll cuối Drawer)
+  - `frontend/e2e/screenshots/after-batch-3c/drawer-low-height-window.png` (Cửa sổ chiều cao thấp 1440x500)
+
+#### 5. Giới Hạn Đã Biết & Lưu Ý Kiến Trúc
+- **Map Action:** Tiếp tục duy trì trạng thái **DEFERRED — Requires Separate Approval** theo chỉ thị Phase 3 (không tự ý thêm mini-map hoặc library mới khi chưa có backend multi-pin data contract). Nút liên kết Google Maps an toàn (`getSafeGoogleMapsUrl`) tiếp tục phục vụ nhu cầu dẫn đường của thực khách.
+- **Đơn Vị Tiền Tệ:** Giữ nguyên 100% đơn vị VND (`.toLocaleString()đ`), không thay đổi sang đơn vị khác.
+
+#### 6. Kế Hoạch Cho Batch 3D — Admin Dashboard Redesign
+Sau khi Batch 3C UX Refinement được nghiệm thu chính thức:
+- **Mục tiêu:** Nâng cấp trang quản trị [frontend/src/pages/Admin/AdminSection.jsx](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/src/pages/Admin/AdminSection.jsx) thành **Wide Data Table** chuẩn Desktop.
+- **Các hạng mục chính:**
+  - Bảng duyệt quán ăn rộng rãi với các cột rõ ràng: Ảnh & Tên quán, Chủ quán, Danh mục, Trạng thái kiểm duyệt, Ngày gửi, Hành động nhanh.
+  - Thanh công cụ lọc trạng thái và tìm kiếm tích hợp `NativeSelect` và `Input` primitives.
+  - Phân trang dạng trang số trực quan.
+  - Giữ nguyên 100% API duyệt/từ chối quán (`/v1/stores/{id}/approve`, `/v1/stores/{id}/reject`) và phân quyền Admin.
+
+---
+
+### 17.6. Báo Cáo Nghiệm Thu Batch 3C UX Refinement Round 2: Address Alignment & Unified Interaction Footer
+
+> **Trạng thái:** **HOÀN THÀNH TOÀN DIỆN BATCH 3C UX REFINEMENT ROUND 2 — SẴN SÀNG NGHIỆM THU**
+> **Tệp nguồn chính:** [`frontend/src/components/drawers/StoreDetailDrawer.jsx`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/src/components/drawers/StoreDetailDrawer.jsx)
+> **Bộ test bổ sung:** [`frontend/e2e/store-detail-desktop.spec.js`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/store-detail-desktop.spec.js)
+
+#### 1. Chi Tiết Xử Lý Hai Vấn Đề UX Trong Round 2
+1. **Căn Chỉnh Phần Chỉ Dẫn (Landmark Alignment):**
+   - *Hiện trạng Round 1:* Khối Chỉ dẫn nằm lồng bên trong cột text địa chỉ nên bị thụt lề vào trong so với icon MapPin.
+   - *Giải pháp Round 2:*
+     - Tách khối Chỉ dẫn thành một hàng độc lập (`w-full`) nằm ngay dưới hàng địa chỉ + nút Google Maps.
+     - Mép trái của khối Chỉ dẫn căn thẳng hàng 100% với mép trái của icon MapPin (`Math.abs(landmarkBox.x - iconBox.x) <= 2`).
+     - Giữ đầy đủ nhãn "📍 Chỉ dẫn:" và nội dung ghi chú mốc.
+     - Giữ nguyên địa chỉ tự xuống dòng (`break-words`, `[overflow-wrap:anywhere]`), không truncate.
+     - Giữ nguyên action button "Xem trên Google Maps ↗" độc lập với URL an toàn.
+     - Card hiển thị hoàn hảo cả khi có hoặc không có Landmark.
+2. **Thanh Tương Tác Cố Định Ở Chân Trang Với Bốn Nút Cùng Cấp (Unified Interaction Footer):**
+   - *Hiện trạng Round 1:* Footer chỉ có nút Lưu Quán. Ba nút đánh giá nhanh nằm trong tab Đánh Giá.
+   - *Giải pháp Round 2:*
+     - Tích hợp cả 4 hành động chính vào cùng một Dedicated Action Footer:
+       1. **Ngon** (👍, emerald theme)
+       2. **Bình Thường** (😐, neutral theme)
+       3. **Không Ngon** (👎, red theme)
+       4. **Lưu Quán / Đã Lưu** (🔖, brand red `#ff3e3e` khi đã lưu)
+     - Trên Desktop (`lg:`): Bố cục cân đối trên một hàng duy nhất (`lg:flex-row lg:items-center lg:justify-between`), nhóm 3 nút đánh giá ở bên trái và nút Lưu quán ở bên phải.
+     - Trên Mobile / Tablet (< `lg:`): Bố cục thích ứng 2 hàng gọn gàng: hàng 1 gồm 3 nút đánh giá đều nhau (`flex-1 min-w-0`), hàng 2 là nút Lưu quán rộng rãi (`w-full`).
+     - Toàn bộ 4 nút đạt chuẩn touch target $\ge 44\text{px}$ (`min-h-11`).
+     - Xử lý safe-area inset `pb-[max(0.6rem,env(safe-area-inset-bottom))]`.
+     - Tuyệt đối không xuất hiện horizontal overflow trên bất kỳ viewport nào (320px đến 1920px).
+     - Khóa guard chống submit lặp (`submittingRating`, `submittingSave`) với `disabled:opacity-50`.
+3. **Điều Chỉnh Tab Đánh Giá:**
+   - Giữ nguyên hai tab "Thực Đơn" và "Đánh Giá" trên Desktop.
+   - Tab Đánh Giá hiển thị thẻ tổng quan cộng đồng (tỷ lệ hài lòng %, tổng lượt bình chọn, số người đã lưu).
+   - Loại bỏ cụm 3 nút đánh giá khỏi nội dung tab Desktop để tránh xuất hiện trùng lặp với footer. Thay bằng ghi chú hướng dẫn nhẹ nhàng hướng người dùng tới thanh tương tác chân trang.
+   - Bảo toàn 100% tính năng đánh giá trên Mobile thông qua footer.
+
+#### 2. Kết Quả Kiểm Thử Kỹ Thuật (Test Evidence Matrix)
+| Bộ kiểm thử | Lệnh / Công cụ | Kết quả | Chi tiết xác minh |
+| :--- | :--- | :---: | :--- |
+| **Code Linter** | `npm run lint` (`oxlint --deny-warnings`) | **PASS** | 0 error, 0 warning trên 76 tệp nguồn. |
+| **Unit & Contract Suite** | `npm test` (`node --test`) | **33/33 PASS** | Toàn bộ 33 tests pass (WCAG, tokens, contracts, security). |
+| **Production Build Gate** | `npm run build` | **PASS (290ms)** | Production bundle tối ưu, `verify-production-build.mjs` pass 100%. |
+| **Store Detail Desktop E2E** | `e2e/store-detail-desktop.spec.js` | **16/16 PASS** | Landmark alignment, Unified 4-button footer, không duplicate rating, 0-50 món, zero overflow 6 viewports. |
+| **Store Detail Drawer Contract** | `e2e/store-detail-drawer.spec.js` | **12/12 PASS** | WAI-ARIA role/modal semantics, touch target $\ge 44\text{px}$, Escape dismiss, AuthModal overlay, inert background. |
+| **Explore Desktop E2E** | `e2e/explore-desktop.spec.js` | **13/13 PASS** | Control Deck, ViewMode, Dynamic resize cycle bảo toàn 100%. |
+| **AuthModal E2E** | `e2e/auth-modal.spec.js` | **15/15 PASS** | Toàn bộ 15 tests authentication flows và dialog accessibility bảo toàn. |
+| **Shared Primitives E2E** | `e2e/primitives.spec.js` | **9/9 PASS** | Button, FormField, NativeSelect, Dialog, ConfirmActionModal. |
+| **UX & Quality E2E** | `e2e/ux-quality.spec.js` | **8 PASS / 1 SKIP** | Không tràn ngang, keyboard navigation, zero debug tokens. |
+| **Visual Regression Suite** | `e2e/visual-regression.spec.js` | **12/12 PASS** | 12/12 tests PASS trên toàn bộ các viewports. |
+| **Tổng kết E2E Playwright** | `npx playwright test` | **85 PASS / 1 SKIP** | **85 tests pass trên Chromium**, 0 fail, 1 skip. |
+
+---
+
+### 17.7. Báo Cáo Nghiệm Thu Batch 3C UX Refinement Round 3: Equal Tabs, Standardized Ratings, Menu Independent Scroll & Verified Rating Distribution
+
+> **Trạng thái:** **HOÀN THÀNH TOÀN DIỆN BATCH 3C UX REFINEMENT ROUND 3 — SẴN SÀNG NGHIỆM THU**
+> **Tệp nguồn chính:** [`frontend/src/components/drawers/StoreDetailDrawer.jsx`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/src/components/drawers/StoreDetailDrawer.jsx)
+> **Bộ test bổ sung:** [`frontend/e2e/store-detail-desktop.spec.js`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/store-detail-desktop.spec.js), [`frontend/e2e/store-detail-drawer.spec.js`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/store-detail-drawer.spec.js)
+
+#### 1. Chi Tiết Triển Khai Bốn Yêu Cầu UX Trong Round 3
+
+1. **Hai Tab Có Chiều Rộng Bằng Nhau (50% / 50% Desktop Tab Bar):**
+   - *Hiện trạng Round 2:* Hai tab "Thực Đơn" và "Đánh Giá" có chiều rộng dựa theo nội dung văn bản (`flex gap-2`), để trống phần lớn thanh tab ở phía bên phải.
+   - *Giải pháp Round 3:*
+     - Chuyển container tablist sang CSS Grid: `hidden lg:grid grid-cols-2 gap-2 border-b-2 border-black pb-2 w-full lg:sticky lg:top-0 lg:z-10 bg-white pt-1`.
+     - Mỗi tab chiếm chính xác 50% chiều rộng khả dụng của cột phải.
+     - Triệt tiêu hoàn toàn khoảng trống vô nghĩa ở cuối thanh tab.
+     - Căn giữa toàn bộ thành phần bên trong (`flex items-center justify-center gap-2`): Icon (`Utensils` / `MessageSquare`), nhãn (`Thực Đơn` / `Đánh Giá`), và badge số lượng/tỷ lệ.
+     - Trạng thái Active Neo-Brutalist sắc nét: nền đỏ `#ff3e3e`, chữ trắng, bóng đen 2px `shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]`. Trạng thái Inactive: nền trắng, chữ xám đậm, bóng nhẹ `shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)]`.
+     - Giữ nguyên toàn bộ thuộc tính trợ năng: `role="tablist"`, `role="tab"`, `role="tabpanel"`, `aria-selected`, `aria-controls`.
+     - Giữ nguyên điều hướng phím mũi tên `ArrowLeft` / `ArrowRight` và focus ring visible `focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)]`.
+     - Giữ nguyên layout cuộn dạng stacked trên Mobile/Tablet.
+
+2. **Chuẩn Hóa Nhãn Đánh Giá Trong Footer:**
+   - *Đổi 3 nhãn hiển thị:*
+     - "Ngon" → **"Rất hợp"**
+     - "Bình Thường" → **"Bình thường"**
+     - "Không Ngon" → **"Chưa hợp"**
+   - *Tối ưu hóa bố cục nút:*
+     - 3 nút đánh giá được gom vào nhóm `grid grid-cols-3 gap-1.5 sm:gap-2 w-full lg:w-[390px] shrink-0`.
+     - Chiều rộng của 3 nút hoàn toàn bằng nhau trên mọi breakpoint (độ lệch $\le 2\text{px}$).
+     - Chiều cao đồng đều đạt chuẩn touch target $\ge 44\text{px}$ (`min-h-11 h-11`).
+     - Đồng nhất typography (`font-black text-[11px] sm:text-xs`), border (`border-2 border-black`), border-radius (`rounded-full`), và shadow (`shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]`).
+     - Nút "Lưu Quán" nằm riêng biệt ở phía bên phải (`lg:shrink-0 flex items-center justify-end`).
+     - **Bảo toàn dữ liệu & API payload:** Giữ nguyên 100% enum giá trị truyền đi: `'VERY_SATISFIED'`, `'NORMAL'`, `'NOT_SATISFIED'`. Không thay đổi logic tính toán, API request hay backend contract.
+
+3. **Scrolling Độc Lập Cho Thực Đơn Desktop:**
+   - *Hiện trạng Round 2:* Khi danh sách món ăn dài (20, 50 món), toàn bộ nội dung Drawer phải cuộn theo làm cột thông tin quán bên trái bị trôi đi.
+   - *Giải pháp Round 3:*
+     - Khởi tạo vùng cuộn độc lập cho danh sách món ăn: `#store-menu-scroll-container` với cấu trúc `space-y-3 lg:max-h-[calc(100vh-25rem)] lg:min-h-[220px] lg:overflow-y-auto lg:pr-1.5`.
+     - Scrollbar kiểu dáng Neo-Brutalist tinh tế, kín đáo nhưng rõ ràng: `[scrollbar-width:thin] [scrollbar-color:#000000_#f1f1f1]`.
+     - Cột thông tin quán bên trái (`lg:col-span-5`) được bổ sung `lg:sticky lg:top-4` giữ vị trí ổn định 100% khi người dùng cuộn danh sách món ăn.
+     - Thanh tab (`role="tablist"`) cố định ở đỉnh cột phải (`lg:sticky lg:top-0 lg:z-10 bg-white`).
+     - Thanh hành động Footer luôn giữ cố định ở chân Drawer.
+     - **Bảo toàn trạng thái cuộn:** Sử dụng `menuScrollRef` và `savedMenuScrollTop` để lưu vị trí cuộn khi chuyển sang tab "Đánh Giá" và tự động khôi phục mượt mà qua `requestAnimationFrame` khi quay lại tab "Thực Đơn" mà không gây lỗi tiêu điểm.
+     - **Xử lý đa dạng kịch bản:**
+       - 0 món: Render hộp thông báo rỗng dạng nét đứt, không xuất hiện scrollbar thừa.
+       - 3 món: Hiển thị tự nhiên trong không gian sẵn có.
+       - 20 và 50 món: Cuộn độc lập mượt mà, tabbing bàn phím tự động cuộn món đang focus vào vùng nhìn thấy.
+       - Cửa sổ thấp 1440×500 và Zoom 200%: Toàn bộ Drawer vẫn giữ khả năng cuộn tổng thể bên ngoài (`min-h-0 overflow-y-auto`), không bao giờ bị cắt cụt hay khóa chết thông tin.
+       - Giữ nguyên luồng cuộn thống nhất trên Mobile/Tablet.
+
+4. **Phân Bố Đánh Giá Cộng Đồng (Verified Community Rating Distribution):**
+   - *Kết quả khảo sát Backend Contract:*
+     - Kiểm tra thực tế entity [`Store.java`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/backend/src/main/java/com/cangiuoc/cgfoodtour/entity/Store.java#L103-L125) và DTOs [`PublicStoreResponse.java`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/backend/src/main/java/com/cangiuoc/cgfoodtour/dto/response/PublicStoreResponse.java#L36-L40), [`StoreResponse.java`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/backend/src/main/java/com/cangiuoc/cgfoodtour/dto/response/StoreResponse.java#L46-L50).
+     - **Xác nhận Backend đã có sẵn dữ liệu phân bố chuẩn:** `countVerySatisfied`, `countNormal`, `countNotSatisfied`, `totalVotes`, `satisfactionRate`.
+     - Logic tính toán tại [`StoreService.java`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/backend/src/main/java/com/cangiuoc/cgfoodtour/service/StoreService.java#L596-L608): `total = verySatisfied + normal + notSatisfied; rate = total == 0 ? 0.00 : (verySatisfied * 100.0 / total);`.
+   - *Hiển thị khi có dữ liệu đã kiểm chứng:*
+     - Thẻ "Chi tiết mức độ hài lòng ({totalRatings} đánh giá)" với 3 hàng rõ ràng:
+       1. **Rất hợp**: Icon `ThumbsUp` xanh lục, số lượt thực tế, tỷ lệ %, thanh tiến trình `bg-emerald-500` với `role="progressbar"`.
+       2. **Bình thường**: Icon `Meh` vàng cam, số lượt thực tế, tỷ lệ %, thanh tiến trình `bg-amber-400` với `role="progressbar"`.
+       3. **Chưa hợp**: Icon `ThumbsDown` đỏ, số lượt thực tế, tỷ lệ %, thanh tiến trình `bg-red-500` với `role="progressbar"`.
+     - Xử lý hoàn hảo khi tổng số lượt = 0 (tỷ lệ 0%, độ rộng thanh tiến trình 0%).
+   - *Fallback khi chưa có dữ liệu:*
+     - Nếu một trong các trường số liệu bị `null` hoặc `undefined`: Hiển thị thông báo trung thực `DEFERRED — Rating distribution requires verified data contract`.
+     - **Tuyệt đối không suy diễn số liệu từ satisfactionRate, không bịa số liệu giả.**
+
+---
+
+#### 2. Kết Quả Kiểm Thử Toàn Diện (Test Verification Matrix)
+
+| Bộ kiểm thử | Lệnh / Công cụ | Kết quả | Chi tiết xác minh |
+| :--- | :--- | :---: | :--- |
+| **Code Linter** | `npm run lint` (`oxlint --deny-warnings`) | **PASS** | 0 error, 0 warning trên 76 tệp nguồn. |
+| **Unit & Contract Suite** | `npm test` (`node --test`) | **33/33 PASS** | Toàn bộ 33 tests pass (WCAG contrast, tokens, contracts, security). |
+| **Production Build Gate** | `npm run build` | **PASS (293ms)** | Production bundle tối ưu, `verify-production-build.mjs` pass 100%. |
+| **Store Detail Desktop E2E** | `e2e/store-detail-desktop.spec.js` | **17/17 PASS** | Equal-width tabs 50/50, 3 nút rating đồng đều, cuộn thực đơn độc lập, cột trái ổn định, phân bố đánh giá 3 mức, fallback DEFERRED. |
+| **Store Detail Drawer Contract** | `e2e/store-detail-drawer.spec.js` | **12/12 PASS** | WAI-ARIA role/modal semantics, touch target $\ge 44\text{px}$, Escape dismiss, AuthModal overlay, inert background. |
+| **Explore Desktop E2E** | `e2e/explore-desktop.spec.js` | **13/13 PASS** | Control Deck, ViewMode, Dynamic resize cycle bảo toàn 100%. |
+| **AuthModal E2E** | `e2e/auth-modal.spec.js` | **15/15 PASS** | Toàn bộ 15 tests authentication flows và dialog accessibility bảo toàn. |
+| **Shared Primitives E2E** | `e2e/primitives.spec.js` | **9/9 PASS** | Button, FormField, NativeSelect, Dialog, ConfirmActionModal. |
+| **UX & Quality E2E** | `e2e/ux-quality.spec.js` | **8 PASS / 1 SKIP** | Không tràn ngang, keyboard navigation, zero debug tokens. |
+| **Visual Regression Suite** | `e2e/visual-regression.spec.js` | **12/12 PASS** | 12/12 tests PASS trên toàn bộ các viewports. |
+| **Tổng kết E2E Playwright** | `npx playwright test` | **86 PASS / 1 SKIP** | **86 tests pass trên Chromium**, 0 fail, 1 skip. |
+
+---
+
+#### 3. Minh Chứng Trực Quan (Visual Evidence Screenshots)
+
+Toàn bộ ảnh chụp màn hình minh chứng được lưu trữ tại `C:\Users\Admin\.gemini\antigravity-ide\brain\10a3bb85-5924-4c9f-a3d3-38a8c8ba72bf\screenshots\after-batch-3c\`:
+
+1. **Tab Thực Đơn (Desktop 1440px):**
+   `drawer-tab-menu.png` — Hai tab chiếm 50% chiều rộng mỗi bên, icon & nhãn căn giữa, badge cân đối, footer 3 nút đánh giá đồng đều.
+2. **Tab Đánh Giá (Desktop 1440px):**
+   `drawer-tab-reviews.png` — Phân bố đánh giá cộng đồng 3 mức: Rất hợp (118 - 98%), Bình thường (2 - 2%), Chưa hợp (0 - 0%) với progress bar màu chuẩn.
+3. **Footer Desktop Close-Up:**
+   `drawer-footer-desktop.png` — Cụm 3 nút rating có chiều rộng bằng nhau, chiều cao 44px, nhãn "Rất hợp", "Bình thường", "Chưa hợp", nút Lưu quán tách biệt bên phải.
+4. **Menu 50 Món Đang Cuộn:**
+   `drawer-menu-50-items-scrolling.png` — Danh sách món cuộn độc lập xuống món số 5, 6, 7, 8; cột thông tin quán bên trái và thanh tab giữ ổn định 100%.
+5. **Mobile 390px Viewport:**
+   `drawer-mobile-390px.png` — Bố cục 2 hàng: hàng 1 gồm 3 nút rating đều nhau, hàng 2 nút Lưu quán full-width.
+6. **Mobile 320px Viewport:**
+   `drawer-mobile-320px.png` — Hiển thị không bị tràn viền hay clipping text, touch target $\ge 44\text{px}$.
+7. **Cửa Sổ Thấp (1440×500):**
+   `drawer-low-height-1440x500.png` — Layout co giãn an toàn, menu và footer luôn truy cập được.
+
+---
+
+### Phase 3D — Admin Dashboard Desktop UX Redesign
+
+> **Trạng thái:** Đã hoàn thành 100% và kiểm chứng toàn diện (Sẵn sàng nghiệm thu).
+> **Branch:** `feature/frontend-desktop-redesign`
+> **Base commit:** `169a8509806ac868d57afb55b8adc29fa906c1c6`
+
+#### 1. Các Nâng Cấp UX Quản Trị Trọng Tâm (Core Admin Improvements)
+
+1. **Bố Cục Desktop 2 Cột Chuẩn Neo-Brutalist (1280px, 1440px, 1920px):**
+   - **Sidebar Quản Trị Cố Định Bên Trái (`w-64 xl:w-72`):**
+     - Logo thương hiệu Cần Giuộc Admin Portal với huy hiệu đếm tổng số tác vụ cần xử lý gấp (`totalNeedsAttention`) nhấp nháy thu hút sự chú ý.
+     - 4 tab điều hướng chuyên biệt: `Tổng Quan`, `Quán Ăn`, `Người Dùng`, `Danh Mục`.
+     - Active navigation state nổi bật (`bg-[#ff3e3e]` cho Tổng Quan, `bg-black text-white` cho các tab chức năng) với shadow và transform dứt khoát.
+     - Footer sidebar tích hợp thẻ Admin Profile thu nhỏ (bấm để xem phóng to avatar), nút "Về Trang Khách ↗", và chỉ báo trạng thái token an toàn.
+   - **Khu Vực Nội Dung Chính (`flex-1 max-w-[1600px]`):**
+     - Khung làm việc thoáng đạt, responsive padding (`p-4 sm:p-6 lg:p-8`), tận dụng tối đa chiều rộng màn hình lớn mà không làm loãng thông tin.
+
+2. **Bảng Dữ Liệu Quản Trị Quán Ăn Rộng Rãi (Wide Stores Data Table):**
+   - **Chuyển Đổi Linh Hoạt (Table View vs Card Grid):** Nút toggle có trạng thái `aria-pressed`, giúp admin dễ dàng chuyển đổi giữa bảng dữ liệu chi tiết và lưới thẻ trực quan.
+   - **6 Cột Thông Tin Tinh Gọn:**
+     - `Quán Ăn`: Thumbnail tương tác (bấm để xem chi tiết / zoom), tên quán in đậm hỗ trợ 2 dòng chống vỡ layout, địa chỉ thu gọn và badge danh mục.
+     - `Chủ Quán`: Username `@...`, email, và số điện thoại liên hệ nhanh.
+     - `Giờ & Giá`: Giờ mở/đóng cửa và khoảng giá tiền Việt Nam Đồng format chuẩn.
+     - `Trạng Thái`: Huy hiệu màu tương phản cao (Đã Duyệt xanh lục, Đang Ẩn vàng cam, Từ Chối đỏ, Chờ Duyệt tím nhạt). Hiển thị trực tiếp ghi chú lý do xin mở lại quán (`recoveryRequestReason`) dạng quote trang nhã.
+     - `Đánh Giá`: Icon Cup vàng, tỷ lệ hài lòng % và tổng số lượt đánh giá.
+     - `Thao Tác Quản Trị`: Cụm nút hành động tinh gọn trên một dòng (`Chi Tiết`, `Duyệt`, `Từ Chối` / `Duyệt KP`, `Từ Chối KP` / `Ẩn Quán`, `Hiện Quán`).
+   - **Phân Tách An Toàn Hành Động Nguy Hiểm:** Nút Hard Delete (`Trash2` màu đỏ) được tách biệt bằng vạch ngăn (`w-[1px] h-5 bg-neutral-300`) ở góc ngoài cùng, ngăn ngừa tuyệt đối việc bấm nhầm khi đang thao tác duyệt nhanh.
+
+3. **Bảng Quản Lý Người Dùng & Cây Thư Mục Quán (Users Management & Store Tree):**
+   - Bộ lọc vai trò chuẩn mực bằng `NativeSelect` (`Tất Cả Roles`, `ADMIN`, `USER`) kết hợp thanh tìm kiếm `Input` tức thời theo username/email.
+   - Bảng tài khoản hiển thị avatar, họ tên, vai trò badge (`ADMIN` đen, `USER` xám) và trạng thái hoạt động.
+   - **Accordion Cây Thư Mục Quán Ăn Của Người Dùng:**
+     - Nút "Xem Quán (N)" mở rộng một cây thư mục dạng grid hiển thị tất cả các quán ăn thuộc quyền sở hữu của user đó kèm trạng thái từng quán.
+   - Các thao tác: Sửa vai trò (`Sửa Roles`), Khóa/Mở khóa tài khoản, và Xóa tài khoản người dùng có dialog xác nhận nghiêm ngặt.
+
+4. **Bố Cục Quản Lý Danh Mục 2 Cột (Categories 2-Column Desktop Grid):**
+   - **Cột Trái (4/12):** Form "Thêm Danh Mục Mới" với trường tên danh mục và bộ chọn `CategoryIconPicker` trực quan với thanh tìm kiếm icon.
+   - **Cột Phải (8/12):** Bảng danh sách danh mục hiện có kèm bộ chọn sắp xếp `NativeSelect` (`ID Tăng/Giảm`, `Tên A → Z`, `Tên Z → A`) và các nút Sửa / Xóa danh mục an toàn.
+
+5. **Drawer Xem Chi Tiết Quán Cho Admin (2-Column Desktop Drawer):**
+   - Mở rộng kích thước trên màn hình lớn (`lg:max-w-3xl xl:max-w-4xl`).
+   - **Cột Trái:** Ảnh banner quán (click để phóng to qua `ImageViewerModal`), tên quán, tỷ lệ hài lòng, card thông tin liên hệ (địa chỉ, liên kết Google Maps an toàn, số điện thoại, giờ mở cửa, khoảng giá) và thẻ audit chủ quán.
+   - **Cột Phải:** Mô tả quán ăn, danh sách thực đơn món ăn (hình ảnh, tên, giá, mô tả), và thanh công cụ thao tác admin trực tiếp (Duyệt, Từ Chối, Ẩn Quán, Khôi Phục, Xóa Quán).
+   - Hỗ trợ đóng nhanh qua phím `Escape` hoặc nút `X`.
+
+6. **Phân Trang Có Đánh Số (Numbered Pagination):**
+   - Dải nút phân trang đánh số `1, 2, 3 ... N` hiển thị trực quan khi `totalPages > 1`, cho phép nhảy nhanh đến trang mong muốn kèm thông tin tổng số quán.
+
+7. **Bảo Toàn An Toàn Nghiệp Vụ & Responsive Toàn Diện:**
+   - Bảo toàn 100% quyền `ADMIN`, các modals xác nhận (`StoreActionModal`, `AccountStatusModal`, `ConfirmActionModal`).
+   - Không thay đổi bất kỳ API contract backend nào.
+   - Tương thích mượt mà từ Desktop 1920×1080, 1440×900, 1280×800, Tablet 768px cho đến Mobile 390px / 320px (với thanh header mobile và drawer menu điều hướng tiện dụng).
+
+---
+
+#### 2. Kết Quả Kiểm Thử Toàn Diện (Test Verification Matrix)
+
+| Bộ kiểm thử | Lệnh / Công cụ | Kết quả | Chi tiết xác minh |
+| :--- | :--- | :---: | :--- |
+| **Code Linter** | `npm run lint` (`oxlint --deny-warnings`) | **PASS** | 0 error, 0 warning trên 79 tệp nguồn. |
+| **Unit & Contract Suite** | `npm test` (`node --test`) | **33/33 PASS** | Toàn bộ 33 tests pass (WCAG contrast, tokens, contracts, security). |
+| **Production Build Gate** | `npm run build` | **PASS (302ms)** | Production bundle tối ưu, `verify-production-build.mjs` pass 100%. |
+| **Admin Desktop E2E Suite** | `e2e/admin-desktop.spec.js` | **7/7 PASS (16.6s)** | Toàn bộ 7 test cases admin: Navigation 4 tabs, Table/Card toggle, Filter/Search, Approve/Reject modals, Hard Delete, 2-column Store Drawer, Users accordion & role modal, Categories form & sorting, Mobile 390px navigation. |
+
+---
+
+#### 3. Minh Chứng Trực Quan (Visual Evidence Screenshots)
+
+Toàn bộ ảnh chụp Before/After được lưu trữ có cấu trúc:
+- **Thư mục Before:** `frontend/e2e/screenshots/before-batch-3d/` (9 ảnh baseline).
+- **Thư mục After:** `frontend/e2e/screenshots/after-batch-3d/` (9 ảnh sau redesign).
+
+1. **Dashboard 1920×1080:**
+   - Before: [`admin-dashboard-desktop-1920x1080.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3d/admin-dashboard-desktop-1920x1080.png)
+   - After: [`admin-dashboard-desktop-1920x1080.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3d/admin-dashboard-desktop-1920x1080.png)
+2. **Dashboard 1440×900:**
+   - Before: [`admin-dashboard-desktop-1440x900.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3d/admin-dashboard-desktop-1440x900.png)
+   - After: [`admin-dashboard-desktop-1440x900.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3d/admin-dashboard-desktop-1440x900.png)
+3. **Dashboard 1280×800:**
+   - Before: [`admin-dashboard-desktop-1280x800.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3d/admin-dashboard-desktop-1280x800.png)
+   - After: [`admin-dashboard-desktop-1280x800.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3d/admin-dashboard-desktop-1280x800.png)
+4. **Dashboard Tablet 768×1024:**
+   - Before: [`admin-dashboard-tablet-768x1024.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3d/admin-dashboard-tablet-768x1024.png)
+   - After: [`admin-dashboard-tablet-768x1024.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3d/admin-dashboard-tablet-768x1024.png)
+5. **Dashboard Mobile 390×844:**
+   - Before: [`admin-dashboard-mobile-390x844.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3d/admin-dashboard-mobile-390x844.png)
+   - After: [`admin-dashboard-mobile-390x844.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3d/admin-dashboard-mobile-390x844.png)
+6. **Bảng Quản Lý Quán Ăn (Stores Tab 1440px):**
+   - Before: [`admin-stores-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3d/admin-stores-desktop-1440.png)
+   - After: [`admin-stores-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3d/admin-stores-desktop-1440.png)
+7. **Bảng Quản Lý Người Dùng (Users Tab 1440px):**
+   - Before: [`admin-users-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3d/admin-users-desktop-1440.png)
+   - After: [`admin-users-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3d/admin-users-desktop-1440.png)
+8. **Quản Lý Danh Mục (Categories Tab 1440px):**
+   - Before: [`admin-categories-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3d/admin-categories-desktop-1440.png)
+   - After: [`admin-categories-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3d/admin-categories-desktop-1440.png)
+9. **Cửa Sổ Chi Tiết Quán Admin (Store Detail Drawer 1440px):**
+   - Before: [`admin-view-store-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3d/admin-view-store-desktop-1440.png)
+   - After: [`admin-view-store-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3d/admin-view-store-desktop-1440.png)
+10. **Chế Độ Lưới Thẻ Quán Ăn (Stores Cards View 1440px):**
+   - After: [`admin-stores-cards-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3d/admin-stores-cards-desktop-1440.png)
+11. **Hộp Thoại Xác Nhận Phê Duyệt Quán (Confirm Dialog 1440px):**
+   - After: [`admin-confirm-dialog-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3d/admin-confirm-dialog-desktop-1440.png)
+12. **Dashboard Cực Nhỏ Mobile (320×568):**
+   - After: [`admin-dashboard-mobile-320x568.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3d/admin-dashboard-mobile-320x568.png)
+
+---
+
+### Phase 3D — Final Acceptance & Regression Verification Report
+
+> **Trạng thái nghiệm thu:** **PASS** (Đạt chuẩn nghiệm thu toàn diện, sẵn sàng đóng Batch 3D).<br>
+> **Branch xác minh:** `feature/frontend-desktop-redesign`<br>
+> **Commit kiểm tra:** `169a8509806ac868d57afb55b8adc29fa906c1c6` (Clean, không commit/push, bảo tồn 12 screenshots của Batch 3C).<br>
+> **Phạm vi backend:** 0 thay đổi backend, 0 thay đổi API contracts, 0 thay đổi logic phân quyền.
+
+#### 1. Audit Phân Trang & Tính Chính Xác Dữ Liệu (Pagination & Data Integrity Audit — P1)
+
+- **Phân loại phân trang:**
+  - Cả Quán Ăn (`/v1/stores/admin`) và Người Dùng (`/users`) đều sử dụng **Server-side pagination** chuẩn thông qua Spring Data `PageResponse`.
+  - Backend API trả về metadata đầy đủ: `totalPages`, `totalElements`, `page`, `size`, `last`.
+- **Phát hiện & Sửa lỗi Prop Forwarding:**
+  - Phát hiện: Tại `frontend/src/App.jsx`, props `adminUsersPage` và `adminStoresPage` trước đó bị truyền nhầm vào component `<MyDishesSection />` thay vì `<AdminSection />`. Hậu quả là `AdminSection` rơi vào giá trị mặc định `{ page: 0, totalPages: 1, totalElements: 0 }`, khiến thanh phân trang số không hiển thị và hiển thị `stores.length` thay vì `totalElements`.
+  - Khắc phục: Đã chuyển chính xác `adminUsersPage={adminUsersPage}` và `adminStoresPage={adminStoresPage}` sang `<AdminSection />` (lines 2346–2347).
+- **Tính toán Dashboard Metrics:**
+  - Trước đây: `approvedStoresCount` và `totalUsersCount` lấy `.length` từ mảng paged của trang hiện tại (tối đa 20 phần tử).
+  - Khắc phục: Cập nhật ưu tiên lấy nguồn dữ liệu tổng thẩm quyền từ Backend: `adminStoreSummary.approved` và `adminUsersPage.totalElements` (fallback `adminUsersList.length`). Không còn tình trạng metrics dashboard bị giới hạn theo trang.
+- **Bộ lọc, Tìm kiếm và Reset Trang:**
+  - `storeStatusFilter`, `storeCategoryFilter`, `storeSearchQuery` và `userRoleFilter`, `userSearchQuery` đều có debounce và tự động gọi `loadStorePage(0)` / `loadUserPage(0)` để reset page index về 1 khi người dùng thay đổi filter hoặc gõ từ khóa tìm kiếm.
+  - Sorting danh mục (`categorySortBy`) hoạt động chính xác trên toàn bộ tập danh mục của client mà không làm mất dữ liệu.
+
+#### 2. Thao Tác Quản Trị Phá Hủy & An Toàn Thao Tác (Admin Destructive Operations Audit — P1)
+
+- **Các luồng thao tác được kiểm tra:**
+  1. `Approve Store`: Permission guard `ADMIN`, confirmation dialog `StoreActionModal` (màu xanh emerald), payload `{ actionType: 'APPROVE' }`, loading state, double-submit prevention.
+  2. `Reject Store`: Permission guard, modal nhập lý do từ chối, payload `{ reason }`, validation yêu cầu lý do không rỗng, loading state `rejectSubmitting`.
+  3. `Hard Delete Store`: Confirmation modal nghiêm ngặt `StoreActionModal` (màu đỏ đậm, cảnh báo "KHÔNG THỂ KHÔI PHỤC"), payload `{ actionType: 'HARD_DELETE' }`.
+  4. `Lock / Unlock User`: Modal `AccountStatusModal`, payload `{ reason }`, cập nhật trạng thái tức thì.
+  5. `Change User Roles`: Modal chỉnh sửa tài khoản với checklist roles (`USER`, `ADMIN`), kiểm tra tuổi $\ge 18$.
+  6. `Delete User`: Dialog `ConfirmActionModal` yêu cầu nhập chính xác username của user mục tiêu và nhập lý do xóa để kích hoạt nút Xóa.
+  7. `Recovery Request`: Duyệt khôi phục (`RECOVER`) hoặc từ chối khôi phục (`REJECT_RECOVERY_REQUEST`).
+  8. `Delete Category`: `ConfirmActionModal` xác nhận trước khi xóa.
+- **Cơ chế Error Retention & Double-Submit Prevention:**
+  - Đã cập nhật `handleHideStore`, `handleRecoverStore`, `handleRejectRecoveryRequest` trong `App.jsx` trả về boolean tường minh (`res.data || true` khi thành công, `false` khi thất bại).
+  - Tại `AdminSection.jsx`, modal từ chối (`rejectingStore`) và `StoreActionModal` chỉ đóng khi thao tác trả về kết quả khác `false`. Khi API trả về lỗi 4xx/5xx hoặc validation fail, modal được giữ nguyên trạng thái mở, nội dung textarea không bị mất để admin có thể sửa lại.
+  - Các nút xác nhận được gắn `disabled={loading}` và chuyển text thành `Đang Xử Lý...` để chống double-click / spam submit.
+
+#### 3. Khả Năng Tiếp Cận Cửa Sổ Chi Tiết Quán Admin (Store Detail Drawer Accessibility)
+
+- **Accessible Dialog Attributes:** Gắn `role="dialog"`, `aria-modal="true"`, `aria-label="Chi tiết quán [Tên quán]"`.
+- **Keyboard Focus Management:**
+  - Tích hợp hook `useDialogFocus` vào `viewingStore` với `ref={drawerDialogRef}`.
+  - Tự động di chuyển focus vào container khi mở drawer.
+  - Nhấn phím `Escape` tự động đóng drawer và phục hồi keyboard focus về nút kích hoạt ban đầu.
+- **Body Scroll Locking:**
+  - Sử dụng `useEffect` khóa `document.body.style.overflow = 'hidden'` khi drawer mở và phục hồi nguyên bản `''` khi unmount hoặc đóng.
+  - Ngăn cuộn nền trang web phía sau.
+- **Action Buttons & Safe Spacing:**
+  - Khung thao tác admin trực tiếp (`pt-4 border-t-2 border-black`) được ghim cố định ở đáy cột phải, không che khuất nội dung danh sách món ăn phía trên.
+  - Cột ảnh và cột tài khoản người dùng được căn chỉnh khoảng cách thở $50-60\text{px}$, chống dính chữ vào avatar.
+
+#### 4. Khắc Phục Vấn Đề Trực Quan (Visual Polish)
+
+- **Khoảng cách Cột Ảnh & Tài Khoản Người Dùng:**
+  - Đã mở rộng cột `Ảnh` lên `w-36 min-w-[140px] pl-4 pr-4`, thêm spacer `w-5` ở header để chữ "Ảnh" nằm cân đối ngay trên avatar tròn.
+  - Cột `Tài Khoản` được tăng lề trái `pl-8 min-w-[220px]`, giải quyết triệt để phản hồi về việc ảnh và tài khoản bị quá sát nhau.
+- **Không có Visual Regression:**
+  - Mọi viewports từ Desktop 1920×1080, 1440×900, 1280×800, Tablet 768×1024 đến Mobile 390×844 và 320×568 đều hiển thị chuẩn Neo-Brutalist, không phát sinh tràn viền ngang (horizontal overflow).
+
+#### 5. Danh Sách Tệp Mã Nguồn Được Chỉnh Sửa (Files Modified)
+
+| Tệp nguồn | Thay đổi cụ thể |
+| :--- | :--- |
+| `frontend/src/App.jsx` | Chuyển `adminUsersPage` và `adminStoresPage` từ `<MyDishesSection>` sang `<AdminSection>`. Bổ sung return boolean tường minh cho `handleHideStore` và `handleRecoverStore`. |
+| `frontend/src/pages/Admin/AdminSection.jsx` | Sửa metrics lấy từ server totals, tích hợp `useDialogFocus` và body scroll lock cho Drawer, sửa khoảng cách cột User, bổ sung double-submit lock và error retention cho modal từ chối, bổ sung `aria-modal` và accessible names. |
+| `frontend/e2e/admin-desktop.spec.js` | Mở rộng lên 10 bài test toàn diện (bổ sung tests phân trang đa trang, destructive operations retention & failure handling, drawer keyboard accessibility & body scroll lock). |
+| `frontend/e2e/capture-admin-after.spec.js` | Mở rộng chụp 12 màn hình After bao gồm Card View, Confirm Dialog, và viewport siêu nhỏ 320×568. |
+| `docs/frontend-audit/IMPLEMENTATION_PROGRESS.md` | Bổ sung báo cáo nghiệm thu chi tiết Batch 3D Final Verification. |
+
+#### 6. Bảng Kết Quả Kiểm Thử (Full Test Suite Results)
+
+- **Linter (`npm run lint`):** **PASS** (0 warnings, 0 errors trên 79 files).
+- **Unit & Contract Suite (`npm test`):** **33/33 PASS** (100% pass, thời gian 1.05s).
+- **Production Build Gate (`npm run build`):** **PASS** (Vite build 461ms, verification script passed).
+- **Playwright Admin Desktop Suite (`e2e/admin-desktop.spec.js`):** **10/10 PASS (25.9s)**:
+  1. `1. Admin Layout & Navigation across tabs`: **PASS**
+  2. `2. Stores Tab: Table vs Card view toggle & filtering`: **PASS**
+  3. `3. Store Actions: Approve, Reject, and Danger Confirmation Modals`: **PASS**
+  4. `4. Viewing Store Drawer: 2-column Desktop Layout & Details`: **PASS**
+  5. `5. Users Tab: Search, Role Filtering, Accordion & Modals`: **PASS**
+  6. `6. Categories Tab: 2-column layout, Icon Picker, Sorting`: **PASS**
+  7. `7. Mobile Responsiveness: 390px viewport navigation`: **PASS**
+  8. `8. Multi-page Pagination: Numbered buttons, Prev/Next navigation, and Total Count`: **PASS**
+  9. `9. Admin Operations: Destructive Confirmations, Payload verification, and Failure modal retention`: **PASS**
+  10. `10. Admin Store Detail Drawer: Focus trapping, Initial focus, Escape dismissal & Body scroll lock`: **PASS**
+
+#### 7. Những Hạng Mục Chưa Thể Xác Minh Trong Môi Trường Local (Unverified Items)
+
+- **Thao tác dữ liệu thật trên Production Database:**
+  - Tất cả destructive operations (Approve, Reject, Hard Delete, User Lock/Delete) chỉ được kiểm thử trên mocked API responses và staging contracts. Chưa chạy trực tiếp trên production database theo đúng nguyên tắc an toàn dữ liệu.
+- **Thử nghiệm màn hình cảm ứng vật lý đa điểm (Physical Touch Devices):**
+  - Đã kiểm tra qua Playwright emulation (390×844 và 320×568). Chưa thực hiện kiểm tra tay trên thiết bị iOS/Android vật lý thực tế.
+
+#### 8. Kết Luận Nghiệm Thu
+
+- **KẾT LUẬN: PASS.**
+- Batch 3D — Admin Dashboard Desktop UX Redesign đã hoàn thành toàn diện tất cả các tiêu chí an toàn, thẩm mỹ và dữ liệu.
+- Hệ thống sẵn sàng để đóng Batch 3D. Dừng lại theo đúng yêu cầu strict scope, không tự ý chuyển sang Batch 3E.
+
+---
+
+## 15. Phase 3: Desktop UX Redesign — Batch 3E (My Stores & Dish Management Desktop UX Redesign)
+
+> **Trạng thái:** **READY FOR ACCEPTANCE REVIEW** (Đã hoàn thành triển khai mã nguồn, E2E suites, Before/After visual capture và kiểm thử hồi quy 100% PASS).<br>
+> **Git Checkpoint cơ sở:** `feature/frontend-desktop-redesign` tại HEAD `d449c5fcf7f09020f974599aaf158bbc958a22d2`<br>
+> **Tài sản untracked:** Bảo tồn nguyên vẹn 12 screenshots của Batch 3C tại `frontend/e2e/screenshots/after-batch-3c/`.<br>
+> **Ranh giới:** 0 thay đổi backend, 0 thay đổi API contracts, 0 thay đổi authentication/authorization.
+
+---
+
+### 15.1. Pre-Implementation Audit & Production Call Sites
+
+1. **Xác minh Production Call Sites:**
+   - **File:** `frontend/src/App.jsx`
+   - **Call Site:** Tab `my-stores` (line ~2410) chỉ render component `<MyStoresSection />`.
+   - **Xác minh `MyDishesSection.jsx`:** Tiếp tục xác nhận là **orphan component** không được import hoặc render trong bất kỳ luồng người dùng production nào.
+   - **Luồng quản lý món ăn production:** Toàn bộ tính năng xem, thêm, sửa, xóa món ăn thực tế của chủ quán được tích hợp trực tiếp bên trong `frontend/src/pages/MyStores/MyStoresSection.jsx` (khi state `managingDishesForStore !== null`).
+   - Mọi nỗ lực tối ưu và redesign tập trung 100% vào `MyStoresSection.jsx` để mang lại giá trị thực tế cho người dùng.
+
+2. **Kiểm kê Form Validation & Data Contracts:**
+   - **Tọa độ GPS:** `parseGoogleMapsUrl` phân tích liên kết Google Maps và chuỗi tọa độ `lat, lng` hợp lệ, gán vào form state mà không thay đổi cấu trúc dữ liệu gửi lên API `/v1/stores`.
+   - **Đơn vị Giá Món Ăn (VND):** Giao diện nhận số rút gọn hàng nghìn (ví dụ nhập `25` với hậu tố `.000đ`), form state nhân với `1000` (`25000`), và payload gửi API `POST /v1/food-items` giữ nguyên định dạng số thực chuẩn VND (`25000.0`). Format hiển thị trên menu sử dụng chuẩn tiếng Việt `vi-VN` (`25.000đ`).
+
+---
+
+### 15.2. Các Tính Năng Đã Được Redesign Trong Batch 3E
+
+1. **My Stores Dashboard (Tổng Quan Quán Ăn Của Tôi):**
+   - **Thanh Chỉ Số Hiệu Suất (4 KPI Stat Tiles):**
+     - `Tổng Số Quán`: Tổng số lượng quán ăn người dùng sở hữu.
+     - `Đang Hoạt Động`: Số quán đã được duyệt và đang mở bán công khai.
+     - `Chờ Xét Duyệt`: Số quán đang đợi ban quản trị phê duyệt.
+     - `Cần Xử Lý`: Số quán bị từ chối (`REJECTED`) hoặc đang ẩn (`HIDDEN`).
+   - **Bộ Lọc Trạng Thái & Tìm Kiếm Trực Tiếp:**
+     - Thanh tìm kiếm realtime theo tên quán và địa chỉ.
+     - 5 Pill buttons lọc nhanh: `Tất Cả`, `Hoạt Động`, `Chờ Duyệt`, `Bị Từ Chối`, `Đã Ẩn`.
+   - **Chế Độ Xem Linh Hoạt (View Mode Toggle):**
+     - `Grid Cards View`: Thẻ quán trực quan với banner lớn, trạng thái badge, giờ mở cửa, khoảng giá và các nút hành động.
+     - `Table View`: Bảng dữ liệu độ đậm đặc cao dành riêng cho desktop màn hình lớn (1280px+), dễ dàng so sánh nhiều quán cùng lúc.
+   - **Trạng thái Trống, Loading & Lỗi:** Empty state Neo-Brutalist với nút CTA "Tạo Quán Đầu Tiên" rõ ràng.
+
+2. **Form Tạo & Chỉnh Sửa Quán Ăn (Desktop 2-Column Responsive Form):**
+   - **Phân bổ 2 cột cân đối trên màn hình lớn (`grid-cols-1 lg:grid-cols-12`):**
+     - **Cột 1 (Nhận diện & Thương hiệu - 5 cols):** Quản lý ảnh bìa banner (preview trực quan với nút thay đổi/xóa), tên quán ăn, chọn danh mục ẩm thực (modal chọn danh mục chuẩn ARIA), và mô tả giới thiệu.
+     - **Cột 2 (Vị trí & Vận hành - 7 cols):** Địa chỉ chi tiết, nhập link/tọa độ Google Maps kèm bộ phân tích tự động, modal hướng dẫn lấy tọa độ, giờ mở cửa - đóng cửa, và khoảng giá min - max.
+   - **Trợ năng & Kiểm tra dữ liệu (Accessibility & Validation):**
+     - Thêm `noValidate` vào thẻ `<form>` để triệt tiêu popup tooltip mặc định của trình duyệt, thay thế bằng khung thông báo lỗi tổng thể `role="alert"` màu đỏ Neo-Brutalist nổi bật ở đầu form.
+     - Tất cả các nhãn `<label>` đều có `htmlFor` liên kết trực tiếp với `id` của input, kèm dấu sao đỏ `aria-hidden="true">*` cho các trường bắt buộc.
+   - **Chống mất dữ liệu (Dirty State & Discard Modal):**
+     - Khi người dùng đã thay đổi dữ liệu trong form chỉnh sửa và bấm nút "Hủy / Quay Lại", hệ thống hiển thị hộp thoại xác nhận hủy thay đổi trước khi thoát.
+
+3. **Quản Lý Món Ăn Thực Tế (Production Dish Management):**
+   - **Bố cục 2 cột chuyên nghiệp (`grid-cols-1 lg:grid-cols-12`):**
+     - **Cột Trái (Form Thêm / Sửa Món - 5 cols):** Form tạo hoặc cập nhật món ăn với ảnh preview, tên món, giá bán với hậu tố `.000đ`, mô tả món, và nút submit có loading state chống double-click. Khi ở chế độ sửa, có nút "Hủy chế độ sửa" để quay lại form thêm mới.
+     - **Cột Phải (Thực Đơn Trực Quan - 7 cols):** Lưới thẻ món ăn hiển thị ảnh minh họa sắc nét, tên món in đậm, giá tiền chuẩn định dạng tiếng Việt (`25.000đ`), mô tả chi tiết, cùng 2 nút Sửa và Xóa có khoảng cách an toàn.
+   - **Xác nhận Xóa An Toàn:** Tích hợp `ConfirmActionModal` chuẩn WCAG yêu cầu xác nhận trước khi xóa món khỏi thực đơn.
+
+4. **Trạng Thái Xét Duyệt, Từ Chối & Khôi Phục (Approval & Recovery States):**
+   - **Quán Bị Từ Chối (`REJECTED`):** Khung cảnh báo màu đỏ Neo-Brutalist nổi bật, hiển thị chi tiết lý do từ chối từ Quản trị viên (`rejectionReason`) và hướng dẫn người dùng chỉnh sửa thông tin để gửi xét duyệt lại.
+   - **Quán Đang Ẩn (`HIDDEN`):** Hiển thị lý do tạm ẩn (`hideReason`) và nút "Gửi Yêu Cầu Khôi Phục".
+   - **Yêu Cầu Khôi Phục:** Modal nhập lý do đề nghị mở lại quán, gửi API `POST /v1/stores/{id}/request-recovery`.
+   - **Bảo Vệ Thao Tác Theo Quyền:** Chỉ cho phép thực hiện các hành động hợp lệ theo đúng trạng thái của quán.
+
+5. **Trợ Năng Hộp Thoại (Modal Dialog Accessibility):**
+   - Toàn bộ các hộp thoại (Modal chọn danh mục, Modal hướng dẫn Google Maps, Modal xác nhận hủy thay đổi) đều được nâng cấp:
+     - Thêm `role="dialog"`, `aria-modal="true"`, và `aria-labelledby`.
+     - Lắng nghe sự kiện bàn phím phím `Escape` để đóng modal tức thì.
+     - Nút đóng modal có `aria-label="Đóng [tên modal]"`.
+
+---
+
+### 15.3. Bằng Chứng Visual Acceptance (Before / After Screenshots)
+
+Tất cả 11 cặp màn hình kiểm thử trực quan đã được chụp tự động và lưu trữ tại `frontend/e2e/screenshots/`:
+- **Thư mục Before:** `frontend/e2e/screenshots/before-batch-3e/`
+- **Thư mục After:** `frontend/e2e/screenshots/after-batch-3e/`
+
+| STT | Màn hình kiểm thử | Baseline (Before) | Redesign (After) | Đánh giá cải tiến UI/UX |
+|---|---|---|---|---|
+| 1 | **My Stores Dashboard (Desktop 1920×1080)** | [`mystores-dashboard-desktop-1920.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-dashboard-desktop-1920.png) | [`mystores-dashboard-desktop-1920.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-dashboard-desktop-1920.png) | Bổ sung 4 thẻ KPI thống kê, thanh tìm kiếm live, filter pills và view toggle. Tận dụng tối đa không gian màn hình rộng. |
+| 2 | **My Stores Dashboard (Desktop 1440×900)** | [`mystores-dashboard-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-dashboard-desktop-1440.png) | [`mystores-dashboard-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-dashboard-desktop-1440.png) | Bố cục thẻ quán cân đối, thông tin giờ giấc và khoảng giá rõ ràng, không bị dính nút. |
+| 3 | **My Stores Dashboard (Desktop 1280×800)** | [`mystores-dashboard-desktop-1280.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-dashboard-desktop-1280.png) | [`mystores-dashboard-desktop-1280.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-dashboard-desktop-1280.png) | Header và thanh điều khiển co giãn hoàn hảo, không phát sinh tràn viền ngang. |
+| 4 | **Form Tạo Quán Ăn (Desktop 1440×900)** | [`mystores-create-store-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-create-store-desktop-1440.png) | [`mystores-create-store-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-create-store-desktop-1440.png) | Chuyển từ form dọc đơn điệu sang bố cục 2 cột chuyên nghiệp: Thương hiệu bên trái, Vị trí/Giờ mở cửa bên phải. |
+| 5 | **Form Chỉnh Sửa Quán (Desktop 1440×900)** | [`mystores-edit-store-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-edit-store-desktop-1440.png) | [`mystores-edit-store-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-edit-store-desktop-1440.png) | Hiển thị preview ảnh hiện có, form 2 cột rõ ràng, nút Lưu và Hủy nằm ở vị trí thuận tiện. |
+| 6 | **Quản Lý Thực Đơn / Món Ăn (Desktop 1440×900)** | [`mystores-manage-dishes-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-manage-dishes-desktop-1440.png) | [`mystores-manage-dishes-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-manage-dishes-desktop-1440.png) | Bố cục 2 cột: Cột trái nhập thông tin món, cột phải hiển thị lưới thực đơn trực quan với định dạng tiền tệ `25.000đ`. |
+| 7 | **Chế Độ Chỉnh Sửa Món Ăn (Desktop 1440×900)** | [`mystores-edit-dish-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-edit-dish-desktop-1440.png) | [`mystores-edit-dish-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-edit-dish-desktop-1440.png) | Nút hủy chỉnh sửa màu vàng nổi bật, preview ảnh món realtime khi nhập URL. |
+| 8 | **Chế Độ Xem Bảng (Table View Mode 1440×900)** | [`mystores-table-view-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-table-view-desktop-1440.png) | [`mystores-table-view-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-table-view-desktop-1440.png) | Chế độ bảng độ đậm đặc cao dành riêng cho chủ quán có nhiều chi nhánh, thao tác nhanh. |
+| 9 | **Quán Bị Từ Chối & Lý Do Admin (Desktop 1440×900)** | [`mystores-rejected-reason-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-rejected-reason-desktop-1440.png) | [`mystores-rejected-reason-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-rejected-reason-desktop-1440.png) | Hộp thoại thông báo lý do từ chối rõ ràng, có nút sửa và gửi lại yêu cầu duyệt. |
+| 10 | **Giao Diện Di Động (Mobile 390×844)** | [`mystores-dashboard-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-dashboard-mobile-390.png) | [`mystores-dashboard-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-dashboard-mobile-390.png) | Tự động chuyển về 1 cột trên mobile, các KPI cuộn ngang hoặc thu nhỏ gọn gàng, 0px tràn trang. |
+| 11 | **Giao Diện Tablet (Tablet 768×1024)** | [`mystores-dashboard-tablet-768.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-dashboard-tablet-768.png) | [`mystores-dashboard-tablet-768.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-dashboard-tablet-768.png) | Bố cục tablet 2 cột cân đối, thao tác chạm cảm ứng thoải mái. |
+
+---
+
+### 15.4. Kết Quả Kiểm Thử Toàn Diện (Full Regression Suite Results)
+
+1. **Linter (`npm run lint`):**
+   - Công cụ: `oxlint --deny-warnings`
+   - Kết quả: **0 warnings, 0 errors** trên 82 files.
+2. **Node Unit & Contract Tests (`npm test`):**
+   - Kết quả: **33/33 PASS** (Thời gian chạy: 1.2s). Bao gồm toàn bộ tests `parseGoogleMapsUrl`, token tests, và contract tests.
+3. **Production Build Gate (`npm run build`):**
+   - Kết quả: **PASS in 328ms**. Artifact verification passed, bundle scan không có chuỗi debug bị cấm.
+4. **Playwright E2E Test Suites (Chromium):**
+   - `e2e/mystores-desktop.spec.js`: **8/8 PASS** (23.2s)
+     - `1. My Stores Dashboard: Layout, KPI cards, view toggle, and search filter`: **PASS**
+     - `2. Store Create Form: 2-column Desktop Layout, GPS parsing & Accessible Validation`: **PASS**
+     - `3. Store Edit Form: 2-column layout, pre-filled values, and cancel confirmation dialog`: **PASS**
+     - `4. Production Dish Management: 2-column Layout, Add Dish, VND currency formatting & Menu grid`: **PASS**
+     - `5. Dish Editing & Safe Deletion Confirmation Modal`: **PASS**
+     - `6. Store Rejection Reason Callout & Recovery Request Workflow`: **PASS**
+     - `7. Modal Accessibility: Escape dismissal and ARIA role dialog attributes`: **PASS**
+     - `8. Responsive Viewport Verification: Mobile 390px, Tablet 768px, and Desktop 1920px`: **PASS**
+   - `e2e/admin-desktop.spec.js`: **10/10 PASS** (25.5s)
+   - `e2e/explore-desktop.spec.js`: **13/13 PASS** (15.8s)
+   - `e2e/auth-modal.spec.js`: **15/15 PASS** (23.2s)
+   - `e2e/store-detail-desktop.spec.js`: **17/17 PASS** (29.3s)
+   - **Tổng cộng:** **63/63 E2E tests PASS**.
+
+---
+
+### 15.5. Trạng Thái Nghiệm Thu & Khuyến Nghị
+
+- **Kết luận:** **SẴN SÀNG NGHIỆM THU TRỰC QUAN (READY FOR PO REVIEW)**.
+- Toàn bộ các yêu cầu của Batch 3E đã hoàn thành, không phát sinh lỗi hồi quy trên các module Admin, Explore, Auth, Store Detail.
+- Không thực hiện commit/push. Dừng lại để Product Owner kiểm tra trực quan trên môi trường `localhost:5173`.
 

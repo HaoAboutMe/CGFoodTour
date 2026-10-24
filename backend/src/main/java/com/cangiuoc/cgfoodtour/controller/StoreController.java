@@ -9,7 +9,9 @@ import com.cangiuoc.cgfoodtour.dto.request.RejectStoreRequest;
 import com.cangiuoc.cgfoodtour.dto.response.StoreResponse;
 import com.cangiuoc.cgfoodtour.dto.response.PublicStoreResponse;
 import com.cangiuoc.cgfoodtour.dto.response.PageResponse;
+import com.cangiuoc.cgfoodtour.dto.response.OwnerStoreHistoryItemResponse;
 import com.cangiuoc.cgfoodtour.service.StoreService;
+import com.cangiuoc.cgfoodtour.service.StoreHistoryService;
 import com.cangiuoc.cgfoodtour.service.SseNotificationService;
 import com.cangiuoc.cgfoodtour.service.ClientIpResolver;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +28,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.time.OffsetDateTime;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @RestController
 @RequestMapping("/v1/stores")
@@ -33,6 +37,7 @@ import java.util.Map;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class StoreController {
     StoreService storeService;
+    StoreHistoryService storeHistoryService;
     SseNotificationService sseNotificationService;
     ClientIpResolver clientIpResolver;
 
@@ -152,6 +157,34 @@ public class StoreController {
         return ApiResponse.<PageResponse<StoreResponse>>builder()
                 .result(storeService.getMyStores(email, status, sort, page, size))
                 .message("Owned stores retrieved successfully")
+                .build();
+    }
+
+    @GetMapping("/mine/history")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<PageResponse<OwnerStoreHistoryItemResponse>> getMyStoreHistory(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "storeId", required = false) String storeId,
+            @RequestParam(value = "group", defaultValue = "ALL") String group,
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "from", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
+            @RequestParam(value = "to", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
+        return ApiResponse.<PageResponse<OwnerStoreHistoryItemResponse>>builder()
+                .result(storeHistoryService.getMyHistory(
+                        getCurrentUserEmail(), page, size, storeId, group, query, from, to))
+                .message("Owner store history retrieved successfully")
+                .build();
+    }
+
+    @GetMapping("/mine/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<StoreResponse> getMyStore(@PathVariable String id) {
+        return ApiResponse.<StoreResponse>builder()
+                .result(storeService.getMyStore(id, getCurrentUserEmail()))
+                .message("Owned store retrieved successfully")
                 .build();
     }
 

@@ -80,11 +80,15 @@ public class UserDeletionService {
             storeAuditLogRepository.save(StoreAuditLog.builder()
                     .storeId(store.getId())
                     .storeName(store.getName())
+                    .ownerIdSnapshot(target.getId())
                     .actorId(actor.getId())
                     .actorEmail(actor.getEmail())
                     .actorRole("ADMIN")
                     .actionType("USER_DELETION_CASCADE")
                     .reason(request.getReason().trim())
+                    .statusBefore(store.getStatus() == null ? null : store.getStatus().name())
+                    .statusAfter("DELETED")
+                    .ownerVisible(false)
                     .build());
             userSavedStoreRepository.deleteByStoreId(store.getId());
             storeRatingRepository.deleteByStoreId(store.getId());
@@ -105,6 +109,7 @@ public class UserDeletionService {
         verificationTokenRepository.deleteByUserId(target.getId());
         passwordResetOtpRepository.deleteByEmail(target.getEmail());
         storeAuditLogRepository.anonymizeActor(target.getId());
+        storeAuditLogRepository.anonymizeOwner(target.getId());
         userDeletionAuditRepository.anonymizeActor(target.getId());
         if (target.getRoles() != null) target.getRoles().clear();
         userRepository.saveAndFlush(target);

@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import StoreCard from '@/components/common/StoreCard'
 import CategoryIcon from '@/components/common/CategoryIcon'
-import { Input } from '@/components/ui'
+import { Input, NativeSelect } from '@/components/ui'
 
 export default function ExploreSection({
   stores,
@@ -68,6 +68,28 @@ export default function ExploreSection({
     setSelectedCategoryIds([])
     setSelectedCategory(null)
   }
+
+  // Single-select category handler for Desktop NativeSelect
+  function handleSelectCategoryChange(e) {
+    const val = e.target.value
+    if (!val) {
+      clearCategoryFilter()
+      return
+    }
+    const catId = isNaN(Number(val)) ? val : Number(val)
+    const found = categories.find((c) => c.id === catId || String(c.id) === String(val))
+    setSelectedCategoryIds([catId])
+    setSelectedCategory(found || null)
+  }
+
+  const currentSelectValue =
+    selectedCategoryIds.length === 1
+      ? String(selectedCategoryIds[0])
+      : selectedCategory?.id
+      ? String(selectedCategory?.id)
+      : selectedCategoryIds.length > 1
+      ? '__multiple__'
+      : ''
 
   // Multi-category toggle helper
   function handleToggleCategory(catId) {
@@ -208,26 +230,55 @@ export default function ExploreSection({
         </div>
       </div>
 
-      {/* Control Panel: Integrated Search & Interactive Category Tiles */}
-      <div className="brutalist-card bg-white p-4 sm:p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-4">
-        {/* Search Bar */}
-        <Input
-          type="text"
-          placeholder="Tìm tên món ăn, quán ăn, tên đường tại Cần Giuộc..."
-          aria-label="Tìm kiếm món ăn, quán ăn, tên đường tại Cần Giuộc"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          leftAdornment={<Search className="w-4 h-4 text-neutral-500" />}
-        />
+      {/* Control Panel: Integrated Search & Interactive Category Control Deck */}
+      <div className="brutalist-card bg-white p-4 sm:p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-4">
+        {/* Row 1: Search Bar & Desktop Category Select */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+          <div className="flex-1 min-w-0">
+            <Input
+              type="text"
+              placeholder="Tìm tên món ăn, quán ăn, tên đường tại Cần Giuộc..."
+              aria-label="Tìm kiếm món ăn, quán ăn, tên đường tại Cần Giuộc"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              leftAdornment={<Search className="w-4 h-4 text-neutral-500" />}
+            />
+          </div>
+          {/* Desktop Category Select (Native Neo-Brutalist Select) */}
+          <div className="hidden md:block w-72 shrink-0">
+            <NativeSelect
+              id="explore-category-select"
+              aria-label="Lọc theo danh mục món ăn"
+              value={currentSelectValue}
+              onChange={handleSelectCategoryChange}
+              containerClassName="w-full"
+            >
+              <option value="">Tất Cả Danh Mục ({totalStoreCount || approvedStores.length})</option>
+              {selectedCategoryIds.length > 1 && (
+                <option value="__multiple__" disabled>
+                  Đã chọn {selectedCategoryIds.length} danh mục
+                </option>
+              )}
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name} ({categoryStoreCount(cat.id)})
+                </option>
+              ))}
+            </NativeSelect>
+          </div>
+        </div>
 
-        {/* Fast Chips Filter Bar */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t-2 border-neutral-100">
+        {/* Row 2: Fast Chips Filter Deck */}
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t-2 border-neutral-100">
           <span className="text-[10px] font-black uppercase text-neutral-500 shrink-0">Lọc Nhanh:</span>
           
           {/* 📍 Gần Tôi Chip */}
           <button
+            type="button"
             onClick={handleToggleNearMe}
             disabled={locationLoading}
+            aria-pressed={nearMeActive}
+            aria-label="Lọc quán ăn gần vị trí của tôi"
             className={`px-3.5 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 border-2 border-black transition-all cursor-pointer select-none ${
               nearMeActive
                 ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
@@ -241,7 +292,10 @@ export default function ExploreSection({
 
           {/* 🟢 Đang Mở Cửa Chip */}
           <button
+            type="button"
             onClick={() => setOpenNowActive(!openNowActive)}
+            aria-pressed={openNowActive}
+            aria-label="Lọc quán đang mở cửa phục vụ"
             className={`px-3.5 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 border-2 border-black transition-all cursor-pointer select-none ${
               openNowActive
                 ? 'bg-[#e6fcf5] text-[#0ca678] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
@@ -252,51 +306,55 @@ export default function ExploreSection({
             <span>Đang Mở Cửa</span>
           </button>
 
-          {/* 🏷️ Mở Bộ Lọc 50+ Danh Mục (Multi-Select Filter) */}
-          {/* 🏷️ Mở Bộ Lọc 50+ Danh Mục (Multi-Select Filter) */}
+          {/* Mobile Category Trigger (md:hidden) */}
           {(() => {
             const hasCategoryFilter = selectedCategoryIds.length > 0 || selectedCategory !== null
             return (
-              <>
-                <button
-                  onClick={(e) => {
-                    e.preventDefault()
-                    setShowCategorySheet(true)
-                  }}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 border-2 border-black transition-all cursor-pointer select-none shrink-0 ${
-                    hasCategoryFilter
-                      ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                      : 'bg-[#fff9db] hover:bg-amber-100 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                  }`}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  <span>
-                    {selectedCategoryIds.length > 1
-                      ? `Đã Chọn (${selectedCategoryIds.length})`
-                      : selectedCategory
-                      ? `Đã Chọn (${selectedCategory.name})`
-                      : selectedCategoryIds.length === 1
-                      ? `Đã Chọn (1)`
-                      : `Tất Cả Danh Mục (${categories.length})`}
-                  </span>
-                  <span className="text-[10px] font-black ml-0.5">▾</span>
-                </button>
-
-                {(nearMeActive || openNowActive || hasCategoryFilter) && (
-                  <button
-                    onClick={() => {
-                      setNearMeActive(false)
-                      setOpenNowActive(false)
-                      clearCategoryFilter()
-                    }}
-                    className="text-[10px] font-black text-[#ff3e3e] hover:underline px-2 cursor-pointer"
-                  >
-                    Xóa lọc ✕
-                  </button>
-                )}
-              </>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setShowCategorySheet(true)
+                }}
+                aria-label="Mở danh sách tất cả các danh mục món ăn"
+                className={`md:hidden px-3.5 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 border-2 border-black transition-all cursor-pointer select-none shrink-0 ${
+                  hasCategoryFilter
+                    ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                    : 'bg-[#fff9db] hover:bg-amber-100 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                }`}
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>
+                  {selectedCategoryIds.length > 1
+                    ? `Đã Chọn (${selectedCategoryIds.length})`
+                    : selectedCategory
+                    ? `Đã Chọn (${selectedCategory.name})`
+                    : selectedCategoryIds.length === 1
+                    ? `Đã Chọn (1)`
+                    : `Tất Cả Danh Mục (${categories.length})`}
+                </span>
+                <span className="text-[10px] font-black ml-0.5">▾</span>
+              </button>
             )
           })()}
+
+          {/* Clear Filters Button */}
+          {(nearMeActive || openNowActive || selectedCategoryIds.length > 0 || selectedCategory !== null || Boolean(searchQuery)) && (
+            <button
+              type="button"
+              onClick={() => {
+                setNearMeActive(false)
+                setOpenNowActive(false)
+                clearCategoryFilter()
+                setSearchQuery('')
+              }}
+              aria-label="Xóa tất cả các bộ lọc hiện tại"
+              className="px-3 py-1 rounded-full text-xs font-black text-white bg-[#c92a2a] hover:bg-[#b02525] border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1 shrink-0 ml-auto"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Xóa lọc ✕</span>
+            </button>
+          )}
         </div>
 
         {locationError && (
@@ -312,19 +370,21 @@ export default function ExploreSection({
         <div className="pt-2 border-t-2 border-neutral-100">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] uppercase font-black tracking-wider text-neutral-500">
-              Tất Cả Danh Mục ({categories.length + 1}):
+              Danh Mục Món Ăn ({categories.length + 1}):
             </span>
             {(selectedCategoryIds.length > 0 || selectedCategory !== null) && (
               <button
+                type="button"
                 onClick={clearCategoryFilter}
-                className="text-[10px] uppercase font-black text-[#ff3e3e] hover:underline cursor-pointer"
+                className="text-[10px] uppercase font-black text-[#c92a2a] hover:underline cursor-pointer"
               >
-                Xóa bộ lọc ✕
+                Xóa chọn danh mục ✕
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+          {/* 💻 Desktop Categories: Clean wrapped pill grid */}
+          <div className="hidden md:flex flex-wrap items-center gap-2 py-1">
             <button
               type="button"
               onClick={(e) => {
@@ -343,7 +403,63 @@ export default function ExploreSection({
               </span>
             </button>
 
-            {/* Render 6 popular categories first */}
+            {categories.slice(0, 10).map((cat) => {
+              const count = categoryStoreCount(cat.id)
+              const isSelected = selectedCategoryIds.includes(cat.id) || selectedCategory?.id === cat.id
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleToggleCategory(cat.id)
+                  }}
+                  className={`px-3.5 py-1.5 border-2 border-black rounded-full text-xs font-black flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
+                      : 'bg-white text-black hover:bg-neutral-50'
+                  }`}
+                >
+                  <CategoryIcon icon={cat.icon || cat.iconUrl} name={cat.name} />
+                  <span>{cat.name}</span>
+                  <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-extrabold ${isSelected ? 'bg-white text-[#ff3e3e]' : 'bg-[#f7f6f2] text-black border border-black'}`}>
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+
+            {categories.length > 10 && (
+              <button
+                type="button"
+                onClick={() => setShowCategorySheet(true)}
+                className="px-3.5 py-1.5 border-2 border-dashed border-black rounded-full text-xs font-black flex items-center gap-1.5 whitespace-nowrap shrink-0 bg-neutral-100 hover:bg-neutral-200 text-black cursor-pointer transition-all"
+              >
+                <span>+ Xem thêm {categories.length - 10} danh mục ↗</span>
+              </button>
+            )}
+          </div>
+
+          {/* 📱 Mobile Categories: Horizontal Scroll Row (Intact) */}
+          <div className="md:hidden flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                handleToggleCategory(null)
+              }}
+              className={`px-3.5 py-1.5 border-2 border-black rounded-full text-xs font-black flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                selectedCategoryIds.length === 0 && selectedCategory === null
+                  ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
+                  : 'bg-white text-black hover:bg-neutral-50'
+              }`}
+            >
+              <span>Tất Cả Món</span>
+              <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-extrabold ${selectedCategoryIds.length === 0 && selectedCategory === null ? 'bg-white text-[#ff3e3e]' : 'bg-neutral-100 text-black'}`}>
+                {approvedStores.length}
+              </span>
+            </button>
+
             {categories.slice(0, 6).map((cat) => {
               const count = categoryStoreCount(cat.id)
               const isSelected = selectedCategoryIds.includes(cat.id) || selectedCategory?.id === cat.id
@@ -370,9 +486,9 @@ export default function ExploreSection({
               )
             })}
 
-            {/* Quick button to open Sheet if more than 6 categories */}
             {categories.length > 6 && (
               <button
+                type="button"
                 onClick={() => setShowCategorySheet(true)}
                 className="px-3.5 py-1.5 border-2 border-dashed border-black rounded-full text-xs font-black flex items-center gap-1.5 whitespace-nowrap shrink-0 bg-neutral-100 hover:bg-neutral-200 text-black cursor-pointer transition-all"
               >
@@ -399,13 +515,46 @@ export default function ExploreSection({
               <span className="text-xs font-bold text-neutral-500">({displayedStores.length}/{sortedStores.length})</span>
             </h2>
           </div>
-          <button
-            onClick={loadGlobalData}
-            className="p-2 rounded-full border-2 border-black bg-white hover:bg-[#ff3e3e] hover:text-white text-black transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
-            title="Cập Nhật Dữ Liệu"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
+
+          <div className="flex items-center gap-2">
+            {/* Desktop View Switcher in Live Stalls Header */}
+            <div className="hidden md:flex items-center gap-1 bg-[#f7f6f2] p-1 border-2 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] shrink-0">
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                aria-pressed={viewMode === 'grid'}
+                className={`px-3 py-1 rounded-full text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-[#ff3e3e] text-white border-2 border-black shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)]'
+                    : 'text-black hover:bg-neutral-200'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" /> Lưới Quán
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('compact')}
+                aria-pressed={viewMode === 'compact'}
+                className={`px-3 py-1 rounded-full text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
+                  viewMode === 'compact'
+                    ? 'bg-[#ff3e3e] text-white border-2 border-black shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)]'
+                    : 'text-black hover:bg-neutral-200'
+                }`}
+              >
+                <ListFilter className="w-3.5 h-3.5" /> Danh Sách
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={loadGlobalData}
+              className="p-2 rounded-full border-2 border-black bg-white hover:bg-[#ff3e3e] hover:text-white text-black transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
+              title="Cập Nhật Dữ Liệu"
+              aria-label="Cập nhật lại dữ liệu quán ăn"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {sortedStores.length === 0 ? (
@@ -425,6 +574,7 @@ export default function ExploreSection({
                   key={store.id}
                   store={store}
                   setActiveStore={setActiveStore}
+                  viewMode="mobile"
                   onToggleSave={handleToggleSaveStore}
                 />
               ))}

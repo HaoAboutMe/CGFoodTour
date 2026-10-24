@@ -91,6 +91,8 @@ Mutations broadcast SSE `STORES_UPDATED` sau khi service thành công.
 | POST `/v1/stores` | Auth | `StoreRequest` | owner=current user; PENDING, unverified; custom string ID |
 | GET `/v1/stores` | Public, optional JWT | `page,size,categoryId,query,sort` | `PageResponse<PublicStoreResponse>`; chỉ APPROVED/owner enabled; size tối đa 100 |
 | GET `/v1/stores/mine` | Auth | `page,size,status,sort` | page store của principal ở mọi trạng thái; management response |
+| GET `/v1/stores/mine/history` | Auth | `page,size,storeId,group,query,from,to` | timeline audit chỉ thuộc Owner hiện tại; phân trang tối đa 50; không trả actor ID/email |
+| GET `/v1/stores/mine/{id}` | Auth/Owner | store ID | management response của quán thuộc principal; quán người khác trả 404 |
 | GET `/v1/stores/admin` | Admin | `page,size,status,categoryId,query,sort` | page store và moderation/owner fields |
 | GET `/v1/stores/ranking` | Public | `limit` mặc định 20, tối đa 100 | APPROVED, totalVotes≥10, satisfaction desc/votes desc |
 | GET `/v1/stores/random?categoryId=` | Public | optional integer | random APPROVED hoặc 404 |
@@ -166,7 +168,7 @@ Frontend hiện không gọi sáu endpoint RBAC này.
 - `UserController`: POST `/users` → `createUser`; GET `/users` → `getUsers`; `/users/me` GET/PUT → `getCurrentUser`/`updateCurrentUser`; `/users/{userId}` GET/PUT/DELETE → `getUserById`/`updateUser`/`deleteUser`; `/users/me/change-password` → `changePassword`; `/users/me/avatar` → `updateAvatar`.
 - `CategoryController`: collection POST/GET → `createCategory`/`getCategories`; item GET/PUT/DELETE → `getCategory`/`updateCategory`/`deleteCategory`.
 - `FoodItemController`: POST `/store/{storeId}` → `createFoodItem`; GET `/store/{storeId}` → `getFoodItemsByStore`; item GET/PUT/DELETE → `getFoodItem`/`updateFoodItem`/`deleteFoodItem`.
-- `StoreController`: `/events` → `subscribeToStoreEvents`; `/parse-gmaps` → `parseGmapsUrl`; collection POST/GET → `createStore`/`getStores`; `/ranking` → `getRanking`; `/random` → `getRandomStore`; item GET/PUT/DELETE → `getStore`/`updateStore`/`deleteStore`; actions → `hideStore`, `recoverStore`, `requestStoreRecovery`, `rejectRecoveryRequest`, `rateStore`, `reportClosed`, `approveStore`, `rejectStore`, `toggleSaveStore`; `/saved` → `getSavedStores`.
+- `StoreController`: `/events` → `subscribeToStoreEvents`; `/parse-gmaps` → `parseGmapsUrl`; collection POST/GET → `createStore`/`getStores`; `/mine` → `getMyStores`; `/mine/history` → `getMyStoreHistory`; `/mine/{id}` → `getMyStore`; `/admin` → `getAdminStores`; `/ranking` → `getRanking`; `/random` → `getRandomStore`; item GET/PUT/DELETE → `getStore`/`updateStore`/`deleteStore`; actions → `hideStore`, `recoverStore`, `requestStoreRecovery`, `rejectRecoveryRequest`, `rateStore`, `reportClosed`, `approveStore`, `rejectStore`, `toggleSaveStore`; `/saved` → `getSavedStores`.
 - `UploadController`: `/v1/upload/image` → `uploadImage`.
 - `RoleController`: POST/GET/DELETE → `createRoles`/`getAll`/`delete`.
 - `PermissionController`: POST/GET/DELETE → `createPermissions`/`getAll`/`delete`.

@@ -65,6 +65,7 @@ class UserDeletionServiceTest {
         verify(verificationTokenRepository).deleteByUserId(target.getId());
         verify(passwordResetOtpRepository).deleteByEmail(target.getEmail());
         verify(storeAuditLogRepository).anonymizeActor(target.getId());
+        verify(storeAuditLogRepository).anonymizeOwner(target.getId());
         verify(userDeletionAuditRepository).anonymizeActor(target.getId());
         verify(userRepository).delete(target);
         verify(managedImageService).deleteAfterCommit("avatars/bad-user");
