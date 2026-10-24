@@ -139,8 +139,12 @@ test.describe('Batch 2D-2C: StoreDetailDrawer Accessibility & Interactive Contra
     expect(shareBox.width).toBeGreaterThanOrEqual(44)
     expect(shareBox.height).toBeGreaterThanOrEqual(44)
 
-    // Check Rating Buttons minimum height
-    const ngonBtn = drawer.getByRole('button', { name: /Đánh giá Ngon/i })
+    // Check Rating Buttons minimum height (switch to reviews tab if on desktop)
+    const reviewsTab = drawer.getByRole('tab', { name: /Đánh giá/i })
+    if (await reviewsTab.isVisible()) {
+      await reviewsTab.click()
+    }
+    const ngonBtn = drawer.getByRole('button', { name: /Đánh giá (Rất Hợp|Ngon)/i })
     await expect(ngonBtn).toBeVisible()
     const ngonBox = await ngonBtn.boundingBox()
     expect(ngonBox.height).toBeGreaterThanOrEqual(44)

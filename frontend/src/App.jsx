@@ -2092,7 +2092,7 @@ export default function App() {
       )}
 
       {/* Main Container */}
-      <main className={activeTab === 'admin' ? 'h-full w-full p-0 pb-20 md:pb-0 animate-fade-in-up' : 'max-w-7xl mx-auto px-4 md:px-8 pt-24 sm:pt-28 md:pt-32 pb-24 md:pb-8 animate-fade-in-up'}>
+      <main className={activeTab === 'admin' ? 'h-full w-full p-0 pb-20 md:pb-0 animate-fade-in-up' : 'max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1536px] mx-auto px-4 md:px-6 lg:px-8 pt-24 sm:pt-28 md:pt-32 pb-24 md:pb-8 animate-fade-in-up'}>
 
         {/* LOADING INDICATOR */}
         {loading && (
