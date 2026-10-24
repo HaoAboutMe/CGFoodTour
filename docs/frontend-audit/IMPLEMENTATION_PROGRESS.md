@@ -1,8 +1,8 @@
 # CG FoodTour — Frontend Implementation Progress
 
 > Tài liệu theo dõi tiến độ thực tế theo từng Phase dựa trên `docs/frontend-audit/FRONTEND_REDESIGN_BLUEPRINT.md`.
-> Cập nhật lần cuối: 23/10/2026 (Hoàn thành Phase 0, 1, 2 và Phase 3A Desktop UX Planning)
-> Trạng thái hiện tại: **PHASE 3 IN PROGRESS (Phase 3A: Planning Complete — Waiting for Approval to Proceed to Phase 3B)**
+> Cập nhật lần cuối: 24/10/2026 (Hoàn thành Phase 0, 1, 2 và Phase 3A-3E)
+> Trạng thái hiện tại: **PHASE 3 IN PROGRESS (Phase 3E: My Stores & Dish Management Desktop UX Redesign — Ready for Visual Acceptance Review)**
 
 ---
 
@@ -1667,3 +1667,131 @@ Toàn bộ ảnh chụp Before/After được lưu trữ có cấu trúc:
 - **KẾT LUẬN: PASS.**
 - Batch 3D — Admin Dashboard Desktop UX Redesign đã hoàn thành toàn diện tất cả các tiêu chí an toàn, thẩm mỹ và dữ liệu.
 - Hệ thống sẵn sàng để đóng Batch 3D. Dừng lại theo đúng yêu cầu strict scope, không tự ý chuyển sang Batch 3E.
+
+---
+
+## 15. Phase 3: Desktop UX Redesign — Batch 3E (My Stores & Dish Management Desktop UX Redesign)
+
+> **Trạng thái:** **READY FOR ACCEPTANCE REVIEW** (Đã hoàn thành triển khai mã nguồn, E2E suites, Before/After visual capture và kiểm thử hồi quy 100% PASS).<br>
+> **Git Checkpoint cơ sở:** `feature/frontend-desktop-redesign` tại HEAD `d449c5fcf7f09020f974599aaf158bbc958a22d2`<br>
+> **Tài sản untracked:** Bảo tồn nguyên vẹn 12 screenshots của Batch 3C tại `frontend/e2e/screenshots/after-batch-3c/`.<br>
+> **Ranh giới:** 0 thay đổi backend, 0 thay đổi API contracts, 0 thay đổi authentication/authorization.
+
+---
+
+### 15.1. Pre-Implementation Audit & Production Call Sites
+
+1. **Xác minh Production Call Sites:**
+   - **File:** `frontend/src/App.jsx`
+   - **Call Site:** Tab `my-stores` (line ~2410) chỉ render component `<MyStoresSection />`.
+   - **Xác minh `MyDishesSection.jsx`:** Tiếp tục xác nhận là **orphan component** không được import hoặc render trong bất kỳ luồng người dùng production nào.
+   - **Luồng quản lý món ăn production:** Toàn bộ tính năng xem, thêm, sửa, xóa món ăn thực tế của chủ quán được tích hợp trực tiếp bên trong `frontend/src/pages/MyStores/MyStoresSection.jsx` (khi state `managingDishesForStore !== null`).
+   - Mọi nỗ lực tối ưu và redesign tập trung 100% vào `MyStoresSection.jsx` để mang lại giá trị thực tế cho người dùng.
+
+2. **Kiểm kê Form Validation & Data Contracts:**
+   - **Tọa độ GPS:** `parseGoogleMapsUrl` phân tích liên kết Google Maps và chuỗi tọa độ `lat, lng` hợp lệ, gán vào form state mà không thay đổi cấu trúc dữ liệu gửi lên API `/v1/stores`.
+   - **Đơn vị Giá Món Ăn (VND):** Giao diện nhận số rút gọn hàng nghìn (ví dụ nhập `25` với hậu tố `.000đ`), form state nhân với `1000` (`25000`), và payload gửi API `POST /v1/food-items` giữ nguyên định dạng số thực chuẩn VND (`25000.0`). Format hiển thị trên menu sử dụng chuẩn tiếng Việt `vi-VN` (`25.000đ`).
+
+---
+
+### 15.2. Các Tính Năng Đã Được Redesign Trong Batch 3E
+
+1. **My Stores Dashboard (Tổng Quan Quán Ăn Của Tôi):**
+   - **Thanh Chỉ Số Hiệu Suất (4 KPI Stat Tiles):**
+     - `Tổng Số Quán`: Tổng số lượng quán ăn người dùng sở hữu.
+     - `Đang Hoạt Động`: Số quán đã được duyệt và đang mở bán công khai.
+     - `Chờ Xét Duyệt`: Số quán đang đợi ban quản trị phê duyệt.
+     - `Cần Xử Lý`: Số quán bị từ chối (`REJECTED`) hoặc đang ẩn (`HIDDEN`).
+   - **Bộ Lọc Trạng Thái & Tìm Kiếm Trực Tiếp:**
+     - Thanh tìm kiếm realtime theo tên quán và địa chỉ.
+     - 5 Pill buttons lọc nhanh: `Tất Cả`, `Hoạt Động`, `Chờ Duyệt`, `Bị Từ Chối`, `Đã Ẩn`.
+   - **Chế Độ Xem Linh Hoạt (View Mode Toggle):**
+     - `Grid Cards View`: Thẻ quán trực quan với banner lớn, trạng thái badge, giờ mở cửa, khoảng giá và các nút hành động.
+     - `Table View`: Bảng dữ liệu độ đậm đặc cao dành riêng cho desktop màn hình lớn (1280px+), dễ dàng so sánh nhiều quán cùng lúc.
+   - **Trạng thái Trống, Loading & Lỗi:** Empty state Neo-Brutalist với nút CTA "Tạo Quán Đầu Tiên" rõ ràng.
+
+2. **Form Tạo & Chỉnh Sửa Quán Ăn (Desktop 2-Column Responsive Form):**
+   - **Phân bổ 2 cột cân đối trên màn hình lớn (`grid-cols-1 lg:grid-cols-12`):**
+     - **Cột 1 (Nhận diện & Thương hiệu - 5 cols):** Quản lý ảnh bìa banner (preview trực quan với nút thay đổi/xóa), tên quán ăn, chọn danh mục ẩm thực (modal chọn danh mục chuẩn ARIA), và mô tả giới thiệu.
+     - **Cột 2 (Vị trí & Vận hành - 7 cols):** Địa chỉ chi tiết, nhập link/tọa độ Google Maps kèm bộ phân tích tự động, modal hướng dẫn lấy tọa độ, giờ mở cửa - đóng cửa, và khoảng giá min - max.
+   - **Trợ năng & Kiểm tra dữ liệu (Accessibility & Validation):**
+     - Thêm `noValidate` vào thẻ `<form>` để triệt tiêu popup tooltip mặc định của trình duyệt, thay thế bằng khung thông báo lỗi tổng thể `role="alert"` màu đỏ Neo-Brutalist nổi bật ở đầu form.
+     - Tất cả các nhãn `<label>` đều có `htmlFor` liên kết trực tiếp với `id` của input, kèm dấu sao đỏ `aria-hidden="true">*` cho các trường bắt buộc.
+   - **Chống mất dữ liệu (Dirty State & Discard Modal):**
+     - Khi người dùng đã thay đổi dữ liệu trong form chỉnh sửa và bấm nút "Hủy / Quay Lại", hệ thống hiển thị hộp thoại xác nhận hủy thay đổi trước khi thoát.
+
+3. **Quản Lý Món Ăn Thực Tế (Production Dish Management):**
+   - **Bố cục 2 cột chuyên nghiệp (`grid-cols-1 lg:grid-cols-12`):**
+     - **Cột Trái (Form Thêm / Sửa Món - 5 cols):** Form tạo hoặc cập nhật món ăn với ảnh preview, tên món, giá bán với hậu tố `.000đ`, mô tả món, và nút submit có loading state chống double-click. Khi ở chế độ sửa, có nút "Hủy chế độ sửa" để quay lại form thêm mới.
+     - **Cột Phải (Thực Đơn Trực Quan - 7 cols):** Lưới thẻ món ăn hiển thị ảnh minh họa sắc nét, tên món in đậm, giá tiền chuẩn định dạng tiếng Việt (`25.000đ`), mô tả chi tiết, cùng 2 nút Sửa và Xóa có khoảng cách an toàn.
+   - **Xác nhận Xóa An Toàn:** Tích hợp `ConfirmActionModal` chuẩn WCAG yêu cầu xác nhận trước khi xóa món khỏi thực đơn.
+
+4. **Trạng Thái Xét Duyệt, Từ Chối & Khôi Phục (Approval & Recovery States):**
+   - **Quán Bị Từ Chối (`REJECTED`):** Khung cảnh báo màu đỏ Neo-Brutalist nổi bật, hiển thị chi tiết lý do từ chối từ Quản trị viên (`rejectionReason`) và hướng dẫn người dùng chỉnh sửa thông tin để gửi xét duyệt lại.
+   - **Quán Đang Ẩn (`HIDDEN`):** Hiển thị lý do tạm ẩn (`hideReason`) và nút "Gửi Yêu Cầu Khôi Phục".
+   - **Yêu Cầu Khôi Phục:** Modal nhập lý do đề nghị mở lại quán, gửi API `POST /v1/stores/{id}/request-recovery`.
+   - **Bảo Vệ Thao Tác Theo Quyền:** Chỉ cho phép thực hiện các hành động hợp lệ theo đúng trạng thái của quán.
+
+5. **Trợ Năng Hộp Thoại (Modal Dialog Accessibility):**
+   - Toàn bộ các hộp thoại (Modal chọn danh mục, Modal hướng dẫn Google Maps, Modal xác nhận hủy thay đổi) đều được nâng cấp:
+     - Thêm `role="dialog"`, `aria-modal="true"`, và `aria-labelledby`.
+     - Lắng nghe sự kiện bàn phím phím `Escape` để đóng modal tức thì.
+     - Nút đóng modal có `aria-label="Đóng [tên modal]"`.
+
+---
+
+### 15.3. Bằng Chứng Visual Acceptance (Before / After Screenshots)
+
+Tất cả 11 cặp màn hình kiểm thử trực quan đã được chụp tự động và lưu trữ tại `frontend/e2e/screenshots/`:
+- **Thư mục Before:** `frontend/e2e/screenshots/before-batch-3e/`
+- **Thư mục After:** `frontend/e2e/screenshots/after-batch-3e/`
+
+| STT | Màn hình kiểm thử | Baseline (Before) | Redesign (After) | Đánh giá cải tiến UI/UX |
+|---|---|---|---|---|
+| 1 | **My Stores Dashboard (Desktop 1920×1080)** | [`mystores-dashboard-desktop-1920.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-dashboard-desktop-1920.png) | [`mystores-dashboard-desktop-1920.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-dashboard-desktop-1920.png) | Bổ sung 4 thẻ KPI thống kê, thanh tìm kiếm live, filter pills và view toggle. Tận dụng tối đa không gian màn hình rộng. |
+| 2 | **My Stores Dashboard (Desktop 1440×900)** | [`mystores-dashboard-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-dashboard-desktop-1440.png) | [`mystores-dashboard-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-dashboard-desktop-1440.png) | Bố cục thẻ quán cân đối, thông tin giờ giấc và khoảng giá rõ ràng, không bị dính nút. |
+| 3 | **My Stores Dashboard (Desktop 1280×800)** | [`mystores-dashboard-desktop-1280.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-dashboard-desktop-1280.png) | [`mystores-dashboard-desktop-1280.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-dashboard-desktop-1280.png) | Header và thanh điều khiển co giãn hoàn hảo, không phát sinh tràn viền ngang. |
+| 4 | **Form Tạo Quán Ăn (Desktop 1440×900)** | [`mystores-create-store-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-create-store-desktop-1440.png) | [`mystores-create-store-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-create-store-desktop-1440.png) | Chuyển từ form dọc đơn điệu sang bố cục 2 cột chuyên nghiệp: Thương hiệu bên trái, Vị trí/Giờ mở cửa bên phải. |
+| 5 | **Form Chỉnh Sửa Quán (Desktop 1440×900)** | [`mystores-edit-store-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-edit-store-desktop-1440.png) | [`mystores-edit-store-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-edit-store-desktop-1440.png) | Hiển thị preview ảnh hiện có, form 2 cột rõ ràng, nút Lưu và Hủy nằm ở vị trí thuận tiện. |
+| 6 | **Quản Lý Thực Đơn / Món Ăn (Desktop 1440×900)** | [`mystores-manage-dishes-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-manage-dishes-desktop-1440.png) | [`mystores-manage-dishes-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-manage-dishes-desktop-1440.png) | Bố cục 2 cột: Cột trái nhập thông tin món, cột phải hiển thị lưới thực đơn trực quan với định dạng tiền tệ `25.000đ`. |
+| 7 | **Chế Độ Chỉnh Sửa Món Ăn (Desktop 1440×900)** | [`mystores-edit-dish-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-edit-dish-desktop-1440.png) | [`mystores-edit-dish-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-edit-dish-desktop-1440.png) | Nút hủy chỉnh sửa màu vàng nổi bật, preview ảnh món realtime khi nhập URL. |
+| 8 | **Chế Độ Xem Bảng (Table View Mode 1440×900)** | [`mystores-table-view-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-table-view-desktop-1440.png) | [`mystores-table-view-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-table-view-desktop-1440.png) | Chế độ bảng độ đậm đặc cao dành riêng cho chủ quán có nhiều chi nhánh, thao tác nhanh. |
+| 9 | **Quán Bị Từ Chối & Lý Do Admin (Desktop 1440×900)** | [`mystores-rejected-reason-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-rejected-reason-desktop-1440.png) | [`mystores-rejected-reason-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-rejected-reason-desktop-1440.png) | Hộp thoại thông báo lý do từ chối rõ ràng, có nút sửa và gửi lại yêu cầu duyệt. |
+| 10 | **Giao Diện Di Động (Mobile 390×844)** | [`mystores-dashboard-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-dashboard-mobile-390.png) | [`mystores-dashboard-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-dashboard-mobile-390.png) | Tự động chuyển về 1 cột trên mobile, các KPI cuộn ngang hoặc thu nhỏ gọn gàng, 0px tràn trang. |
+| 11 | **Giao Diện Tablet (Tablet 768×1024)** | [`mystores-dashboard-tablet-768.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3e/mystores-dashboard-tablet-768.png) | [`mystores-dashboard-tablet-768.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3e/mystores-dashboard-tablet-768.png) | Bố cục tablet 2 cột cân đối, thao tác chạm cảm ứng thoải mái. |
+
+---
+
+### 15.4. Kết Quả Kiểm Thử Toàn Diện (Full Regression Suite Results)
+
+1. **Linter (`npm run lint`):**
+   - Công cụ: `oxlint --deny-warnings`
+   - Kết quả: **0 warnings, 0 errors** trên 82 files.
+2. **Node Unit & Contract Tests (`npm test`):**
+   - Kết quả: **33/33 PASS** (Thời gian chạy: 1.2s). Bao gồm toàn bộ tests `parseGoogleMapsUrl`, token tests, và contract tests.
+3. **Production Build Gate (`npm run build`):**
+   - Kết quả: **PASS in 328ms**. Artifact verification passed, bundle scan không có chuỗi debug bị cấm.
+4. **Playwright E2E Test Suites (Chromium):**
+   - `e2e/mystores-desktop.spec.js`: **8/8 PASS** (23.2s)
+     - `1. My Stores Dashboard: Layout, KPI cards, view toggle, and search filter`: **PASS**
+     - `2. Store Create Form: 2-column Desktop Layout, GPS parsing & Accessible Validation`: **PASS**
+     - `3. Store Edit Form: 2-column layout, pre-filled values, and cancel confirmation dialog`: **PASS**
+     - `4. Production Dish Management: 2-column Layout, Add Dish, VND currency formatting & Menu grid`: **PASS**
+     - `5. Dish Editing & Safe Deletion Confirmation Modal`: **PASS**
+     - `6. Store Rejection Reason Callout & Recovery Request Workflow`: **PASS**
+     - `7. Modal Accessibility: Escape dismissal and ARIA role dialog attributes`: **PASS**
+     - `8. Responsive Viewport Verification: Mobile 390px, Tablet 768px, and Desktop 1920px`: **PASS**
+   - `e2e/admin-desktop.spec.js`: **10/10 PASS** (25.5s)
+   - `e2e/explore-desktop.spec.js`: **13/13 PASS** (15.8s)
+   - `e2e/auth-modal.spec.js`: **15/15 PASS** (23.2s)
+   - `e2e/store-detail-desktop.spec.js`: **17/17 PASS** (29.3s)
+   - **Tổng cộng:** **63/63 E2E tests PASS**.
+
+---
+
+### 15.5. Trạng Thái Nghiệm Thu & Khuyến Nghị
+
+- **Kết luận:** **SẴN SÀNG NGHIỆM THU TRỰC QUAN (READY FOR PO REVIEW)**.
+- Toàn bộ các yêu cầu của Batch 3E đã hoàn thành, không phát sinh lỗi hồi quy trên các module Admin, Explore, Auth, Store Detail.
+- Không thực hiện commit/push. Dừng lại để Product Owner kiểm tra trực quan trên môi trường `localhost:5173`.
+

@@ -40,7 +40,9 @@ Hiển thị banner, category, open status, location/price/rating/save. Drawer h
 
 ### MyStoresSection
 
-Owner portal ba bước tạo store; chỉnh sửa accordion; quản lý món; trạng thái submission; moderation self-service. Client parse tọa độ bằng regex; short HTTP URL fallback sang backend parser. Form validation bắt name/category/landmark/address/GPS nhưng backend không bắt GPS.
+Owner portal ba bước tạo store; chỉnh sửa accordion; quản lý món; moderation self-service. Tab `Lịch Sử Quán` tải lazy từ `GET /v1/stores/mine/history`, dùng timeline phân trang/filter server-side thay cho việc suy diễn từ snapshot `myStores`. Timeline có copy tiếng Việt, tombstone cho quán đã xóa và CTA theo trạng thái hiện tại; actor PII không đi vào frontend. Client parse tọa độ bằng regex; short HTTP URL fallback sang backend parser. Form validation bắt name/category/landmark/address/GPS nhưng backend không bắt GPS.
+
+Feature lịch sử được tách tại `pages/MyStores/history/`: hook data riêng, presentation mapping, filter responsive và event/timeline component. `MySubmissionsSection.jsx` hiện là compatibility wrapper để giữ call site ổn định trong giai đoạn migration.
 
 `MapPicker` được import/state khai báo nhưng lint báo unused trong section hiện tại. Upload banner/food gọi generic Cloudinary endpoint trước khi store/item được lưu, nên asset orphan có thể tồn tại nếu người dùng bỏ form.
 
