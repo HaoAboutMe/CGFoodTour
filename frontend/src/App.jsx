@@ -1586,8 +1586,10 @@ export default function App() {
       showToast('Đã tạm ẩn quán ăn!', 'success')
       await loadGlobalData()
       if (activeTab === 'admin') await loadAdminPendingStores()
+      return res.data || true
     } else {
       showToast(getVietnameseApiError(res.error, 'Không thể ẩn quán ăn.'), 'error')
+      return false
     }
   }
 
@@ -1598,8 +1600,10 @@ export default function App() {
       showToast('Đã khôi phục quán ăn!', 'success')
       await loadGlobalData()
       if (activeTab === 'admin') await loadAdminPendingStores()
+      return res.data || true
     } else {
       showToast(getVietnameseApiError(res.error, 'Không thể khôi phục quán ăn.'), 'error')
+      return false
     }
   }
 
@@ -2276,8 +2280,6 @@ export default function App() {
               handleUploadStoreBanner={handleUploadStoreBanner}
               handleUploadFoodImage={handleUploadFoodImage}
               loadGlobalData={loadGlobalData}
-              adminUsersPage={adminUsersPage}
-              adminStoresPage={adminStoresPage}
             />
           </Suspense>
         )}
@@ -2341,6 +2343,8 @@ export default function App() {
               loadAdminUsers={loadAdminUsers}
               loadAdminPendingStores={loadAdminPendingStores}
               loadGlobalData={loadGlobalData}
+              adminUsersPage={adminUsersPage}
+              adminStoresPage={adminStoresPage}
             />
             {!ownedStoresPage.last && (
               <button className="brutalist-btn-white mx-auto block mt-4" onClick={() => loadMyStores(ownedStoresPage.page + 1, true)}>
