@@ -1537,6 +1537,24 @@ export default function App() {
     setEditingStore(store)
   }
 
+  async function handleOpenOwnedStore(storeId) {
+    const response = await makeRequest('GET', `/v1/stores/mine/${encodeURIComponent(storeId)}`)
+    if (response.success && response.data?.result) {
+      openActiveStore(response.data.result)
+      return
+    }
+    showToast(getVietnameseApiError(response?.error, 'Không thể mở thông tin quán.'), 'error')
+  }
+
+  async function handleEditOwnedStore(storeId) {
+    const response = await makeRequest('GET', `/v1/stores/mine/${encodeURIComponent(storeId)}`)
+    if (response.success && response.data?.result) {
+      setEditingStore(response.data.result)
+      return
+    }
+    showToast(getVietnameseApiError(response?.error, 'Không thể tải quán để chỉnh sửa.'), 'error')
+  }
+
   // Update Store (Owner / Admin)
   async function handleUpdateStore(e, bannerFile = null) {
     e.preventDefault()
@@ -2280,6 +2298,9 @@ export default function App() {
               handleUploadStoreBanner={handleUploadStoreBanner}
               handleUploadFoodImage={handleUploadFoodImage}
               loadGlobalData={loadGlobalData}
+              makeRequest={makeRequest}
+              handleOpenOwnedStore={handleOpenOwnedStore}
+              handleEditOwnedStore={handleEditOwnedStore}
             />
           </Suspense>
         )}
