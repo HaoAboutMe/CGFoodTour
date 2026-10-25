@@ -396,6 +396,13 @@ select.brutalist-input {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .brutalist-skeleton {
+    animation: none !important;
+    background: #e4e2dd !important;
+  }
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

@@ -193,6 +193,18 @@ export default function App() {
   const [adminUsersPage, setAdminUsersPage] = useState({ page: 0, totalPages: 1, totalElements: 0 })
   const [adminStoresPage, setAdminStoresPage] = useState({ page: 0, totalPages: 1, totalElements: 0 })
 
+  // Session & Request Identity Guards (P0)
+  const sessionGenerationRef = useRef(0)
+
+  // Contextual & Local Loading States (P1 - Eliminating Unnecessary Global Backdrop)
+  const [loadingPublicStores, setLoadingPublicStores] = useState(false)
+  const [loadingSavedStores, setLoadingSavedStores] = useState(false)
+  const [loadingMyStores, setLoadingMyStores] = useState(false)
+  const [loadingAdminStores, setLoadingAdminStores] = useState(false)
+  const [loadingAdminUsers, setLoadingAdminUsers] = useState(false)
+  const [loadingStoreDetail, setLoadingStoreDetail] = useState(false)
+  const [loadingAuth, setLoadingAuth] = useState(false)
+
   // Load Initial Data
   useEffect(() => {
     loadGlobalData()
@@ -219,13 +231,17 @@ export default function App() {
     const tab = rawPath === '' ? 'explore' : rawPath
 
     if (['explore', 'about', 'cs2-spinner', 'saved', 'profile', 'my-stores', 'admin'].includes(tab)) {
-      if (!token && ['saved', 'profile', 'my-stores', 'admin'].includes(tab)) {
-        if (tab === 'saved') {
-          // Allowed to view saved tab even when unauthenticated (shows login prompt)
-          setActiveTab('saved')
-          return
-        }
+      if (!token && !hasSession && ['profile', 'my-stores', 'admin'].includes(tab)) {
         navigate('/explore', { replace: true })
+        return
+      }
+      if (!token && hasSession && ['profile', 'my-stores', 'admin'].includes(tab)) {
+        setActiveTab(tab)
+        return
+      }
+      if (tab === 'saved') {
+        setActiveTab('saved')
+        if (token) loadSavedStores()
         return
       }
       
@@ -240,12 +256,16 @@ export default function App() {
       if (tab === 'admin') {
         loadAdminUsers()
         loadAdminPendingStores()
-      } else if (tab === 'explore' || tab === 'my-stores' || tab === 'about' || tab === 'cs2-spinner' || tab === 'saved') {
-        loadGlobalData()
-        if (tab === 'saved') {
-          loadSavedStores()
+      } else if (tab === 'saved') {
+        loadSavedStores()
+      } else if (tab === 'my-stores') {
+        loadMyStores()
+      } else if (tab === 'explore') {
+        if (stores.length === 0) {
+          loadGlobalData()
         }
       }
+      // Note: 'about' and 'cs2-spinner' are completely static and do not trigger loadGlobalData()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, token])
@@ -253,21 +273,31 @@ export default function App() {
   // Resolve a store route independently from the currently loaded Explore page.
   useEffect(() => {
     const match = location.pathname.match(/^\/quan\/([^/]+)(?:\/([^/]+))?\/?$/)
-    if (!match) return undefined
+    if (!match) {
+      setLoadingStoreDetail(false)
+      return undefined
+    }
     let cancelled = false
     const id = decodeURIComponent(match[1])
+    setLoadingStoreDetail(true)
     ;(async () => {
-      const response = await makeRequest('GET', `/v1/stores/${encodeURIComponent(id)}`)
-      if (cancelled) return
-      if (!response.success || !response.data.result) {
-        setActiveStore(null)
-        document.title = 'Không tìm thấy quán | Cần Giuộc Food Tour'
-        return
+      try {
+        const response = await makeRequest('GET', `/v1/stores/${encodeURIComponent(id)}`)
+        if (cancelled) return
+        if (!response.success || !response.data.result) {
+          setActiveStore(null)
+          document.title = 'Không tìm thấy quán | Cần Giuộc Food Tour'
+          return
+        }
+        const store = response.data.result
+        setActiveStore(store)
+        const canonicalPath = storePath(store)
+        if (location.pathname !== canonicalPath) navigate(canonicalPath, { replace: true })
+      } finally {
+        if (!cancelled) {
+          setLoadingStoreDetail(false)
+        }
       }
-      const store = response.data.result
-      setActiveStore(store)
-      const canonicalPath = storePath(store)
-      if (location.pathname !== canonicalPath) navigate(canonicalPath, { replace: true })
     })()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -389,7 +419,12 @@ export default function App() {
       tokenRef.current = ''
       setToken('')
       setHasSession(false)
+      const currentTab = location.pathname.substring(1)
+      if (['profile', 'my-stores', 'admin'].includes(currentTab)) {
+        navigate('/explore', { replace: true })
+      }
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Refresh shortly before the current access token expires.
@@ -607,10 +642,13 @@ export default function App() {
     if (!authResult?.accessToken) {
       throw new Error('Invalid authentication response')
     }
+    if (broadcast) {
+      sessionGenerationRef.current++
+      authChannelRef.current?.postMessage({ type: 'LOGIN' })
+    }
     tokenRef.current = authResult.accessToken
     setToken(authResult.accessToken)
     setHasSession(true)
-    if (broadcast) authChannelRef.current?.postMessage({ type: 'LOGIN' })
     return authResult.accessToken
   }
 
@@ -790,7 +828,6 @@ export default function App() {
 
   // Load global components data (stores, categories)
   async function loadGlobalData() {
-    setLoading(true)
     const catRes = await makeRequest('GET', '/v1/categories')
     if (catRes.success && catRes.data.result) {
       setCategories(catRes.data.result)
@@ -804,56 +841,61 @@ export default function App() {
     } else {
       setOwnedStores([])
     }
-
-    setLoading(false)
   }
 
   async function loadPublicStores(page = 0, append = false) {
     const requestId = ++publicStoreRequestRef.current
     if (append) setLoadingMoreStores(true)
-    const params = new URLSearchParams({ page: String(page), size: '24', sort: 'newest' })
-    if (searchQuery.trim()) params.set('query', searchQuery.trim())
-    const categoryIds = publicFilters.categoryIds.length > 0
-      ? publicFilters.categoryIds
-      : (selectedCategory?.id ? [selectedCategory.id] : [])
-    categoryIds.forEach((id) => params.append('categoryIds', String(id)))
-    if (publicFilters.openNow) params.set('openNow', 'true')
-    if (publicFilters.nearMe && publicFilters.latitude != null && publicFilters.longitude != null) {
-      params.set('latitude', String(publicFilters.latitude))
-      params.set('longitude', String(publicFilters.longitude))
-      params.set('radiusKm', '10')
-      params.set('sort', 'distance')
-    }
-    const storeRes = await makeRequest('GET', `/v1/stores?${params.toString()}`)
-    if (requestId !== publicStoreRequestRef.current) {
-      if (append) setLoadingMoreStores(false)
-      return
-    }
-    if (storeRes.success && storeRes.data.result) {
-      const result = storeRes.data.result
-      const content = Array.isArray(result) ? result : (result.content || [])
-      setStores((previous) => append
-        ? [...new Map([...previous, ...content].map((store) => [store.id, store])).values()]
-        : content)
-      setStorePage(Array.isArray(result)
-        ? { page: 0, totalPages: 1, totalElements: content.length, last: true }
-        : result)
-    }
-    if (!append) {
-      const facetParams = new URLSearchParams()
-      if (searchQuery.trim()) facetParams.set('query', searchQuery.trim())
-      if (publicFilters.openNow) facetParams.set('openNow', 'true')
+    else setLoadingPublicStores(true)
+
+    try {
+      const params = new URLSearchParams({ page: String(page), size: '24', sort: 'newest' })
+      if (searchQuery.trim()) params.set('query', searchQuery.trim())
+      const categoryIds = publicFilters.categoryIds.length > 0
+        ? publicFilters.categoryIds
+        : (selectedCategory?.id ? [selectedCategory.id] : [])
+      categoryIds.forEach((id) => params.append('categoryIds', String(id)))
+      if (publicFilters.openNow) params.set('openNow', 'true')
       if (publicFilters.nearMe && publicFilters.latitude != null && publicFilters.longitude != null) {
-        facetParams.set('latitude', String(publicFilters.latitude))
-        facetParams.set('longitude', String(publicFilters.longitude))
-        facetParams.set('radiusKm', '10')
+        params.set('latitude', String(publicFilters.latitude))
+        params.set('longitude', String(publicFilters.longitude))
+        params.set('radiusKm', '10')
+        params.set('sort', 'distance')
       }
-      const facetRes = await makeRequest('GET', `/v1/stores/facets?${facetParams.toString()}`)
-      if (requestId === publicStoreRequestRef.current && facetRes.success) {
-        setStoreFacets(facetRes.data.result || {})
+      const storeRes = await makeRequest('GET', `/v1/stores?${params.toString()}`)
+      if (requestId !== publicStoreRequestRef.current) {
+        return
+      }
+      if (storeRes.success && storeRes.data.result) {
+        const result = storeRes.data.result
+        const content = Array.isArray(result) ? result : (result.content || [])
+        setStores((previous) => append
+          ? [...new Map([...previous, ...content].map((store) => [store.id, store])).values()]
+          : content)
+        setStorePage(Array.isArray(result)
+          ? { page: 0, totalPages: 1, totalElements: content.length, last: true }
+          : result)
+      }
+      if (!append) {
+        const facetParams = new URLSearchParams()
+        if (searchQuery.trim()) facetParams.set('query', searchQuery.trim())
+        if (publicFilters.openNow) facetParams.set('openNow', 'true')
+        if (publicFilters.nearMe && publicFilters.latitude != null && publicFilters.longitude != null) {
+          facetParams.set('latitude', String(publicFilters.latitude))
+          facetParams.set('longitude', String(publicFilters.longitude))
+          facetParams.set('radiusKm', '10')
+        }
+        const facetRes = await makeRequest('GET', `/v1/stores/facets?${facetParams.toString()}`)
+        if (requestId === publicStoreRequestRef.current && facetRes.success) {
+          setStoreFacets(facetRes.data.result || {})
+        }
+      }
+    } finally {
+      if (requestId === publicStoreRequestRef.current) {
+        if (append) setLoadingMoreStores(false)
+        else setLoadingPublicStores(false)
       }
     }
-    if (append) setLoadingMoreStores(false)
   }
 
   async function loadMorePublicStores() {
@@ -862,33 +904,51 @@ export default function App() {
   }
 
   async function loadMyStores(page = 0, append = false) {
+    const session = sessionGenerationRef.current
     const activeToken = tokenRef.current
     if (!activeToken) {
       setOwnedStores([])
       return
     }
-    const res = await makeRequest('GET', `/v1/stores/mine?page=${page}&size=20`)
-    if (res.success && res.data.result) {
-      const result = res.data.result
-      const content = result.content || result
-      setOwnedStores((previous) => append ? [...new Map([...previous, ...content].map((store) => [store.id, store])).values()] : content)
-      if (!Array.isArray(result)) setOwnedStoresPage(result)
+    if (!append) setLoadingMyStores(true)
+    try {
+      const res = await makeRequest('GET', `/v1/stores/mine?page=${page}&size=20`)
+      if (sessionGenerationRef.current !== session || !tokenRef.current) return
+      if (res.success && res.data.result) {
+        const result = res.data.result
+        const content = result.content || result
+        setOwnedStores((previous) => append ? [...new Map([...previous, ...content].map((store) => [store.id, store])).values()] : content)
+        if (!Array.isArray(result)) setOwnedStoresPage(result)
+      }
+    } finally {
+      if (sessionGenerationRef.current === session) {
+        if (!append) setLoadingMyStores(false)
+      }
     }
   }
 
   // Load saved stores for current logged in user
   async function loadSavedStores(page = 0, append = false) {
+    const session = sessionGenerationRef.current
     const activeToken = tokenRef.current
     if (!activeToken) {
       setSavedStores([])
       return
     }
-    const res = await makeRequest('GET', `/v1/stores/saved?page=${page}&size=24`)
-    if (res.success && res.data.result) {
-      const result = res.data.result
-      const content = result.content || result
-      setSavedStores((previous) => append ? [...new Map([...previous, ...content].map((store) => [store.id, store])).values()] : content)
-      if (!Array.isArray(result)) setSavedStoresPage(result)
+    if (!append) setLoadingSavedStores(true)
+    try {
+      const res = await makeRequest('GET', `/v1/stores/saved?page=${page}&size=24`)
+      if (sessionGenerationRef.current !== session || !tokenRef.current) return
+      if (res.success && res.data.result) {
+        const result = res.data.result
+        const content = result.content || result
+        setSavedStores((previous) => append ? [...new Map([...previous, ...content].map((store) => [store.id, store])).values()] : content)
+        if (!Array.isArray(result)) setSavedStoresPage(result)
+      }
+    } finally {
+      if (sessionGenerationRef.current === session) {
+        if (!append) setLoadingSavedStores(false)
+      }
     }
   }
 
@@ -921,7 +981,7 @@ export default function App() {
         setActiveStore((prev) => (prev ? { ...prev, isSaved, savedCount } : null))
       }
 
-      // Refresh saved stores list
+      // Refresh saved stores list without blocking
       loadSavedStores()
     } else {
       showToast(getVietnameseApiError(res.error, 'Không thể thực hiện thao tác lưu quán.'), 'error')
@@ -930,7 +990,9 @@ export default function App() {
 
   // Profile retrieval
   async function getMyProfileSilently() {
+    const session = sessionGenerationRef.current
     const res = await makeRequest('GET', '/users/me')
+    if (sessionGenerationRef.current !== session || !tokenRef.current) return
     if (res.success && res.data.result) {
       const u = res.data.result
       setCurrentUser(u)
@@ -947,12 +1009,12 @@ export default function App() {
   // Manual Login
   async function handleLogin(e) {
     e.preventDefault()
-    setLoading(true)
+    setLoadingAuth(true)
     const res = await makeRequest('POST', '/auth/token', {
       email: loginEmail,
       password: loginPassword
     })
-    setLoading(false)
+    setLoadingAuth(false)
 
     if (res.success && res.data.result) {
       persistSession(res.data.result, true)
@@ -1013,7 +1075,7 @@ export default function App() {
       return
     }
 
-    setLoading(true)
+    setLoadingAuth(true)
     const res = await makeRequest('POST', '/auth/register', {
       username: cleanUsername,
       email: cleanEmail,
@@ -1022,7 +1084,7 @@ export default function App() {
       password: regPassword,
       dateOfBirth: regDob
     })
-    setLoading(false)
+    setLoadingAuth(false)
 
     if (res.success) {
       showToast('Đăng ký tài khoản thành công! Vui lòng kiểm tra hộp thư Email để bấm liên kết kích hoạt trước khi đăng nhập.', 'success')
@@ -1042,9 +1104,9 @@ export default function App() {
   // Verify email
   async function handleVerifyEmail(e) {
     e.preventDefault()
-    setLoading(true)
+    setLoadingAuth(true)
     const res = await makeRequest('POST', '/auth/verify-email', { token: verifyTokenVal.trim() })
-    setLoading(false)
+    setLoadingAuth(false)
 
     if (res.success) {
       showToast('Xác thực Email thành công! Bạn có thể đăng nhập ngay bây giờ.', 'success')
@@ -1058,9 +1120,9 @@ export default function App() {
   // Resend email verification
   async function handleResendVerification(e) {
     e.preventDefault()
-    setLoading(true)
+    setLoadingAuth(true)
     const res = await makeRequest('POST', `/auth/resend-verification?email=${encodeURIComponent(resendEmail)}`)
-    setLoading(false)
+    setLoadingAuth(false)
 
     if (res.success) {
       showToast('Đã gửi liên kết xác thực vào email của bạn!', 'success')
@@ -1078,9 +1140,9 @@ export default function App() {
       showToast('Vui lòng nhập email để nhận mã OTP.', 'error')
       return
     }
-    setLoading(true)
+    setLoadingAuth(true)
     const res = await makeRequest('POST', '/auth/forgot-password', { email: targetEmail })
-    setLoading(false)
+    setLoadingAuth(false)
 
     if (res.success) {
       showToast('Đã gửi mã OTP đặt lại mật khẩu vào email của bạn!', 'success')
@@ -1095,12 +1157,12 @@ export default function App() {
   // Verify OTP
   async function handleVerifyOtp(e) {
     if (e && e.preventDefault) e.preventDefault()
-    setLoading(true)
+    setLoadingAuth(true)
     const res = await makeRequest('POST', '/auth/verify-otp', {
       email: resetEmail,
       otp: resetOtp
     })
-    setLoading(false)
+    setLoadingAuth(false)
 
     if (res.success) {
       showToast('Xác thực OTP thành công!', 'success')
@@ -1117,21 +1179,25 @@ export default function App() {
       showToast('Mật khẩu nhập lại không khớp!', 'error')
       return
     }
-    setLoading(true)
+    setLoadingAuth(true)
     const res = await makeRequest('POST', '/auth/reset-password', {
       email: resetEmail,
       otp: resetOtp,
       newPassword: resetPassword
     })
-    setLoading(false)
+    setLoadingAuth(false)
 
     if (res.success) {
       // Reset password revokes every token that was issued before the reset.
+      sessionGenerationRef.current++
       setToken('')
       tokenRef.current = ''
       setHasSession(false)
       setCurrentUser(null)
+      setSavedStores([])
+      setSavedStoresPage({ page: 0, totalPages: 1, totalElements: 0, last: true })
       setOwnedStores([])
+      setOwnedStoresPage({ page: 0, totalPages: 1, totalElements: 0, last: true })
       setAdminStores([])
       setAdminPendingStores([])
       showToast('Đổi mật khẩu thành công! Hãy đăng nhập.', 'success')
@@ -1156,9 +1222,9 @@ export default function App() {
     }
 
     if (!idToken) return
-    setLoading(true)
+    setLoadingAuth(true)
     const res = await makeRequest('POST', '/auth/google-login', { idToken })
-    setLoading(false)
+    setLoadingAuth(false)
 
     if (res.success && res.data.result) {
       persistSession(res.data.result, true)
@@ -1180,9 +1246,9 @@ export default function App() {
     }
 
     if (!accessTokenVal) return
-    setLoading(true)
+    setLoadingAuth(true)
     const res = await makeRequest('POST', '/auth/facebook-login', { accessToken: accessTokenVal })
-    setLoading(false)
+    setLoadingAuth(false)
 
     if (res.success && res.data.result) {
       persistSession(res.data.result, true)
@@ -1266,14 +1332,58 @@ export default function App() {
           })
         : Promise.resolve(null)
 
+      sessionGenerationRef.current++
       setToken('')
       tokenRef.current = ''
       setHasSession(false)
       setCurrentUser(null)
       authChannelRef.current?.postMessage({ type: 'LOGOUT' })
+
+      // P0: Comprehensive User-Scoped State Reset
+      setSavedStores([])
+      setSavedStoresPage({ page: 0, totalPages: 1, totalElements: 0, last: true })
+      setOwnedStores([])
+      setOwnedStoresPage({ page: 0, totalPages: 1, totalElements: 0, last: true })
+      setAdminStores([])
+      setAdminPendingStores([])
+      setAdminStoreSummary({})
+      setAdminStoresPage({ page: 0, totalPages: 1, totalElements: 0, last: true })
+      setAdminUsersList([])
+      setAdminUsersPage({ page: 0, totalPages: 1, totalElements: 0, last: true })
+      setEditingUser(null)
+      setAdminUserUsername('')
+      setAdminUserFirst('')
+      setAdminUserLast('')
+      setAdminUserDob('')
+      setAdminUserRoles({ USER: false, ADMIN: false })
+      setUpUsername('')
+      setUpFirstname('')
+      setUpLastname('')
+      setUpDob('')
+      setPwdOld('')
+      setPwdNew('')
+      setEditingStore(null)
+      setStoreName('')
+      setStoreCategoryId('')
+      setStoreDesc('')
+      setStoreLat('')
+      setStoreLng('')
+      setStoreMapUrl('')
+      setStoreAddress('')
+      setStorePhone('')
+      setStoreOpen('')
+      setStoreClose('')
+      setStorePriceMin('')
+      setStorePriceMax('')
+      setStoreBannerUrl('')
+      setFoodName('')
+      setFoodPrice(0)
+      setFoodDesc('')
+      setFoodImage('')
+      setFoodStoreId('')
       setAvatarPreview('')
       setAvatarFile(null)
-      setEditingStore(null)
+      setActiveStore(null)
       showToast('Đã đăng xuất khỏi Cần Giuộc FoodTour.', 'info')
       navigate('/explore')
 
@@ -1758,23 +1868,23 @@ export default function App() {
       setShowAuthModal(true)
       return
     }
-    setLoading(true)
     const res = await makeRequest('POST', `/v1/stores/${storeId}/rate`, { ratingLevel: ratingVal })
-    setLoading(false)
 
     if (res.success && res.data.result) {
-      showToast(`Đã đánh giá! Tỷ lệ hài lòng: ${res.data.result.satisfactionRate}% (${res.data.result.totalVotes} lượt đánh giá)`, 'success')
-      loadGlobalData()
-      // Refresh active store details
+      const { satisfactionRate, totalVotes } = res.data.result
+      showToast(`Đã đánh giá! Tỷ lệ hài lòng: ${satisfactionRate}% (${totalVotes} lượt đánh giá)`, 'success')
+      setStores((prevStores) =>
+        prevStores.map((st) =>
+          st.id === storeId ? { ...st, satisfactionRate, totalVotes } : st
+        )
+      )
+      // Refresh active store details directly without global reload
       if (activeStore && activeStore.id === storeId) {
-        const updated = stores.find((s) => s.id === storeId)
-        if (updated) {
-          setActiveStore({
-            ...activeStore,
-            satisfactionRate: res.data.result.satisfactionRate,
-            totalVotes: res.data.result.totalVotes
-          })
-        }
+        setActiveStore((prev) => (prev ? {
+          ...prev,
+          satisfactionRate,
+          totalVotes
+        } : null))
       }
     } else {
       showToast(getVietnameseApiError(res.error, 'Đánh giá thất bại.'), 'error')
@@ -1835,12 +1945,10 @@ export default function App() {
       return
     }
 
-    setLoading(true)
     const res = await makeRequest('POST', `/v1/stores/${storeId}/report-closed`, {
       latitude,
       longitude
     })
-    setLoading(false)
 
     if (res.success && res.data.result) {
       const closedState = res.data.result.isReportedClosed ? 'CÓ (Đã báo đóng cửa hôm nay)' : 'CHƯA (Cần thêm lượt báo)'
@@ -1884,6 +1992,7 @@ export default function App() {
 
   // Admin View - Users List retrieve
   async function loadAdminUsers(options) {
+    const session = sessionGenerationRef.current
     const requestId = ++adminUserRequestSequenceRef.current
     const request = options === undefined
       ? adminUserRequestRef.current
@@ -1891,22 +2000,31 @@ export default function App() {
         ? { ...adminUserRequestRef.current, page: options }
         : { ...adminUserRequestRef.current, ...options }
     adminUserRequestRef.current = request
-    const params = new URLSearchParams({ page: String(request.page || 0), size: '20', sort: 'newest' })
-    if (request.query) params.set('query', request.query)
-    if (request.role && request.role !== 'ALL') params.set('role', request.role)
-    const res = await makeRequest('GET', `/users?${params.toString()}`)
-    if (requestId !== adminUserRequestSequenceRef.current) return
-    if (res.success && res.data.result) {
-      const result = res.data.result
-      setAdminUsersList(result.content || result)
-      if (result.content) setAdminUsersPage(result)
-    } else {
-      showToast('Quyền Admin bị từ chối hoặc tải danh sách người dùng thất bại.', 'error')
+    setLoadingAdminUsers(true)
+    try {
+      const params = new URLSearchParams({ page: String(request.page || 0), size: '20', sort: 'newest' })
+      if (request.query) params.set('query', request.query)
+      if (request.role && request.role !== 'ALL') params.set('role', request.role)
+      const res = await makeRequest('GET', `/users?${params.toString()}`)
+      if (sessionGenerationRef.current !== session || !tokenRef.current) return
+      if (requestId !== adminUserRequestSequenceRef.current) return
+      if (res.success && res.data.result) {
+        const result = res.data.result
+        setAdminUsersList(result.content || result)
+        if (result.content) setAdminUsersPage(result)
+      } else {
+        showToast('Quyền Admin bị từ chối hoặc tải danh sách người dùng thất bại.', 'error')
+      }
+    } finally {
+      if (requestId === adminUserRequestSequenceRef.current && sessionGenerationRef.current === session) {
+        setLoadingAdminUsers(false)
+      }
     }
   }
 
   // Admin View - Pending stores retrieve
   async function loadAdminPendingStores(options) {
+    const session = sessionGenerationRef.current
     const requestId = ++adminStoreRequestSequenceRef.current
     const request = options === undefined
       ? adminStoreRequestRef.current
@@ -1914,22 +2032,30 @@ export default function App() {
         ? { ...adminStoreRequestRef.current, page: options }
         : { ...adminStoreRequestRef.current, ...options }
     adminStoreRequestRef.current = request
-    const params = new URLSearchParams({ page: String(request.page || 0), size: '20', sort: 'newest' })
-    if (request.query) params.set('query', request.query)
-    if (request.status && request.status !== 'ALL') params.set('status', request.status)
-    if (request.categoryId && request.categoryId !== 'ALL') params.set('categoryId', String(request.categoryId))
-    const res = await makeRequest('GET', `/v1/stores/admin?${params.toString()}`)
-    const summaryRes = await makeRequest('GET', '/v1/stores/admin/summary')
-    if (requestId !== adminStoreRequestSequenceRef.current) return
-    if (res.success && res.data.result) {
-      const result = res.data.result
-      const content = result.content || result
-      setAdminStores(content)
-      if (result.content) setAdminStoresPage(result)
-      // filter only PENDING submissions
-      setAdminPendingStores(content.filter((s) => s.status === 'PENDING'))
+    setLoadingAdminStores(true)
+    try {
+      const params = new URLSearchParams({ page: String(request.page || 0), size: '20', sort: 'newest' })
+      if (request.query) params.set('query', request.query)
+      if (request.status && request.status !== 'ALL') params.set('status', request.status)
+      if (request.categoryId && request.categoryId !== 'ALL') params.set('categoryId', String(request.categoryId))
+      const res = await makeRequest('GET', `/v1/stores/admin?${params.toString()}`)
+      const summaryRes = await makeRequest('GET', '/v1/stores/admin/summary')
+      if (sessionGenerationRef.current !== session || !tokenRef.current) return
+      if (requestId !== adminStoreRequestSequenceRef.current) return
+      if (res.success && res.data.result) {
+        const result = res.data.result
+        const content = result.content || result
+        setAdminStores(content)
+        if (result.content) setAdminStoresPage(result)
+        // filter only PENDING submissions
+        setAdminPendingStores(content.filter((s) => s.status === 'PENDING'))
+      }
+      if (summaryRes.success) setAdminStoreSummary(summaryRes.data.result || {})
+    } finally {
+      if (requestId === adminStoreRequestSequenceRef.current && sessionGenerationRef.current === session) {
+        setLoadingAdminStores(false)
+      }
     }
-    if (summaryRes.success) setAdminStoreSummary(summaryRes.data.result || {})
   }
 
   // Admin View - Approve store submission
@@ -2153,6 +2279,7 @@ export default function App() {
             totalStoreCount={storePage.totalElements || stores.length}
             onServerFiltersChange={setPublicFilters}
             categoryFacets={storeFacets}
+            loading={loadingPublicStores}
           />
         )}
 
@@ -2169,6 +2296,9 @@ export default function App() {
               setShowAuthModal={setShowAuthModal}
               setAuthMode={setAuthMode}
               currentUser={currentUser}
+              switchTab={switchTab}
+              onNavigateExplore={() => switchTab('explore')}
+              loading={loadingSavedStores}
             />
             {!savedStoresPage.last && (
               <button className="brutalist-btn-white mx-auto block" onClick={() => loadSavedStores(savedStoresPage.page + 1, true)}>
@@ -2281,7 +2411,7 @@ export default function App() {
               storeBannerUrl={storeBannerUrl}
               setStoreBannerUrl={setStoreBannerUrl}
               handleCreateStore={handleCreateStore}
-              loading={loading}
+              loading={loadingMyStores}
               foodName={foodName}
               setFoodName={setFoodName}
               foodPrice={foodPrice}
@@ -2366,6 +2496,8 @@ export default function App() {
               loadGlobalData={loadGlobalData}
               adminUsersPage={adminUsersPage}
               adminStoresPage={adminStoresPage}
+              loadingStores={loadingAdminStores}
+              loadingUsers={loadingAdminUsers}
             />
             {!ownedStoresPage.last && (
               <button className="brutalist-btn-white mx-auto block mt-4" onClick={() => loadMyStores(ownedStoresPage.page + 1, true)}>
@@ -2437,7 +2569,7 @@ export default function App() {
         resendEmail={resendEmail}
         setResendEmail={setResendEmail}
         handleResendVerification={handleResendVerification}
-        loading={loading}
+        loading={loadingAuth}
         showToast={showToast}
       />
 
@@ -2448,6 +2580,7 @@ export default function App() {
         handleSubmitRating={handleSubmitRating}
         handleReportClosedToday={handleReportClosedToday}
         handleToggleSaveStore={handleToggleSaveStore}
+        isLoadingStore={loadingStoreDetail}
       />
 
       {import.meta.env.DEV && DevConsole && isAdmin() && (

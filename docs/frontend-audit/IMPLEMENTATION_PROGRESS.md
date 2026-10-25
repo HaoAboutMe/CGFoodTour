@@ -1,8 +1,8 @@
 # CG FoodTour — Frontend Implementation Progress
 
 > Tài liệu theo dõi tiến độ thực tế theo từng Phase dựa trên `docs/frontend-audit/FRONTEND_REDESIGN_BLUEPRINT.md`.
-> Cập nhật lần cuối: 24/10/2026 (Hoàn thành Phase 0, 1, 2 và Phase 3A-3E)
-> Trạng thái hiện tại: **PHASE 3 IN PROGRESS (Phase 3E: My Stores & Dish Management Desktop UX Redesign — Ready for Visual Acceptance Review)**
+> Cập nhật lần cuối: 25/10/2026 (Hoàn thành Phase 0, 1, 2, Phase 3A-3F, Batch 3F-E, Batch 3G-A, Batch 3G-B, Batch 3G-C và Batch 3G-D Phase 3 Closure)
+> Trạng thái hiện tại: **PHASE 3 OFFICIALLY CLOSED (DESKTOP UX REDESIGN & LOCAL QA COMPLETE — BATCH 3G-D CHECKPOINT CREATED)**
 
 ---
 
@@ -1794,4 +1794,428 @@ Tất cả 11 cặp màn hình kiểm thử trực quan đã được chụp t�
 - **Kết luận:** **SẴN SÀNG NGHIỆM THU TRỰC QUAN (READY FOR PO REVIEW)**.
 - Toàn bộ các yêu cầu của Batch 3E đã hoàn thành, không phát sinh lỗi hồi quy trên các module Admin, Explore, Auth, Store Detail.
 - Không thực hiện commit/push. Dừng lại để Product Owner kiểm tra trực quan trên môi trường `localhost:5173`.
+
+---
+
+## 16. Phase 3: Desktop UX Redesign — Batch 3F (Supporting Pages & Header Desktop UX Redesign)
+
+> **Trạng thái:** **READY FOR ACCEPTANCE REVIEW** (Đã hoàn thành toàn diện mã nguồn, E2E suites, Before/After visual capture 12/12 cặp màn hình và kiểm thử hồi quy 100% PASS).<br>
+> **Git Checkpoint cơ sở:** `feature/frontend-desktop-redesign` tại HEAD `1d36b8f`<br>
+> **Tài sản untracked:** Bảo tồn nguyên vẹn 12 screenshots Batch 3C (`after-batch-3c/`), Batch 3E (`before-batch-3e/`, `after-batch-3e/`).<br>
+> **Ranh giới:** 0 thay đổi Backend Java/Spring Boot, 0 thay đổi API contracts (`GET /v1/stores/saved`, `POST /v1/stores/{id}/save`, `/users/me`), 0 thay đổi logic auth/roles, không commit/push.
+
+---
+
+### 16.1. Pre-Implementation Audit & Production Call Sites
+
+1. **Xác minh Production Call Sites:**
+   - **Header & Navigation:** `frontend/src/layouts/Header.jsx` được gọi tại `frontend/src/App.jsx` (dòng ~2290), hiển thị xuyên suốt mọi trang trên Desktop (1280px, 1440px, 1920px), Tablet (768px) và Mobile (390px).
+   - **Saved Stores (Quán Đã Lưu):** `frontend/src/components/SavedStoresSection.jsx` được render trong tab `saved` của `App.jsx` (dòng ~2438), hiển thị danh sách quán ăn người dùng đã bookmark với API `/v1/stores/saved`.
+   - **User Profile / Account:** `frontend/src/pages/Profile/ProfileSection.jsx` được render trong tab `profile` của `App.jsx` (dòng ~2430), cho phép người dùng xem thông tin tài khoản, email, vai trò và cập nhật họ tên/mật khẩu qua API `/users/me`.
+   - **About (Về Chúng Tôi):** `frontend/src/pages/About/AboutSection.jsx` được render trong tab `about` của `App.jsx` (dòng ~2445), hiển thị câu chuyện thương hiệu, giá trị cốt lõi, thông tin liên hệ và CTA điều hướng.
+
+---
+
+### 16.2. Các Tính Năng Đã Được Redesign Trong Batch 3F
+
+1. **Header & Main Navigation Desktop/Mobile/Tablet (`Header.jsx`):**
+   - **Điều Hướng Desktop Cân Đối:** Căn chỉnh logo, thương hiệu, nhóm navigation trung tâm và tài khoản người dùng theo bố cục chuẩn Neo-Brutalist, không phát sinh khoảng trắng thừa hoặc co cụm.
+   - **Active Route Indicator Ngữ Nghĩa:** Bổ sung `aria-current="page"` cho route đang hoạt động kèm border đen đậm 2px, nền đỏ mờ `bg-[#ff3e3e]/10`, chữ đỏ đậm `#c92a2a` đạt chuẩn WCAG 2.2 AA (độ tương phản $\ge 4.5:1$).
+   - **User Avatar & Account Dropdown:**
+     - Thiết kế pill badge người dùng gọn gàng, hiển thị avatar người dùng (hoặc fallback initials chữ cái đầu) kèm tên và mũi tên chỉ thị dropdown.
+     - Thuộc tính trợ năng đầy đủ: `aria-haspopup="true"`, `aria-expanded={showUserMenu}`, `aria-controls="user-dropdown-menu"`.
+     - Thẻ tóm tắt người dùng ở đầu dropdown với huy hiệu vai trò (`Quản Trị` / `Thành Viên`) và email.
+     - **Keyboard Escape Dismiss:** Lắng nghe phím `Escape` để đóng dropdown tức thì và khôi phục tiêu điểm bàn phím về nút mở avatar.
+     - Bảo toàn backward compatibility cho các selector test (`button` role, `alt="avatar"`).
+   - **Header Clearance trên My Stores / Lịch Sử Quán:** Chiều cao header cố định chuẩn `h-16 md:h-20` kết hợp `sticky top-0 z-40`, đảm bảo khi cuộn trang hoặc chuyển tab trong My Stores và Lịch sử quán, thanh tab không bao giờ bị header che khuất.
+
+2. **Saved Stores — Quán Đã Lưu (`SavedStoresSection.jsx`):**
+   - **Tái Sử Dụng `StoreCard` Đồng Nhất Với Explore:** Thay thế thẻ quán thủ công bằng `StoreCard` chung của dự án, đảm bảo hình ảnh, badge trạng thái mở cửa, khoảng giá, khoảng cách GPS và nút bookmark (`isSaved: true`) hiển thị 100% nhất quán.
+   - **Lưới Thẻ Đa Cột Responsive Desktop:** Lưới 3 cột trên laptop (`lg:grid-cols-3`) và 4 cột trên màn hình siêu rộng (`2xl:grid-cols-4`).
+   - **Desktop View Mode Toggle:** Hỗ trợ chuyển đổi giữa `Chế độ Lưới (Grid)` và `Chế độ Danh Sách Thu Gọn (Compact List)`.
+   - **Bộ Lọc Danh Mục & Tìm Kiếm Trực Tiếp:**
+     - Thanh tìm kiếm realtime theo tên quán, địa chỉ hoặc món ăn đặc trưng.
+     - Nhóm pill filter danh mục ẩm thực cuộn mượt mà với badge hiển thị số lượng quán tương ứng.
+   - **Empty State Thân Thiện:** Minh họa Bookmark rỗng Neo-Brutalist với thông điệp rõ ràng và nút bấm CTA "Khám Phá Quán Ăn Ngay ↗" điều hướng thẳng về tab Explore.
+
+3. **User Profile / Account (`ProfileSection.jsx`):**
+   - **Bố Cục 2 Cột Chuyên Nghiệp Trên Desktop (`grid-cols-1 lg:grid-cols-12`):**
+     - **Cột Trái (Thông Tin Cá Nhân - 7 cols):** Card hồ sơ lớn với avatar viền đen 3D, tên hiển thị, vai trò hệ thống, badge `Đã xác thực email` màu xanh chuẩn WCAG, form đổi họ và tên với nhãn `htmlFor`/`id` rõ ràng.
+     - **Cột Phải (Bảo Mật & Mật Khẩu - 5 cols):** Form đổi mật khẩu với các trường mật khẩu hiện tại, mật khẩu mới, xác nhận mật khẩu mới kèm nút bật/tắt hiển thị mật khẩu (`type="button"`).
+   - **Trợ Năng Form & Validation:** Thêm `noValidate` vào form, thông báo lỗi `role="alert"`, thông báo thành công `role="status"` rõ ràng, nút submit có loading state chống double-click.
+
+4. **About — Về Chúng Tôi (`AboutSection.jsx`):**
+   - **Bố Cục 2 Cột Desktop Thông Thoáng:**
+     - **Cột Trái:** Giới thiệu câu chuyện hành trình ẩm thực Cần Giuộc với typography phân cấp rõ ràng, đoạn văn giới hạn độ rộng đọc tối ưu.
+     - **Cột Phải:** Card liên hệ & đóng góp cộng đồng nổi bật với đường viền đen đậm, bóng cứng 3D và liên kết email `mailto:` trợ năng.
+   - **3 Giá Trị Cốt Lõi (Core Values):** Lưới 3 card giá trị (`Tôn Vinh Ẩm Thực`, `Cộng Đồng Gắn Kết`, `Trải Nghiệm Mượt Mà`) với icon sinh động và màu nền dịu mắt.
+   - **WCAG AA Compliance:** Toàn bộ văn bản và nút bấm sử dụng màu tương phản cao (Action Red `#c92a2a` trên nền sáng, chữ đen đậm `#111827`).
+
+---
+
+### 16.3. Bằng Chứng Visual Acceptance (Before / After Screenshots)
+
+Tất cả 12 cặp màn hình kiểm thử trực quan đã được chụp tự động qua Playwright E2E suites:
+- **Thư mục Before:** `frontend/e2e/screenshots/before-batch-3f/`
+- **Thư mục After:** `frontend/e2e/screenshots/after-batch-3f/`
+
+| STT | Màn hình kiểm thử | Baseline (Before) | Redesign (After) | Đánh giá cải tiến UI/UX |
+|:---:|---|---|---|---|
+| 1 | **Header & Nav Desktop (1440×900)** | [`header-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/header-desktop-1440.png) | [`header-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/header-desktop-1440.png) | Active route có viền đen 2px, nền mờ và chữ đỏ `#c92a2a` đạt chuẩn WCAG. Logo và điều hướng trung tâm cân xứng. |
+| 2 | **User Dropdown Desktop (1440×900)** | [`header-user-dropdown-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/header-user-dropdown-desktop-1440.png) | [`header-user-dropdown-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/header-user-dropdown-desktop-1440.png) | Thẻ tóm tắt hồ sơ với tag vai trò Quản Trị / Thành Viên, danh sách nút bấm đồng bộ Neo-Brutalist, hỗ trợ phím Escape. |
+| 3 | **Header Tablet (768×1024)** | [`header-tablet-768.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/header-tablet-768.png) | [`header-tablet-768.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/header-tablet-768.png) | Bố cục tablet co giãn hài hòa, không bị chồng chéo các nút. |
+| 4 | **Header Mobile (390×844)** | [`header-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/header-mobile-390.png) | [`header-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/header-mobile-390.png) | Header gọn gàng trên mobile, nút chuông và avatar chạm cảm ứng an toàn. |
+| 5 | **Saved Stores Desktop (1440×900)** | [`saved-stores-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/saved-stores-desktop-1440.png) | [`saved-stores-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/saved-stores-desktop-1440.png) | Tái sử dụng StoreCard chuẩn Explore, thanh tìm kiếm live, category pills, và nút chuyển View Mode Grid / Compact. |
+| 6 | **Saved Stores Empty (1440×900)** | [`saved-stores-empty-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/saved-stores-empty-desktop-1440.png) | [`saved-stores-empty-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/saved-stores-empty-desktop-1440.png) | Empty state minh họa trực quan, thông điệp rõ ràng và nút CTA "Khám Phá Quán Ăn Ngay ↗" điều hướng về Explore. |
+| 7 | **Saved Stores Mobile (390×844)** | [`saved-stores-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/saved-stores-mobile-390.png) | [`saved-stores-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/saved-stores-mobile-390.png) | Tự động chuyển về 1 cột trên mobile, cuộn mượt mà, không tràn viền ngang. |
+| 8 | **Profile Page Desktop (1440×900)** | [`profile-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/profile-desktop-1440.png) | [`profile-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/profile-desktop-1440.png) | Bố cục 2 cột Desktop: Hồ sơ cá nhân bên trái (7 cols), Đổi mật khẩu bên phải (5 cols). Nhãn form rõ ràng. |
+| 9 | **Profile Page Mobile (390×844)** | [`profile-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/profile-mobile-390.png) | [`profile-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/profile-mobile-390.png) | Bố cục xếp chồng 1 cột tự nhiên, các ô nhập và nút bấm $\ge 44\text{px}$ touch target. |
+| 10 | **About Page Desktop (1440×900)** | [`about-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/about-desktop-1440.png) | [`about-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/about-desktop-1440.png) | Hero banner ấn tượng, 2 cột Câu chuyện & Liên hệ, 3 card Giá trị cốt lõi, CTA buttons nổi bật. |
+| 11 | **About Page Mobile (390×844)** | [`about-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/about-mobile-390.png) | [`about-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/about-mobile-390.png) | Mobile layout tối ưu hóa kích thước chữ và khoảng cách, 0px tràn ngang. |
+| 12 | **My Stores Header Clearance (1440×900)** | [`mystores-header-clearance-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/mystores-header-clearance-desktop-1440.png) | [`mystores-header-clearance-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/mystores-header-clearance-desktop-1440.png) | Thanh tab và KPI của My Stores có khoảng cách an toàn dưới header sticky, không bị che khuất khi cuộn. |
+
+---
+
+### 16.4. Kết Quả Kiểm Thử Toàn Diện (Full Regression Suite Results)
+
+1. **Linter (`npm run lint`):**
+   - Công cụ: `oxlint --deny-warnings`
+   - Kết quả: **0 warnings, 0 errors** trên toàn bộ 92 files.
+2. **Node Unit & Contract Tests (`npm test`):**
+   - Kết quả: **37/37 PASS** (Thời gian chạy: 1.04s).
+3. **Production Build Gate (`npm run build`):**
+   - Kết quả: **PASS in 306ms**. Artifact verification passed, 0 chuỗi debug bị cấm trong production artifact.
+4. **Playwright E2E Test Suites (Chromium):**
+   - `e2e/supporting-pages-desktop.spec.js`: **7/7 PASS** (13.3s)
+     - `1. Desktop Header: Layout, Brand, Nav Links & Active page indicator`: **PASS**
+     - `2. Header User Dropdown: Keyboard Escape, ARIA roles & Profile Summary Card`: **PASS**
+     - `3. Saved Stores: StoreCard Grid, Search filter & View Mode toggle`: **PASS**
+     - `4. Saved Stores: Empty State & Navigation to Explore`: **PASS**
+     - `5. User Profile Page: Form Fields, Readonly Email & Accessible Labels`: **PASS**
+     - `6. About Page: Hero, 2-Column Story, Values & CTA buttons`: **PASS**
+     - `7. Responsive Viewports: Mobile 390px, Tablet 768px & Zero horizontal overflow`: **PASS**
+   - `e2e/capture-supporting-before.spec.js`: **12/12 PASS** (20.5s)
+   - `e2e/capture-supporting-after.spec.js`: **12/12 PASS** (20.7s)
+   - `e2e/mystores-desktop.spec.js`: **8/8 PASS** (23.6s)
+   - `e2e/admin-desktop.spec.js`: **10/10 PASS** (25.3s)
+   - `e2e/explore-desktop.spec.js`: **13/13 PASS** (13.9s)
+   - `e2e/store-detail-desktop.spec.js`: **17/17 PASS** (27.5s)
+   - `e2e/auth-modal.spec.js`: **15/15 PASS** (20.1s)
+   - **Tổng cộng:** **82/82 E2E tests PASS** trên toàn bộ các modules của hệ thống!
+
+---
+
+### 16.5. Trạng Thái Nghiệm Thu & Khuyến Nghị
+
+- **Kết luận:** **ĐÃ HOÀN TẤT CHECKPOINT CHO BATCH 3F (COMMIT `c68fff1`)**.
+- Toàn bộ các yêu cầu của Batch 3F đã được triển khai hoàn chỉnh, thẩm mỹ Neo-Brutalist cao cấp, đáp ứng tiêu chuẩn WCAG AA và bảo toàn 100% logic nghiệp vụ/API contracts.
+
+---
+
+## 17. Batch 3F-E: Email Templates, Content & Rendering Quality
+
+### 17.1. Bảng Kiểm Kê Email Toàn Diện (Email Inventory Table)
+
+Đã rà soát và kiểm kê toàn bộ 5 luồng email tự động trong hệ thống `backend/src/main/java/com/cangiuoc/cgfoodtour/service/EmailService.java`:
+
+| STT | Loại email | Sự kiện kích hoạt | Service / Method | Template đang dùng | Subject | Các biến dữ liệu | Người nhận | Thời hạn link / OTP | Vấn đề nội dung & HTML/CSS trước sửa đổi |
+|:---:|---|---|---|---|---|---|---|---|---|
+| 1 | **Xác thực tài khoản** | Đăng ký tài khoản mới (`UserService.registerUser`) hoặc yêu cầu gửi lại email xác thực (`resendVerificationEmail`) | `EmailService.sendVerificationEmail(to, verificationLink)` | String template inline trong `EmailService` | `Xác thực tài khoản - CGFoodTour` | `verificationLink` | Email người dùng đăng ký | **24 giờ** (xác thực qua `VerificationToken.expiryDate`) | - Dùng `<style>` block và class CSS dễ bị client strip.<br>- Không nêu thời hạn hiệu lực 24h.<br>- Nút bấm thiếu fallback text link copy thủ công.<br>- Nền và card bo góc không dùng cấu trúc bảng lồng nhau chuẩn email. |
+| 2 | **OTP Đặt lại mật khẩu** | Người dùng bấm "Quên mật khẩu" (`UserService.requestForgotPasswordOtp`) | `EmailService.sendOtpEmail(to, otp)` | String template inline trong `EmailService` | `Mã OTP Đặt Lại Mật Khẩu - CGFoodTour` | `otp` | Email tài khoản yêu cầu reset | **5 phút** (xác thực qua Redis OTP TTL) | - Khối hiển thị OTP dùng div thông thường, font dễ bị co cụm trên mobile.<br>- Thiếu cảnh báo bảo mật không chia sẻ mã cho bất kỳ ai.<br>- Không có plain-text alternative. |
+| 3 | **Khóa tài khoản** | Quản trị viên thực hiện vô hiệu hóa tài khoản (`UserService.disableUser`) | `EmailService.sendAccountDisabledEmail(to, username, reason)` | String template inline trong `EmailService` | `Thông báo khóa tài khoản - CGFoodTour` | `username`, `reason` | Email người dùng bị khóa | Ngay lập tức | - Thiếu bước hướng dẫn tiếp theo và email hỗ trợ chính thức.<br>- Tên người dùng và lý do chưa được escape HTML chuẩn, có nguy cơ formatting glitch hoặc XSS. |
+| 4 | **Mở khóa tài khoản** | Quản trị viên kích hoạt lại tài khoản (`UserService.enableUser`) | `EmailService.sendAccountEnabledEmail(to, username)` | String template inline trong `EmailService` | `Chào mừng bạn trở lại CGFoodTour` | `username` | Email người dùng được mở khóa | Ngay lập tức | - Nội dung sơ sài, thiếu hướng dẫn tình trạng các quán ăn đã duyệt.<br>- Màu sắc và typography không đồng bộ với thương hiệu. |
+| 5 | **Thông báo trạng thái quán** | Quản trị viên thực hiện ẩn quán (`HIDE`), từ chối khôi phục (`REJECT_RECOVERY_REQUEST`), hoặc xóa vĩnh viễn (`HARD_DELETE`) | `EmailService.sendStoreStatusNotificationEmail(to, storeName, actionType, reason)` | String template inline trong `EmailService` | `Thông báo về quán ăn: [storeName] - CGFoodTour` | `storeName`, `actionType`, `reason` | Email chủ quán ăn | Ngay lập tức | - Chỉ hiển thị badge trạng thái thô mà không có hướng dẫn hành động tiếp theo theo từng case.<br>- Không có khung callout phân biệt lý do từ quản trị viên.<br>- Bố cục dễ vỡ trên Outlook do dùng div và inline-block. |
+
+---
+
+### 17.2. Phân Tích Lỗi & Nguyên Nhân Gốc Rễ
+
+1. **Email Client Stripping `<style>` Block:**
+   - *Hiện tượng:* Giao diện hiển thị vỡ khung, font chữ to nhỏ bất thường, mất shadow và border trên Outlook Desktop và Gmail App.
+   - *Nguyên nhân:* Nhiều email client tự động xóa toàn bộ thẻ `<style>` trong `<head>` hoặc không hỗ trợ các class selector CSS.
+   - *Khắc phục:* Chuyển đổi 100% sang table-based layouts (`table role="presentation"`) với thuộc tính HTML `bgcolor`, `width`, và inline CSS trên từng thẻ `td`, `a`, `p`, `span`.
+2. **Thiếu Multipart Plain-Text Alternative:**
+   - *Hiện tượng:* Các bộ lọc spam (SpamAssassin, Gmail spam engine) cho điểm phạt do email chỉ có HTML; người dùng ứng dụng xem email text-only hoặc đồng hồ thông minh không đọc được.
+   - *Khắc phục:* Nâng cấp `EmailService` sử dụng `helper.setText(plainText, htmlContent)`, đảm bảo song song cả bản plain-text mạch lạc và bản HTML cao cấp.
+3. **Thực Thể HTML Gây Phình Ký Tự Tiếng Việt (`HtmlUtils.htmlEscape`):**
+   - *Hiện tượng:* Hàm escape mặc định của Spring mã hóa cả ký tự có dấu thành `&Aacute;`, `&aacute;` làm phình dung lượng payload và lỗi hiển thị trên một số client cũ.
+   - *Khắc phục:* Viết hàm `escapeHtml` chuyên biệt chỉ escape 5 ký tự đặc biệt cú pháp (`&`, `<`, `>`, `"`, `'`) và giữ nguyên UTF-8 tiếng Việt chuẩn nét.
+4. **Nội Dung Thiếu Thời Hạn & Hướng Dẫn Hành Động:**
+   - *Hiện tượng:* Người dùng không biết liên kết xác thực tồn tại bao lâu (24 giờ), OTP có hạn bao nhiêu phút (5 phút), hoặc khi bị ẩn quán thì cần làm gì tiếp theo.
+   - *Khắc phục:* Bổ sung các callout box chuyên biệt: thời hạn rõ ràng, hướng dẫn thao tác chi tiết, fallback link copy thủ công, và cảnh báo bảo mật.
+
+---
+
+### 17.3. Hệ Thống Thiết Kế Email Dùng Chung (Email Design System)
+
+- **Canvas & Container:**
+  - Nền tổng thể: `#F7F6F2` (Canvas xám ấm dịu mắt).
+  - Khối nội dung chính: Thẻ bảng trắng `#FFFFFF`, chiều rộng tối đa `600px`, bo góc `16px`, đường viền đen mảnh `2.5px solid #111827`, đổ bóng Neo-Brutalist `6px 6px 0px #111827`.
+- **Bảng Màu (Color Tokens):**
+  - Brand Red: `#FF3E3E` (Pill header & logo brand).
+  - Action Red (WCAG AA): `#C92A2A` (Nút bấm CTA, link liên kết, OTP text). Đạt tỷ lệ tương phản $\ge 4.5:1$ trên nền trắng.
+  - Text Primary: `#111827` (Đen than dễ đọc).
+  - Text Secondary: `#374151` / `#4B5563` (Xám đậm).
+  - Text Muted: `#6B7280` / `#9CA3AF` (Footer & lưu ý).
+  - Card Highlights: `#F9FAFB` (Fallback link), `#FEF2F2` (Lý do từ chối/cảnh báo), `#FFFBEB` (OTP & Hướng dẫn tiếp theo), `#ECFDF5` (Thành công).
+- **Typography & Layout:**
+  - Fallback stack chuẩn email: `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`.
+  - Khối OTP: Monospace font `Courier New, Courier, monospace`, font-size `38px`, letter-spacing `10px`, căn giữa tuyệt đối.
+  - Bulletproof Buttons: Cấu trúc bảng lồng nhau `<table align="center"><tr><td bgcolor="#C92A2A"><a ...></a></td></tr></table>` đảm bảo click được trên 100% email client kể cả khi hình ảnh bị chặn.
+- **Header & Footer:**
+  - Header: Pill thương hiệu `🍜 CẦN GIUỘC FOODTOUR` bên trái, category badge chữ hoa bên phải.
+  - Footer: Thông tin email tự động, email hỗ trợ chính thức `cangiuocfoodtour@gmail.com`, và bản quyền hệ thống.
+
+---
+
+### 17.4. Bằng Chứng Visual Acceptance (Before / After Screenshots)
+
+Toàn bộ 14 cặp màn hình kiểm thử trực quan đã được tạo và chụp tự động qua Playwright E2E suites:
+- **Thư mục Before:** `frontend/e2e/screenshots/before-batch-3f-e/`
+- **Thư mục After:** `frontend/e2e/screenshots/after-batch-3f-e/`
+
+| STT | Màn hình kiểm thử | Baseline (Before) | Redesign (After) | Đánh giá cải tiến UI/UX & Rendering |
+|:---:|---|---|---|---|
+| 1 | **Xác thực Email (Desktop 1000px)** | [`email-verification-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-verification-desktop.png) | [`email-verification-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-verification-desktop.png) | Bổ sung thời hạn 24 giờ, nút CTA Action Red chuẩn WCAG AA, khung liên kết dự phòng copy thủ công và cảnh báo an toàn. |
+| 2 | **Xác thực Email (Mobile 390px)** | [`email-verification-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-verification-mobile.png) | [`email-verification-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-verification-mobile.png) | Co giãn 100% chiều rộng di động, không tràn ngang, liên kết dài ngắt dòng an toàn với `word-break: break-all`. |
+| 3 | **OTP Đặt lại MK (Desktop 1000px)** | [`email-otp-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-otp-desktop.png) | [`email-otp-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-otp-desktop.png) | Khối hiển thị OTP nổi bật 38px, font monospace giãn cách 10px, thông báo thời hạn 5 phút và cảnh báo bảo mật nghiêm ngặt. |
+| 4 | **OTP Đặt lại MK (Mobile 390px)** | [`email-otp-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-otp-mobile.png) | [`email-otp-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-otp-mobile.png) | OTP không bị chia dòng bất thường trên màn hình hẹp, thao tác sao chép dễ dàng trên điện thoại. |
+| 5 | **Khóa tài khoản (Desktop 1000px)** | [`email-account-disabled-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-account-disabled-desktop.png) | [`email-account-disabled-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-account-disabled-desktop.png) | Khung lý do khóa từ quản trị viên màu đỏ nhạt viền đen, lời giải thích rõ ràng và địa chỉ email hỗ trợ chính thức. |
+| 6 | **Khóa tài khoản (Mobile 390px)** | [`email-account-disabled-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-account-disabled-mobile.png) | [`email-account-disabled-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-account-disabled-mobile.png) | Bố cục thông báo trực quan, văn bản nhiều dòng tự động xuống hàng êm ái. |
+| 7 | **Mở khóa tài khoản (Desktop 1000px)** | [`email-account-enabled-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-account-enabled-desktop.png) | [`email-account-enabled-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-account-enabled-desktop.png) | Tông màu xanh lục khích lệ, thông báo các quán ăn đã duyệt trước đó đã hiển thị trở lại, xưng hô lịch sự. |
+| 8 | **Mở khóa tài khoản (Mobile 390px)** | [`email-account-enabled-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-account-enabled-mobile.png) | [`email-account-enabled-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-account-enabled-mobile.png) | Trải nghiệm chào mừng ấm áp, tương thích hoàn hảo trên thiết bị di động. |
+| 9 | **Quán bị tạm ẩn (Desktop 1000px)** | [`email-store-hidden-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-store-hidden-desktop.png) | [`email-store-hidden-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-store-hidden-desktop.png) | Card quán hiển thị tên quán, badge "ĐÃ TẠM ẨN", lý do chi tiết từ Admin và Card "HƯỚNG DẪN TIẾP THEO" màu hổ phách. |
+| 10 | **Quán bị tạm ẩn (Mobile 390px)** | [`email-store-hidden-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-store-hidden-mobile.png) | [`email-store-hidden-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-store-hidden-mobile.png) | Bố cục card co giãn mượt mà, văn bản hướng dẫn hiển thị sắc nét trên màn hình nhỏ. |
+| 11 | **Từ chối khôi phục quán (Desktop 1000px)** | [`email-store-recovery-rejected-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-store-recovery-rejected-desktop.png) | [`email-store-recovery-rejected-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-store-recovery-rejected-desktop.png) | Badge "TỪ CHỐI KHÔI PHỤC", nêu rõ lý do giấy tờ chưa đạt và hướng dẫn bổ sung minh chứng. |
+| 12 | **Từ chối khôi phục quán (Mobile 390px)** | [`email-store-recovery-rejected-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-store-recovery-rejected-mobile.png) | [`email-store-recovery-rejected-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-store-recovery-rejected-mobile.png) | Header và bảng trạng thái giữ vững tính toàn vẹn bố cục trên mobile. |
+| 13 | **Xóa quán vĩnh viễn (Desktop 1000px)** | [`email-store-hard-deleted-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-store-hard-deleted-desktop.png) | [`email-store-hard-deleted-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-store-hard-deleted-desktop.png) | Badge "ĐÃ XÓA VĨNH VIỄN", thông báo minh bạch quyết định kiểm duyệt và kênh tiếp nhận khiếu nại. |
+| 14 | **Xóa quán vĩnh viễn (Mobile 390px)** | [`email-store-hard-deleted-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-store-hard-deleted-mobile.png) | [`email-store-hard-deleted-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-store-hard-deleted-mobile.png) | Hiển thị trọn vẹn thông báo trên giao diện di động hẹp. |
+
+---
+
+### 17.5. Kết Quả Kiểm Thử Tự Động (Test Automation Results)
+
+1. **Backend Email Suite (`EmailTemplateBuilderTest` & `EmailServiceTest`):**
+   - Lệnh thực thi: `mvn test "-Dtest=EmailTemplateBuilderTest,EmailServiceTest"`
+   - Kết quả: **19/19 tests PASS** (100% thành công).
+   - Kiểm tra toàn diện: HTML format, plain-text alternatives, 24h & 5m expiries, XSS escaping, null safety, không tồn tại raw template placeholders (`%s`), không có `<script>`, hỗ trợ đầy đủ các action types (`HIDE`, `REJECT_RECOVERY_REQUEST`, `HARD_DELETE`, default).
+2. **Toàn Bộ Backend Test Suite:**
+   - Lệnh thực thi: `mvn test`
+   - Kết quả: **105 tests run, 0 failures, 0 errors, 2 skipped** (BUILD SUCCESS in 12.5s).
+3. **Frontend Linter & Unit Tests:**
+   - `npm run lint`: **0 warnings, 0 errors** trên 96 files.
+   - `npm test`: **37/37 PASS** (WCAG contrast, confirm modal, button variants, slug, sanitization).
+4. **Production Build Gate:**
+   - `npm run build`: **PASS in 284ms**, artifact verification passed.
+5. **Playwright E2E Email Rendering Verification:**
+   - `capture-email-before.spec.js`: **14/14 PASS** (7 before desktop, 7 before mobile).
+   - `capture-email-after.spec.js`: **14/14 PASS** (7 after desktop, 7 after mobile).
+
+---
+
+### 17.6. Bảng Tương Thích Email Clients (Compatibility Matrix)
+
+| Email Client | Môi trường kiểm chứng | Trạng thái hiển thị | Ghi chú kỹ thuật |
+|---|---|---|---|
+| **Gmail Web** | Web Desktop (Chrome / Chromium) | **VERIFIED (Tốt)** | Khung bảng 600px giữ nguyên, Action Red nổi bật, bulletproof button click tốt. |
+| **Gmail Mobile App** | Mobile Viewport (390px) | **VERIFIED (Tốt)** | Tự động thích ứng 100% width, không bể khung, không tràn ngang. |
+| **Outlook Desktop** | Word Rendering Engine Check | **COMPATIBLE (Đã tối ưu)** | Đã thêm MSO XML conditional comments (`<!--[if mso]>`), thuộc tính `bgcolor`, và bảng lồng nhau chống vỡ table cells. |
+| **Outlook Web (OWA)** | Web Desktop | **VERIFIED (Tốt)** | Hỗ trợ đầy đủ inline CSS và bảng định dạng. |
+| **Apple Mail** | WebKit / Safari rendering | **VERIFIED (Tốt)** | Typography mượt mà, hỗ trợ tốt bo góc và shadow. |
+| **Text-Only / Smartwatch Clients** | Plain-Text MIME Alternative | **VERIFIED (Tốt)** | Gửi kèm `plainText` qua `helper.setText(plainText, htmlContent)`, hiển thị đầy đủ link và OTP dạng text thuần. |
+
+---
+
+### 17.7. Danh Sách Files Modified & Giới Hạn Nghiệm Thu
+
+- **Files Modified:**
+  - `backend/src/main/java/com/cangiuoc/cgfoodtour/service/EmailService.java`: Tích hợp `EmailTemplateBuilder`, bổ sung multipart `(plainText, htmlContent)` và hoàn thiện gửi email tự động.
+- **Files Created:**
+  - `backend/src/main/java/com/cangiuoc/cgfoodtour/service/EmailTemplateBuilder.java`: Module dựng template HTML & Plain-text dùng chung.
+  - `backend/src/test/java/com/cangiuoc/cgfoodtour/service/EmailTemplateBuilderTest.java`: 19 bài kiểm thử đơn vị và nội dung email.
+  - `frontend/scripts/generate-before-email-previews.mjs`: Script tạo 7 file HTML Before.
+  - `frontend/scripts/generate-after-email-previews.mjs`: Script tạo 7 file HTML After.
+  - `frontend/e2e/capture-email-before.spec.js`: Suite chụp 14 ảnh Before.
+  - `frontend/e2e/capture-email-after.spec.js`: Suite chụp 14 ảnh After.
+  - `frontend/e2e/email-previews/before/` & `after/`: 14 file HTML preview.
+  - `frontend/e2e/screenshots/before-batch-3f-e/` & `after-batch-3f-e/`: 28 ảnh chụp màn hình kiểm thử trực quan.
+- **Giới hạn kiểm thử (Known Limitations):**
+  - Môi trường thử nghiệm sử dụng rendering engine Chromium/Playwright mô phỏng client thực tế và email previews cục bộ; chưa gửi thử qua SMTP production với tài khoản người dùng thật để đảm bảo an toàn dữ liệu và tuân thủ nguyên tắc bảo mật.
+  - Tùy thuộc vào thiết lập Dark Mode của một số client cá nhân (như Outlook Windows dark mode inversion), màu nền card `#FFFFFF` có thể bị client đảo màu thành xám đậm nhưng chữ đen `#111827` sẽ tự động chuyển sang trắng sáng để giữ độ tương phản.
+- **Trạng thái nghiệm thu:**
+  - **ĐÃ TẠO CHECKPOINT GIT AN TOÀN (COMMIT `5c50f64`)**.
+  - Đã nghiệm thu toàn diện bởi Product Owner ngày 25/10/2026.
+
+---
+
+## 18. Batch 3G-A: SPA Navigation Continuity, Skeleton Loading & Perceived Performance Audit
+
+### 18.1. Mục Tiêu & Phạm Vi Kiểm Định
+- **Trọng tâm:** Xác định thực nghiệm mọi nguyên nhân gây giật màn hình, chớp trắng, che mờ bằng backdrop toàn cục, hoặc thiếu skeleton khi người dùng điều hướng trong ứng dụng React SPA.
+- **Tài liệu chi tiết:** `docs/frontend-audit/PHASE_3_FINAL_QA_REPORT.md`.
+- **Nguyên tắc thực hiện:** Chỉ thực hiện Audit và viết tests kiểm chứng tại 3G-A. **Không refactor diện rộng, không sửa business logic, không commit/push, dừng lại chờ Product Owner phê duyệt trước khi bước sang 3G-B**.
+
+### 18.2. Kết Quả Thực Nghiệm & Phát Hiện Cốt Lõi
+1. **Điều Hướng SPA & Remount Check:**
+   - Đạt **0 document reload** qua hành trình `Explore → Saved → About → Explore` (xác thực qua marker `window.__spaNavigationMarker`).
+   - Nút DOM `<header>` giữ nguyên danh tính, không bị remount trên các tab người dùng thông thường (`header.__headerMarker = 'HEADER_NODE_PERSISTENT'`).
+2. **Global Loading Overlay che mờ toàn bộ App:**
+   - Cờ `loading` toàn cục trong `App.jsx` kích hoạt popup `fixed inset-0 z-50 bg-black/40 backdrop-blur-sm` mỗi khi gọi `loadGlobalData()`.
+   - Thực nghiệm phát hiện overlay xuất hiện ngay cả khi vào trang tĩnh `/about`.
+3. **Premature Empty State Flicker:**
+   - Trang **Explore** render ngay thông báo *"Không tìm thấy quán ăn phù hợp"* trước khi API `/v1/stores` trả dữ liệu, gây giật giao diện khi các thẻ quán xuất hiện.
+   - Skeletons tìm thấy trên Explore: **0**.
+4. **Khoảng Trống Skeleton Các Trang Trọng Yếu:**
+   - **Explore:** Thiếu `StoreCardSkeleton`.
+   - **Admin Dashboard:** Thiếu `TableSkeleton` (Users & Stores) và `MetricCardSkeleton`.
+   - **StoreDetailDrawer:** Render `null` khi vào URL trực tiếp `/quan/:id` với mạng chậm, gây pop-in đột ngột.
+   - **Saved Stores:** Có skeleton trong component nhưng `App.jsx` không truyền prop `loading`.
+5. **Rủi Ro Rò Rỉ Dữ Liệu Phiên Đăng Xuất (Session Leak):**
+   - `handleLogout` trong `App.jsx` chưa xóa sạch `savedStores`, `ownedStores`, `adminStores`, `adminUsersList` và form cá nhân trong state bộ nhớ.
+6. **Thiếu Race Condition Guard:**
+   - `loadSavedStores()` và `loadMyStores()` chưa có request sequence guard như các API khác.
+
+### 18.3. Bằng Chứng Thực Nghiệm Playwright Suite
+- Suite kiểm thử: `frontend/e2e/spa-navigation-audit.spec.js` (7 tests PASS on Chromium):
+  - `Audit 1`: 0 document reloads khi chuyển tab liên tiếp (1.3s).
+  - `Audit 2`: Header DOM node identity được bảo toàn (1.0s).
+  - `Audit 3`: Phát hiện `GLOBAL_BACKDROP_SPINNER_RENDERED` khi vào trang About (1.4s).
+  - `Audit 4`: Xác nhận Explore thiếu skeleton và chớp premature empty state (1.0s).
+  - `Audit 6`: Xác nhận Saved Stores thiếu cờ loading (961ms).
+  - `Audit 7`: Xác nhận StoreDetailDrawer trả về 0 phần tử khi mở URL trực tiếp (1.1s).
+  - `Audit 8`: Xác thực luồng dọn dẹp bộ nhớ khi đăng xuất (1.2s).
+
+### 18.4. Trạng Thái Batch 3G-A
+- **HOÀN THÀNH BATCH 3G-A (PRE-FIX AUDIT PASS — PHÊ DUYỆT TRIỂN KHAI 3G-B)**.
+
+---
+
+## 19. Batch 3G-B: SPA Navigation & Loading UX Remediation
+
+### 19.1. Mục Tiêu & Phạm Vi Triển Khai
+- **Mục tiêu:**
+  1. Loại bỏ hiện tượng nháy màn hình và global backdrop không cần thiết khi chuyển tab.
+  2. Chuẩn hóa Skeleton/Shimmer loading cho các trang có dữ liệu bất đồng bộ (`Explore`, `Saved`, `StoreDetailDrawer`, `Admin`, `Profile`, `MyStores`).
+  3. Giữ app shell ổn định khi chuyển tab, bảo đảm 0 document reloads.
+  4. Ngăn các trạng thái empty xuất hiện trước khi dữ liệu tải xong (khắc phục premature empty state).
+  5. Khắc phục race conditions và rủi ro rò rỉ dữ liệu giữa các phiên đăng nhập khi logout.
+  6. Duy trì 100% business rules và thiết kế Neo-Brutalist hiện có.
+- **Ranh giới:** Targeted remediation; không redesign; không thay đổi backend/API contract; không commit/push; dừng lại chờ Product Owner nghiệm thu trước khi chuyển sang Batch 3G-C.
+
+### 19.2. Bảng Đối Chiếu Nguyên Nhân Gốc Rễ và Khắc Phục (Root Cause → Fix Mapping)
+- **ISSUE-01 (Full-Page Refresh):** Khóa vững client-side routing; loại bỏ nạp dữ liệu thừa khi vào trang tĩnh `/about` và `/cs2-spinner`.
+- **ISSUE-02 (White Flash / Nháy Màn Hình):** Giữ app shell liên tục; hiển thị skeleton tại chỗ khớp layout thật; ngăn unmount container đột ngột.
+- **ISSUE-03 (Header Remount):** Duy trì `<Header>` và `<BottomNav>` tại app shell level (`activeTab !== 'admin'`); DOM identity được bảo toàn.
+- **ISSUE-04 (Global Backdrop):** Tách cờ `loading` thành 7 cờ cục bộ theo ngữ cảnh trong `App.jsx`; xóa bỏ triệt để overlay toàn màn hình khi điều hướng.
+- **ISSUE-05 (Premature Empty State):** Thêm điều kiện `!loading && stores.length === 0` tại `ExploreSection` và `SavedStoresSection`; hiển thị `StoreCardSkeleton` khi `loading && stores.length === 0`.
+- **ISSUE-06 (StoreDetailDrawer Pop-in):** Thêm prop `isLoadingStore`; render ngay vỏ drawer + `DetailDrawerSkeleton` khi mở direct deep link `/quan/:id`.
+- **ISSUE-07 (Session Leak & Race Condition):** Thêm `sessionGenerationRef` tăng khi logout; gắn sequence IDs cho `loadSavedStores` và `loadMyStores`; dọn sạch 14 state nhạy cảm trong `handleLogout()`.
+- **ISSUE-08 (Skeleton Phân Mảnh & Reduced Motion):** Chuẩn hóa bộ primitives `Skeleton.jsx`; thêm `@media (prefers-reduced-motion: reduce)` tắt animation shimmer.
+
+### 19.3. Danh Sách Files Can Thiệp
+1. `frontend/src/index.css`: `@media (prefers-reduced-motion: reduce)` cho `.brutalist-skeleton`.
+2. `frontend/src/components/ui/Skeleton.jsx`: 6 primitives dùng chung (`Skeleton`, `StoreCardSkeleton`, `MetricCardSkeleton`, `TableSkeleton`, `DetailDrawerSkeleton`, `ProfileFormSkeleton`).
+3. `frontend/src/components/ui/index.js`: Re-export skeleton primitives.
+4. `frontend/src/components/ui/primitives.test.mjs`: Unit tests kiểm tra skeleton accessibility và CSS classes.
+5. `frontend/src/pages/Explore/ExploreSection.jsx`: Prop `loading`, render `StoreCardSkeleton`, chặn premature empty state.
+6. `frontend/src/components/SavedStoresSection.jsx`: Prop `loading`, render `StoreCardSkeleton`, chặn premature empty state.
+7. `frontend/src/components/drawers/StoreDetailDrawer.jsx`: Prop `isLoadingStore`, render drawer shell + `DetailDrawerSkeleton` cho deep links.
+8. `frontend/src/pages/Admin/AdminSection.jsx`: Props `loadingStores`, `loadingUsers`, `MetricCardSkeleton`, `TableSkeleton`, hoãn từ chối truy cập.
+9. `frontend/src/pages/Profile/ProfileSection.jsx`: Tích hợp `ProfileFormSkeleton`.
+10. `frontend/src/pages/MyStores/MyStoresSection.jsx`: Bảo vệ form khi fetch ngầm, thêm badge đồng bộ.
+11. `frontend/src/App.jsx`: `sessionGenerationRef`, 7 cờ loading cục bộ, gỡ bỏ global backdrop, bảo vệ bootstrap session, dọn sạch bộ nhớ khi logout.
+12. `frontend/e2e/spa-navigation-regression.spec.js`: Suite 14 test cases hồi quy tự động.
+
+### 19.4. Kết Quả Kiểm Thử Thực Nghiệm & Quality Gates
+- **Linter (`npm run lint`):** PASS (0 warnings, 0 errors trên 99 files).
+- **Unit & Contract Tests (`npm test`):** PASS (38/38 tests passing, bao gồm skeleton tests).
+- **Production Build Gate (`npm run build`):** PASS in 313ms, `verify-production-build.mjs` passed.
+- **Playwright Regression Suite (`e2e/spa-navigation-regression.spec.js`):** **14/14 PASS** in 14.8s.
+  - R1: 0 document reloads khi chuyển tab liên tiếp (PASS).
+  - R2: Tab switching Explore <-> About không kích hoạt global backdrop (PASS).
+  - R3: Delayed Explore API hiển thị `StoreCardSkeleton` và không hiển thị premature empty state (PASS).
+  - R4: Delayed Saved Stores hiển thị `StoreCardSkeleton` không chớp rỗng (PASS).
+  - R5: Deep link `/quan/:id` render Drawer Shell + `DetailDrawerSkeleton` lập tức (PASS).
+  - R6: Delayed Admin API hiển thị `MetricCardSkeleton` & `TableSkeleton`, không có false 0 metrics (PASS).
+  - R7: Logout reset triệt để và chặn request in-flight rò rỉ vào phiên mới (PASS).
+  - R8: Tắt shimmer khi bật `prefers-reduced-motion` (PASS).
+  - R9: 6 Viewports (320x568, 390x844, 768x1024, 1280x800, 1440x900, 1920x1080) không tràn ngang (PASS).
+- **Playwright Baseline Audit (`e2e/spa-navigation-audit.spec.js`):** **7/7 PASS** in 7.5s (Global spinner events = `[]`, Skeletons found = 90).
+
+### 19.5. Trạng Thái Batch 3G-B
+- **ĐÃ ĐƯỢC PRODUCT OWNER PHÊ DUYỆT NGHIỆM THU — CHO PHÉP BẮT ĐẦU BATCH 3G-C.**
+
+---
+
+## 20. Batch 3G-C: Final Acceptance & Cross-Module Regression Verification
+
+### 20.1. Mục Tiêu & Phạm Vi Kiểm Định
+- **Mục tiêu:** Xác minh độc lập toàn diện 10 bản sửa lỗi của Batch 3G-B, tính liên tục của SPA, an toàn phiên làm việc, khôi phục khi mạng chậm/lỗi máy chủ, và hồi quy chức năng chéo giữa các module.
+- **Ranh giới nghiêm ngặt:** Không phát triển tính năng mới, không redesign, không sửa backend, không commit/push, bảo toàn 100% screenshots untracked.
+
+### 20.2. Ma Trận Đánh Giá 10 Bản Sửa Lỗi Batch 3G-B (10/10 PASS)
+1. **Chuyển tab không gây document reload:** Đạt 0 document reloads trên hành trình liên tục 7 màn hình (`Explore → Saved → About → CS2 → Explore`).
+2. **Không còn global blocking backdrop khi điều hướng:** 0 sự kiện backdrop đen (`Global spinner events = []`).
+3. **Explore không hiển thị empty state sớm:** Skeletons hiển thị lập tức dưới độ trễ API 1000–3000ms; empty state count = 0.
+4. **Saved Stores có loading state thực sự:** Truyền prop `loading` chuẩn, hiển thị `StoreCardSkeleton`.
+5. **StoreDetailDrawer deep link render shell & skeleton lập tức:** Render trong 50ms đầu tiên, nút đóng hoạt động bình thường khi đang tải.
+6. **Admin không hiển thị KPI bằng 0 giả:** Hiển thị `MetricCardSkeleton` và `TableSkeleton` trong lúc chờ API `/admin/summary`.
+7. **About không gọi fetch dư thừa:** 0 network request thừa khi vào tab tĩnh.
+8. **Profile không lộ thông tin phiên cũ:** Dọn dẹp sạch sẽ 14 state nhạy cảm trong `handleLogout()`.
+9. **Request cũ không ghi đè state sau logout:** `sessionGenerationRef` chặn hoàn toàn các response in-flight cũ (2000ms).
+10. **Hỗ trợ prefers-reduced-motion:** Tắt toàn bộ animation shimmer gradient khi người dùng kích hoạt reduced motion.
+
+### 20.3. Bảng Tổng Hợp Quality Gates Toàn Diện
+- **Backend Unit & Service Tests (`mvn test`):** **103/103 PASS (2 skipped due to local DB missing)** — BUILD SUCCESS.
+- **Frontend Linter Gate (`npm run lint`):** **PASS (0 warnings, 0 errors trên 100 files)**.
+- **Frontend Unit & Contract Tests (`npm test`):** **38/38 PASS (100%)**.
+- **Frontend Production Build Gate (`npm run build`):** **PASS in 360ms**, artifact verification passed.
+- **E2E Final Acceptance Suite (`e2e/final-acceptance-3g-c.spec.js`):** **18/18 PASS in 29.5s**.
+- **E2E SPA Regression Suite (`e2e/spa-navigation-regression.spec.js`):** **14/14 PASS in 16.0s**.
+- **E2E SPA Baseline Audit Suite (`e2e/spa-navigation-audit.spec.js`):** **7/7 PASS**.
+- **E2E Shared Primitives Harness (`e2e/primitives.spec.js`):** **6/6 PASS**.
+- **E2E UX Quality Suite (`e2e/ux-quality.spec.js`):** **11/11 PASS (1 skipped)**.
+- **Kiểm tra Responsive trên 6 Viewports (320px, 390px, 768px, 1280px, 1440px, 1920px):** **0px horizontal overflow**.
+- **Bộ 10 Screenshots Nghiệm Thu Trực Quan (`frontend/e2e/screenshots/after-batch-3g-c/`):** Đã tạo đầy đủ 10/10 ảnh.
+
+### 20.4. Phân Loại Sự Cố Tồn Dư
+- **Sự cố P0 (Data leakage, privilege escalation, auth failure):** **0**.
+- **Sự cố P1 (Broken critical workflow, blocking UX, bad loading):** **0**.
+- **Sự cố P2 (Minor layout/spacing):** **0**.
+
+### 20.5. Trạng Thái Batch 3G-C
+- **ĐÃ ĐƯỢC PRODUCT OWNER PHÊ DUYỆT NGHIỆM THU — CHÍNH THỨC CHO PHÉP THỰC HIỆN BATCH 3G-D.**
+
+---
+
+## 21. Batch 3G-D: Final Git Checkpoint & Phase 3 Closure
+
+### 21.1. Mục Tiêu & Trách Nhiệm
+- **Mục tiêu:** Kiểm toán Git cuối cùng, tái kiểm tra toàn bộ Quality Gates, hoàn thiện hồ sơ nghiệm thu Phase 3, tạo local commit checkpoint duy nhất, và chính thức đóng Phase 3 ở phạm vi phát triển/kiểm thử local.
+- **Ranh giới:** Không push, không merge, không phát triển tính năng mới, không sửa backend, không tự động chuyển Phase 4.
+
+### 21.2. Mốc Checkpoints Được Xác Nhận
+- **Phase 3D Checkpoint:** Commit `d449c5f`
+- **Phase 3F Checkpoint:** Commit `c68fff1`
+- **Phase 3F-E Checkpoint:** Commit `5c50f64`
+- **Phase 3 Final Closure (Batch 3G-D):** Local commit duy nhất hoàn tất Phase 3.
+
+### 21.3. Tổng Hợp Kết Quả Quality Gates Lần Cuối
+- **Backend Tests (`mvn test`):** 103/103 PASS (2 skipped due to local DB missing) — BUILD SUCCESS.
+- **Frontend Linter (`npm run lint`):** PASS (0 warnings, 0 errors trên 100 files).
+- **Frontend Unit Tests (`npm test`):** 38/38 PASS (100%).
+- **Frontend Production Build (`npm run build`):** PASS in 360ms, verification script passed.
+- **E2E Playwright Suites:**
+  - `final-acceptance-3g-c.spec.js`: 18/18 PASS.
+  - `spa-navigation-regression.spec.js`: 14/14 PASS.
+  - `spa-navigation-audit.spec.js`: 7/7 PASS.
+  - `primitives.spec.js`: 6/6 PASS.
+  - `ux-quality.spec.js`: 11/11 PASS (1 skipped).
+- **Visual Acceptance Screenshots:** 10/10 ảnh đã được lưu trữ trong `frontend/e2e/screenshots/after-batch-3g-c/`.
+
+### 21.4. Trạng Thái Nghiệm Thu & Khóa Phase 3
+- **PHASE 3 CHÍNH THỨC HOÀN TẤT VÀ ĐƯỢC ĐÓNG TRÊN PHẠM VI DESKTOP UX REDESIGN & LOCAL QA.**
+- Đã tạo local Git checkpoint an toàn. Không push lên remote. Tạm dừng chờ chỉ đạo tiếp theo từ Product Owner.
+
+
 
