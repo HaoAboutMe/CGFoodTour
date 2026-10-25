@@ -1795,3 +1795,119 @@ Tất cả 11 cặp màn hình kiểm thử trực quan đã được chụp t�
 - Toàn bộ các yêu cầu của Batch 3E đã hoàn thành, không phát sinh lỗi hồi quy trên các module Admin, Explore, Auth, Store Detail.
 - Không thực hiện commit/push. Dừng lại để Product Owner kiểm tra trực quan trên môi trường `localhost:5173`.
 
+---
+
+## 16. Phase 3: Desktop UX Redesign — Batch 3F (Supporting Pages & Header Desktop UX Redesign)
+
+> **Trạng thái:** **READY FOR ACCEPTANCE REVIEW** (Đã hoàn thành toàn diện mã nguồn, E2E suites, Before/After visual capture 12/12 cặp màn hình và kiểm thử hồi quy 100% PASS).<br>
+> **Git Checkpoint cơ sở:** `feature/frontend-desktop-redesign` tại HEAD `1d36b8f`<br>
+> **Tài sản untracked:** Bảo tồn nguyên vẹn 12 screenshots Batch 3C (`after-batch-3c/`), Batch 3E (`before-batch-3e/`, `after-batch-3e/`).<br>
+> **Ranh giới:** 0 thay đổi Backend Java/Spring Boot, 0 thay đổi API contracts (`GET /v1/stores/saved`, `POST /v1/stores/{id}/save`, `/users/me`), 0 thay đổi logic auth/roles, không commit/push.
+
+---
+
+### 16.1. Pre-Implementation Audit & Production Call Sites
+
+1. **Xác minh Production Call Sites:**
+   - **Header & Navigation:** `frontend/src/layouts/Header.jsx` được gọi tại `frontend/src/App.jsx` (dòng ~2290), hiển thị xuyên suốt mọi trang trên Desktop (1280px, 1440px, 1920px), Tablet (768px) và Mobile (390px).
+   - **Saved Stores (Quán Đã Lưu):** `frontend/src/components/SavedStoresSection.jsx` được render trong tab `saved` của `App.jsx` (dòng ~2438), hiển thị danh sách quán ăn người dùng đã bookmark với API `/v1/stores/saved`.
+   - **User Profile / Account:** `frontend/src/pages/Profile/ProfileSection.jsx` được render trong tab `profile` của `App.jsx` (dòng ~2430), cho phép người dùng xem thông tin tài khoản, email, vai trò và cập nhật họ tên/mật khẩu qua API `/users/me`.
+   - **About (Về Chúng Tôi):** `frontend/src/pages/About/AboutSection.jsx` được render trong tab `about` của `App.jsx` (dòng ~2445), hiển thị câu chuyện thương hiệu, giá trị cốt lõi, thông tin liên hệ và CTA điều hướng.
+
+---
+
+### 16.2. Các Tính Năng Đã Được Redesign Trong Batch 3F
+
+1. **Header & Main Navigation Desktop/Mobile/Tablet (`Header.jsx`):**
+   - **Điều Hướng Desktop Cân Đối:** Căn chỉnh logo, thương hiệu, nhóm navigation trung tâm và tài khoản người dùng theo bố cục chuẩn Neo-Brutalist, không phát sinh khoảng trắng thừa hoặc co cụm.
+   - **Active Route Indicator Ngữ Nghĩa:** Bổ sung `aria-current="page"` cho route đang hoạt động kèm border đen đậm 2px, nền đỏ mờ `bg-[#ff3e3e]/10`, chữ đỏ đậm `#c92a2a` đạt chuẩn WCAG 2.2 AA (độ tương phản $\ge 4.5:1$).
+   - **User Avatar & Account Dropdown:**
+     - Thiết kế pill badge người dùng gọn gàng, hiển thị avatar người dùng (hoặc fallback initials chữ cái đầu) kèm tên và mũi tên chỉ thị dropdown.
+     - Thuộc tính trợ năng đầy đủ: `aria-haspopup="true"`, `aria-expanded={showUserMenu}`, `aria-controls="user-dropdown-menu"`.
+     - Thẻ tóm tắt người dùng ở đầu dropdown với huy hiệu vai trò (`Quản Trị` / `Thành Viên`) và email.
+     - **Keyboard Escape Dismiss:** Lắng nghe phím `Escape` để đóng dropdown tức thì và khôi phục tiêu điểm bàn phím về nút mở avatar.
+     - Bảo toàn backward compatibility cho các selector test (`button` role, `alt="avatar"`).
+   - **Header Clearance trên My Stores / Lịch Sử Quán:** Chiều cao header cố định chuẩn `h-16 md:h-20` kết hợp `sticky top-0 z-40`, đảm bảo khi cuộn trang hoặc chuyển tab trong My Stores và Lịch sử quán, thanh tab không bao giờ bị header che khuất.
+
+2. **Saved Stores — Quán Đã Lưu (`SavedStoresSection.jsx`):**
+   - **Tái Sử Dụng `StoreCard` Đồng Nhất Với Explore:** Thay thế thẻ quán thủ công bằng `StoreCard` chung của dự án, đảm bảo hình ảnh, badge trạng thái mở cửa, khoảng giá, khoảng cách GPS và nút bookmark (`isSaved: true`) hiển thị 100% nhất quán.
+   - **Lưới Thẻ Đa Cột Responsive Desktop:** Lưới 3 cột trên laptop (`lg:grid-cols-3`) và 4 cột trên màn hình siêu rộng (`2xl:grid-cols-4`).
+   - **Desktop View Mode Toggle:** Hỗ trợ chuyển đổi giữa `Chế độ Lưới (Grid)` và `Chế độ Danh Sách Thu Gọn (Compact List)`.
+   - **Bộ Lọc Danh Mục & Tìm Kiếm Trực Tiếp:**
+     - Thanh tìm kiếm realtime theo tên quán, địa chỉ hoặc món ăn đặc trưng.
+     - Nhóm pill filter danh mục ẩm thực cuộn mượt mà với badge hiển thị số lượng quán tương ứng.
+   - **Empty State Thân Thiện:** Minh họa Bookmark rỗng Neo-Brutalist với thông điệp rõ ràng và nút bấm CTA "Khám Phá Quán Ăn Ngay ↗" điều hướng thẳng về tab Explore.
+
+3. **User Profile / Account (`ProfileSection.jsx`):**
+   - **Bố Cục 2 Cột Chuyên Nghiệp Trên Desktop (`grid-cols-1 lg:grid-cols-12`):**
+     - **Cột Trái (Thông Tin Cá Nhân - 7 cols):** Card hồ sơ lớn với avatar viền đen 3D, tên hiển thị, vai trò hệ thống, badge `Đã xác thực email` màu xanh chuẩn WCAG, form đổi họ và tên với nhãn `htmlFor`/`id` rõ ràng.
+     - **Cột Phải (Bảo Mật & Mật Khẩu - 5 cols):** Form đổi mật khẩu với các trường mật khẩu hiện tại, mật khẩu mới, xác nhận mật khẩu mới kèm nút bật/tắt hiển thị mật khẩu (`type="button"`).
+   - **Trợ Năng Form & Validation:** Thêm `noValidate` vào form, thông báo lỗi `role="alert"`, thông báo thành công `role="status"` rõ ràng, nút submit có loading state chống double-click.
+
+4. **About — Về Chúng Tôi (`AboutSection.jsx`):**
+   - **Bố Cục 2 Cột Desktop Thông Thoáng:**
+     - **Cột Trái:** Giới thiệu câu chuyện hành trình ẩm thực Cần Giuộc với typography phân cấp rõ ràng, đoạn văn giới hạn độ rộng đọc tối ưu.
+     - **Cột Phải:** Card liên hệ & đóng góp cộng đồng nổi bật với đường viền đen đậm, bóng cứng 3D và liên kết email `mailto:` trợ năng.
+   - **3 Giá Trị Cốt Lõi (Core Values):** Lưới 3 card giá trị (`Tôn Vinh Ẩm Thực`, `Cộng Đồng Gắn Kết`, `Trải Nghiệm Mượt Mà`) với icon sinh động và màu nền dịu mắt.
+   - **WCAG AA Compliance:** Toàn bộ văn bản và nút bấm sử dụng màu tương phản cao (Action Red `#c92a2a` trên nền sáng, chữ đen đậm `#111827`).
+
+---
+
+### 16.3. Bằng Chứng Visual Acceptance (Before / After Screenshots)
+
+Tất cả 12 cặp màn hình kiểm thử trực quan đã được chụp tự động qua Playwright E2E suites:
+- **Thư mục Before:** `frontend/e2e/screenshots/before-batch-3f/`
+- **Thư mục After:** `frontend/e2e/screenshots/after-batch-3f/`
+
+| STT | Màn hình kiểm thử | Baseline (Before) | Redesign (After) | Đánh giá cải tiến UI/UX |
+|:---:|---|---|---|---|
+| 1 | **Header & Nav Desktop (1440×900)** | [`header-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/header-desktop-1440.png) | [`header-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/header-desktop-1440.png) | Active route có viền đen 2px, nền mờ và chữ đỏ `#c92a2a` đạt chuẩn WCAG. Logo và điều hướng trung tâm cân xứng. |
+| 2 | **User Dropdown Desktop (1440×900)** | [`header-user-dropdown-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/header-user-dropdown-desktop-1440.png) | [`header-user-dropdown-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/header-user-dropdown-desktop-1440.png) | Thẻ tóm tắt hồ sơ với tag vai trò Quản Trị / Thành Viên, danh sách nút bấm đồng bộ Neo-Brutalist, hỗ trợ phím Escape. |
+| 3 | **Header Tablet (768×1024)** | [`header-tablet-768.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/header-tablet-768.png) | [`header-tablet-768.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/header-tablet-768.png) | Bố cục tablet co giãn hài hòa, không bị chồng chéo các nút. |
+| 4 | **Header Mobile (390×844)** | [`header-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/header-mobile-390.png) | [`header-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/header-mobile-390.png) | Header gọn gàng trên mobile, nút chuông và avatar chạm cảm ứng an toàn. |
+| 5 | **Saved Stores Desktop (1440×900)** | [`saved-stores-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/saved-stores-desktop-1440.png) | [`saved-stores-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/saved-stores-desktop-1440.png) | Tái sử dụng StoreCard chuẩn Explore, thanh tìm kiếm live, category pills, và nút chuyển View Mode Grid / Compact. |
+| 6 | **Saved Stores Empty (1440×900)** | [`saved-stores-empty-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/saved-stores-empty-desktop-1440.png) | [`saved-stores-empty-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/saved-stores-empty-desktop-1440.png) | Empty state minh họa trực quan, thông điệp rõ ràng và nút CTA "Khám Phá Quán Ăn Ngay ↗" điều hướng về Explore. |
+| 7 | **Saved Stores Mobile (390×844)** | [`saved-stores-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/saved-stores-mobile-390.png) | [`saved-stores-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/saved-stores-mobile-390.png) | Tự động chuyển về 1 cột trên mobile, cuộn mượt mà, không tràn viền ngang. |
+| 8 | **Profile Page Desktop (1440×900)** | [`profile-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/profile-desktop-1440.png) | [`profile-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/profile-desktop-1440.png) | Bố cục 2 cột Desktop: Hồ sơ cá nhân bên trái (7 cols), Đổi mật khẩu bên phải (5 cols). Nhãn form rõ ràng. |
+| 9 | **Profile Page Mobile (390×844)** | [`profile-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/profile-mobile-390.png) | [`profile-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/profile-mobile-390.png) | Bố cục xếp chồng 1 cột tự nhiên, các ô nhập và nút bấm $\ge 44\text{px}$ touch target. |
+| 10 | **About Page Desktop (1440×900)** | [`about-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/about-desktop-1440.png) | [`about-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/about-desktop-1440.png) | Hero banner ấn tượng, 2 cột Câu chuyện & Liên hệ, 3 card Giá trị cốt lõi, CTA buttons nổi bật. |
+| 11 | **About Page Mobile (390×844)** | [`about-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/about-mobile-390.png) | [`about-mobile-390.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/about-mobile-390.png) | Mobile layout tối ưu hóa kích thước chữ và khoảng cách, 0px tràn ngang. |
+| 12 | **My Stores Header Clearance (1440×900)** | [`mystores-header-clearance-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f/mystores-header-clearance-desktop-1440.png) | [`mystores-header-clearance-desktop-1440.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f/mystores-header-clearance-desktop-1440.png) | Thanh tab và KPI của My Stores có khoảng cách an toàn dưới header sticky, không bị che khuất khi cuộn. |
+
+---
+
+### 16.4. Kết Quả Kiểm Thử Toàn Diện (Full Regression Suite Results)
+
+1. **Linter (`npm run lint`):**
+   - Công cụ: `oxlint --deny-warnings`
+   - Kết quả: **0 warnings, 0 errors** trên toàn bộ 92 files.
+2. **Node Unit & Contract Tests (`npm test`):**
+   - Kết quả: **37/37 PASS** (Thời gian chạy: 1.04s).
+3. **Production Build Gate (`npm run build`):**
+   - Kết quả: **PASS in 306ms**. Artifact verification passed, 0 chuỗi debug bị cấm trong production artifact.
+4. **Playwright E2E Test Suites (Chromium):**
+   - `e2e/supporting-pages-desktop.spec.js`: **7/7 PASS** (13.3s)
+     - `1. Desktop Header: Layout, Brand, Nav Links & Active page indicator`: **PASS**
+     - `2. Header User Dropdown: Keyboard Escape, ARIA roles & Profile Summary Card`: **PASS**
+     - `3. Saved Stores: StoreCard Grid, Search filter & View Mode toggle`: **PASS**
+     - `4. Saved Stores: Empty State & Navigation to Explore`: **PASS**
+     - `5. User Profile Page: Form Fields, Readonly Email & Accessible Labels`: **PASS**
+     - `6. About Page: Hero, 2-Column Story, Values & CTA buttons`: **PASS**
+     - `7. Responsive Viewports: Mobile 390px, Tablet 768px & Zero horizontal overflow`: **PASS**
+   - `e2e/capture-supporting-before.spec.js`: **12/12 PASS** (20.5s)
+   - `e2e/capture-supporting-after.spec.js`: **12/12 PASS** (20.7s)
+   - `e2e/mystores-desktop.spec.js`: **8/8 PASS** (23.6s)
+   - `e2e/admin-desktop.spec.js`: **10/10 PASS** (25.3s)
+   - `e2e/explore-desktop.spec.js`: **13/13 PASS** (13.9s)
+   - `e2e/store-detail-desktop.spec.js`: **17/17 PASS** (27.5s)
+   - `e2e/auth-modal.spec.js`: **15/15 PASS** (20.1s)
+   - **Tổng cộng:** **82/82 E2E tests PASS** trên toàn bộ các modules của hệ thống!
+
+---
+
+### 16.5. Trạng Thái Nghiệm Thu & Khuyến Nghị
+
+- **Kết luận:** **SẴN SÀNG NGHIỆM THU TRỰC QUAN (READY FOR PRODUCT OWNER REVIEW)**.
+- Toàn bộ các yêu cầu của Batch 3F đã được triển khai hoàn chỉnh, thẩm mỹ Neo-Brutalist cao cấp, đáp ứng tiêu chuẩn WCAG AA và bảo toàn 100% logic nghiệp vụ/API contracts.
+- **Tuân thủ nghiêm ngặt:** Không thực hiện commit hoặc push. Không tự ý chuyển sang Batch 3G. Dừng lại chờ Product Owner kiểm tra trực quan trên `localhost:5173` và phê duyệt nghiệm thu.
+

@@ -2169,6 +2169,8 @@ export default function App() {
               setShowAuthModal={setShowAuthModal}
               setAuthMode={setAuthMode}
               currentUser={currentUser}
+              switchTab={switchTab}
+              onNavigateExplore={() => switchTab('explore')}
             />
             {!savedStoresPage.last && (
               <button className="brutalist-btn-white mx-auto block" onClick={() => loadSavedStores(savedStoresPage.page + 1, true)}>
