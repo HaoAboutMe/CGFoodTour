@@ -39,7 +39,7 @@ No source defect was confirmed at CRITICAL severity. One release-blocking data g
 - **Complexity:** M.
 - **Dependencies:** Docker/MySQL 8; sanitized snapshot for legacy upgrade proof.
 - **Verification:** both Testcontainers tests pass; row/index/FK inventory diff approved; restored application reaches readiness; owner history works.
-- **Current status:** OPEN; locally fixable for clean DB, snapshot portion needs representative data.
+- **Current status:** PARTIALLY RESOLVED (Track A2: Clean Flyway V1→V2 migration & Hibernate schema validation verified 100% PASS on isolated MySQL 8.4 via Testcontainers; existing database snapshot upgrade/baseline remains OPEN for Track A3).
 
 ### AUD-QA-001 — Real browser E2E is not executed by CI or this audit
 
