@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Camera, User, Eye, EyeOff, CheckCircle2, Calendar, Mail, KeyRound } from 'lucide-react'
 import { AVATAR_FALLBACK_IMAGE } from '@/utils/imageAssets'
+import { ProfileFormSkeleton } from '@/components/ui/Skeleton'
 
 export default function ProfileSection({
   currentUser,
@@ -32,25 +33,7 @@ export default function ProfileSection({
   const isUserAdmin = currentUser?.roles?.includes('ADMIN')
 
   if (loading) {
-    return (
-      <div className="space-y-8 animate-fade-in-up pb-16">
-        <div className="p-8 brutalist-card bg-white border-4 border-black rounded-3xl shadow-[6px_6px_0px_0px_#111] space-y-4">
-          <div className="h-8 w-64 bg-neutral-200 border-2 border-black rounded-xl animate-pulse" />
-          <div className="h-4 w-96 bg-neutral-200 rounded animate-pulse" />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-7 p-6 brutalist-card bg-white border-4 border-black rounded-3xl shadow-[6px_6px_0px_0px_#111] space-y-4">
-            <div className="h-24 w-24 rounded-full bg-neutral-200 border-2 border-black mx-auto animate-pulse" />
-            <div className="h-10 w-full bg-neutral-200 border-2 border-black rounded-xl animate-pulse" />
-            <div className="h-10 w-full bg-neutral-200 border-2 border-black rounded-xl animate-pulse" />
-          </div>
-          <div className="lg:col-span-5 p-6 brutalist-card bg-white border-4 border-black rounded-3xl shadow-[6px_6px_0px_0px_#111] space-y-4">
-            <div className="h-10 w-full bg-neutral-200 border-2 border-black rounded-xl animate-pulse" />
-            <div className="h-10 w-full bg-neutral-200 border-2 border-black rounded-xl animate-pulse" />
-          </div>
-        </div>
-      </div>
-    )
+    return <ProfileFormSkeleton />
   }
 
   return (

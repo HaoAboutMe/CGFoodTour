@@ -6,6 +6,7 @@ import ImageViewerModal from '@/components/modals/ImageViewerModal'
 import { getSafeGoogleMapsUrl } from '@/utils/googleMapsUrl'
 import { canShareStore, storePath } from '@/utils/storeUrl'
 import { FOOD_FALLBACK_IMAGE, STORE_FALLBACK_IMAGE } from '@/utils/imageAssets'
+import { DetailDrawerSkeleton } from '@/components/ui'
 
 const FOCUSABLE_SELECTOR = [
   'button:not([disabled])',
@@ -18,6 +19,7 @@ const FOCUSABLE_SELECTOR = [
 
 export default function StoreDetailDrawer({
   activeStore,
+  isLoadingStore = false,
   setActiveStore,
   onClose,
   handleSubmitRating,
@@ -181,7 +183,7 @@ export default function StoreDetailDrawer({
         }
       }
     }
-  }, [activeStore])
+  }, [activeStore, isLoadingStore])
 
   // 2. Nested overlay management (when ImageViewerModal is open)
   useEffect(() => {
@@ -197,7 +199,7 @@ export default function StoreDetailDrawer({
 
   // 3. Keyboard focus trap & Escape handling
   useEffect(() => {
-    if (!activeStore) return undefined
+    if (!activeStore && !isLoadingStore) return undefined
 
     const handleKeyDown = (event) => {
       // If image lightbox is open, let it handle Escape
@@ -246,7 +248,7 @@ export default function StoreDetailDrawer({
 
     document.addEventListener('keydown', handleKeyDown, true)
     return () => document.removeEventListener('keydown', handleKeyDown, true)
-  }, [activeStore, previewImage, closeDrawer])
+  }, [activeStore, isLoadingStore, previewImage, closeDrawer])
 
   // Share feedback clear timeout
   useEffect(() => {
@@ -254,6 +256,46 @@ export default function StoreDetailDrawer({
     const timeoutId = window.setTimeout(() => setShareFeedback(''), 2500)
     return () => window.clearTimeout(timeoutId)
   }, [shareFeedback])
+
+  if (isLoadingStore && !activeStore) {
+    return createPortal(
+      <div
+        ref={containerRef}
+        onClick={(e) => {
+          if (e.target === containerRef.current) closeDrawer()
+        }}
+        className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-fade-in"
+        role="dialog"
+        aria-modal="true"
+        aria-busy="true"
+        aria-label="Đang tải chi tiết quán ăn"
+      >
+        <div
+          ref={drawerRef}
+          tabIndex={-1}
+          className="relative w-full max-w-2xl bg-white border-l-4 border-black h-full flex flex-col shadow-[-8px_0px_0px_0px_rgba(0,0,0,1)] outline-none overflow-hidden"
+        >
+          {/* Header with Close Button */}
+          <div className="p-4 border-b-4 border-black flex items-center justify-between bg-[#f7f6f2] shrink-0">
+            <span className="font-black text-xs uppercase tracking-wider text-black">Đang tải thông tin quán...</span>
+            <button
+              ref={closeButtonRef}
+              type="button"
+              onClick={closeDrawer}
+              aria-label="Đóng chi tiết quán"
+              className="p-2 border-2 border-black rounded-lg bg-white hover:bg-[#ff3e3e] hover:text-white transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <DetailDrawerSkeleton />
+          </div>
+        </div>
+      </div>,
+      document.body
+    )
+  }
 
   if (!activeStore) return null
 

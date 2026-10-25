@@ -198,3 +198,27 @@ test('Primitives - enforce minimum 44px touch target geometry', () => {
   assert.ok(iconBtnHtml.includes('min-w-[44px]') && iconBtnHtml.includes('min-h-[44px]'), 'IconButton guarantees 44x44px touch target')
 })
 
+test('Skeleton - primitives have aria-hidden and brutalist classes', () => {
+  const skeletonHtml = renderToString(h(ui.Skeleton, { className: 'h-6 w-24' }))
+  assert.ok(skeletonHtml.includes('aria-hidden="true"'), 'Skeleton primitive has aria-hidden="true"')
+  assert.ok(skeletonHtml.includes('brutalist-skeleton'), 'Skeleton primitive uses brutalist-skeleton class')
+  assert.ok(skeletonHtml.includes('h-6 w-24'), 'Preserves custom utility classes')
+
+  const storeSkeletonGrid = renderToString(h(ui.StoreCardSkeleton, { viewMode: 'grid' }))
+  assert.ok(storeSkeletonGrid.includes('brutalist-card'), 'StoreCardSkeleton renders card container')
+  assert.ok(storeSkeletonGrid.includes('h-44'), 'Grid skeleton matches 176px image geometry')
+
+  const metricSkeleton = renderToString(h(ui.MetricCardSkeleton, null))
+  assert.ok(metricSkeleton.includes('brutalist-card'), 'MetricCardSkeleton renders brutalist card')
+
+  const tableSkeleton = renderToString(h(ui.TableSkeleton, { rows: 3, cols: 4 }))
+  assert.ok(tableSkeleton.includes('<table'), 'TableSkeleton renders table element')
+  assert.ok(tableSkeleton.includes('aria-hidden="true"'), 'TableSkeleton has aria-hidden')
+
+  const drawerSkeleton = renderToString(h(ui.DetailDrawerSkeleton, null))
+  assert.ok(drawerSkeleton.includes('h-52') || drawerSkeleton.includes('h-64'), 'DetailDrawerSkeleton has hero banner placeholder')
+
+  const profileSkeleton = renderToString(h(ui.ProfileFormSkeleton, null))
+  assert.ok(profileSkeleton.includes('brutalist-card'), 'ProfileFormSkeleton renders card containers')
+})
+

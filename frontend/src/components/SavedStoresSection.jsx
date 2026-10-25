@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { Bookmark, Search, LayoutGrid, List, X, Heart, Compass } from 'lucide-react'
 import StoreCard from '@/components/common/StoreCard'
+import { StoreCardSkeleton } from '@/components/ui'
 
 export default function SavedStoresSection({
   savedStores = [],
@@ -222,16 +223,19 @@ export default function SavedStoresSection({
       {/* ========================================================================= */}
       {loading ? (
         /* Loading Skeletons */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div
+          role="status"
+          aria-busy="true"
+          aria-label="Đang tải danh sách quán đã lưu"
+          className={
+            viewMode === 'compact'
+              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
+              : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5'
+          }
+        >
+          <span className="sr-only">Đang tải danh sách quán đã lưu...</span>
           {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="brutalist-card bg-white p-4 border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_#111] space-y-3"
-            >
-              <div className="h-44 bg-neutral-200 border-2 border-black rounded-lg animate-pulse" />
-              <div className="h-5 bg-neutral-200 rounded w-3/4 animate-pulse" />
-              <div className="h-4 bg-neutral-200 rounded w-1/2 animate-pulse" />
-            </div>
+            <StoreCardSkeleton key={i} viewMode={viewMode} />
           ))}
         </div>
       ) : filteredStores.length > 0 ? (

@@ -1,8 +1,8 @@
 # CG FoodTour — Frontend Implementation Progress
 
 > Tài liệu theo dõi tiến độ thực tế theo từng Phase dựa trên `docs/frontend-audit/FRONTEND_REDESIGN_BLUEPRINT.md`.
-> Cập nhật lần cuối: 25/10/2026 (Hoàn thành Phase 0, 1, 2, Phase 3A-3F và Batch 3F-E)
-> Trạng thái hiện tại: **PHASE 3 IN PROGRESS (Batch 3F-E: Email Templates, Content & Rendering Quality — Ready for Visual Acceptance Review)**
+> Cập nhật lần cuối: 25/10/2026 (Hoàn thành Phase 0, 1, 2, Phase 3A-3F, Batch 3F-E, Batch 3G-A, Batch 3G-B, Batch 3G-C và Batch 3G-D Phase 3 Closure)
+> Trạng thái hiện tại: **PHASE 3 OFFICIALLY CLOSED (DESKTOP UX REDESIGN & LOCAL QA COMPLETE — BATCH 3G-D CHECKPOINT CREATED)**
 
 ---
 
@@ -2043,8 +2043,179 @@ Toàn bộ 14 cặp màn hình kiểm thử trực quan đã được tạo và 
   - Môi trường thử nghiệm sử dụng rendering engine Chromium/Playwright mô phỏng client thực tế và email previews cục bộ; chưa gửi thử qua SMTP production với tài khoản người dùng thật để đảm bảo an toàn dữ liệu và tuân thủ nguyên tắc bảo mật.
   - Tùy thuộc vào thiết lập Dark Mode của một số client cá nhân (như Outlook Windows dark mode inversion), màu nền card `#FFFFFF` có thể bị client đảo màu thành xám đậm nhưng chữ đen `#111827` sẽ tự động chuyển sang trắng sáng để giữ độ tương phản.
 - **Trạng thái nghiệm thu:**
-  - **SẴN SÀNG NGHIỆM THU TRỰC QUAN (READY FOR PRODUCT OWNER REVIEW)**.
-  - Không commit, không push, dừng lại sau Batch 3F-E để Product Owner đánh giá trực quan.
+  - **ĐÃ TẠO CHECKPOINT GIT AN TOÀN (COMMIT `5c50f64`)**.
+  - Đã nghiệm thu toàn diện bởi Product Owner ngày 25/10/2026.
+
+---
+
+## 18. Batch 3G-A: SPA Navigation Continuity, Skeleton Loading & Perceived Performance Audit
+
+### 18.1. Mục Tiêu & Phạm Vi Kiểm Định
+- **Trọng tâm:** Xác định thực nghiệm mọi nguyên nhân gây giật màn hình, chớp trắng, che mờ bằng backdrop toàn cục, hoặc thiếu skeleton khi người dùng điều hướng trong ứng dụng React SPA.
+- **Tài liệu chi tiết:** `docs/frontend-audit/PHASE_3_FINAL_QA_REPORT.md`.
+- **Nguyên tắc thực hiện:** Chỉ thực hiện Audit và viết tests kiểm chứng tại 3G-A. **Không refactor diện rộng, không sửa business logic, không commit/push, dừng lại chờ Product Owner phê duyệt trước khi bước sang 3G-B**.
+
+### 18.2. Kết Quả Thực Nghiệm & Phát Hiện Cốt Lõi
+1. **Điều Hướng SPA & Remount Check:**
+   - Đạt **0 document reload** qua hành trình `Explore → Saved → About → Explore` (xác thực qua marker `window.__spaNavigationMarker`).
+   - Nút DOM `<header>` giữ nguyên danh tính, không bị remount trên các tab người dùng thông thường (`header.__headerMarker = 'HEADER_NODE_PERSISTENT'`).
+2. **Global Loading Overlay che mờ toàn bộ App:**
+   - Cờ `loading` toàn cục trong `App.jsx` kích hoạt popup `fixed inset-0 z-50 bg-black/40 backdrop-blur-sm` mỗi khi gọi `loadGlobalData()`.
+   - Thực nghiệm phát hiện overlay xuất hiện ngay cả khi vào trang tĩnh `/about`.
+3. **Premature Empty State Flicker:**
+   - Trang **Explore** render ngay thông báo *"Không tìm thấy quán ăn phù hợp"* trước khi API `/v1/stores` trả dữ liệu, gây giật giao diện khi các thẻ quán xuất hiện.
+   - Skeletons tìm thấy trên Explore: **0**.
+4. **Khoảng Trống Skeleton Các Trang Trọng Yếu:**
+   - **Explore:** Thiếu `StoreCardSkeleton`.
+   - **Admin Dashboard:** Thiếu `TableSkeleton` (Users & Stores) và `MetricCardSkeleton`.
+   - **StoreDetailDrawer:** Render `null` khi vào URL trực tiếp `/quan/:id` với mạng chậm, gây pop-in đột ngột.
+   - **Saved Stores:** Có skeleton trong component nhưng `App.jsx` không truyền prop `loading`.
+5. **Rủi Ro Rò Rỉ Dữ Liệu Phiên Đăng Xuất (Session Leak):**
+   - `handleLogout` trong `App.jsx` chưa xóa sạch `savedStores`, `ownedStores`, `adminStores`, `adminUsersList` và form cá nhân trong state bộ nhớ.
+6. **Thiếu Race Condition Guard:**
+   - `loadSavedStores()` và `loadMyStores()` chưa có request sequence guard như các API khác.
+
+### 18.3. Bằng Chứng Thực Nghiệm Playwright Suite
+- Suite kiểm thử: `frontend/e2e/spa-navigation-audit.spec.js` (7 tests PASS on Chromium):
+  - `Audit 1`: 0 document reloads khi chuyển tab liên tiếp (1.3s).
+  - `Audit 2`: Header DOM node identity được bảo toàn (1.0s).
+  - `Audit 3`: Phát hiện `GLOBAL_BACKDROP_SPINNER_RENDERED` khi vào trang About (1.4s).
+  - `Audit 4`: Xác nhận Explore thiếu skeleton và chớp premature empty state (1.0s).
+  - `Audit 6`: Xác nhận Saved Stores thiếu cờ loading (961ms).
+  - `Audit 7`: Xác nhận StoreDetailDrawer trả về 0 phần tử khi mở URL trực tiếp (1.1s).
+  - `Audit 8`: Xác thực luồng dọn dẹp bộ nhớ khi đăng xuất (1.2s).
+
+### 18.4. Trạng Thái Batch 3G-A
+- **HOÀN THÀNH BATCH 3G-A (PRE-FIX AUDIT PASS — PHÊ DUYỆT TRIỂN KHAI 3G-B)**.
+
+---
+
+## 19. Batch 3G-B: SPA Navigation & Loading UX Remediation
+
+### 19.1. Mục Tiêu & Phạm Vi Triển Khai
+- **Mục tiêu:**
+  1. Loại bỏ hiện tượng nháy màn hình và global backdrop không cần thiết khi chuyển tab.
+  2. Chuẩn hóa Skeleton/Shimmer loading cho các trang có dữ liệu bất đồng bộ (`Explore`, `Saved`, `StoreDetailDrawer`, `Admin`, `Profile`, `MyStores`).
+  3. Giữ app shell ổn định khi chuyển tab, bảo đảm 0 document reloads.
+  4. Ngăn các trạng thái empty xuất hiện trước khi dữ liệu tải xong (khắc phục premature empty state).
+  5. Khắc phục race conditions và rủi ro rò rỉ dữ liệu giữa các phiên đăng nhập khi logout.
+  6. Duy trì 100% business rules và thiết kế Neo-Brutalist hiện có.
+- **Ranh giới:** Targeted remediation; không redesign; không thay đổi backend/API contract; không commit/push; dừng lại chờ Product Owner nghiệm thu trước khi chuyển sang Batch 3G-C.
+
+### 19.2. Bảng Đối Chiếu Nguyên Nhân Gốc Rễ và Khắc Phục (Root Cause → Fix Mapping)
+- **ISSUE-01 (Full-Page Refresh):** Khóa vững client-side routing; loại bỏ nạp dữ liệu thừa khi vào trang tĩnh `/about` và `/cs2-spinner`.
+- **ISSUE-02 (White Flash / Nháy Màn Hình):** Giữ app shell liên tục; hiển thị skeleton tại chỗ khớp layout thật; ngăn unmount container đột ngột.
+- **ISSUE-03 (Header Remount):** Duy trì `<Header>` và `<BottomNav>` tại app shell level (`activeTab !== 'admin'`); DOM identity được bảo toàn.
+- **ISSUE-04 (Global Backdrop):** Tách cờ `loading` thành 7 cờ cục bộ theo ngữ cảnh trong `App.jsx`; xóa bỏ triệt để overlay toàn màn hình khi điều hướng.
+- **ISSUE-05 (Premature Empty State):** Thêm điều kiện `!loading && stores.length === 0` tại `ExploreSection` và `SavedStoresSection`; hiển thị `StoreCardSkeleton` khi `loading && stores.length === 0`.
+- **ISSUE-06 (StoreDetailDrawer Pop-in):** Thêm prop `isLoadingStore`; render ngay vỏ drawer + `DetailDrawerSkeleton` khi mở direct deep link `/quan/:id`.
+- **ISSUE-07 (Session Leak & Race Condition):** Thêm `sessionGenerationRef` tăng khi logout; gắn sequence IDs cho `loadSavedStores` và `loadMyStores`; dọn sạch 14 state nhạy cảm trong `handleLogout()`.
+- **ISSUE-08 (Skeleton Phân Mảnh & Reduced Motion):** Chuẩn hóa bộ primitives `Skeleton.jsx`; thêm `@media (prefers-reduced-motion: reduce)` tắt animation shimmer.
+
+### 19.3. Danh Sách Files Can Thiệp
+1. `frontend/src/index.css`: `@media (prefers-reduced-motion: reduce)` cho `.brutalist-skeleton`.
+2. `frontend/src/components/ui/Skeleton.jsx`: 6 primitives dùng chung (`Skeleton`, `StoreCardSkeleton`, `MetricCardSkeleton`, `TableSkeleton`, `DetailDrawerSkeleton`, `ProfileFormSkeleton`).
+3. `frontend/src/components/ui/index.js`: Re-export skeleton primitives.
+4. `frontend/src/components/ui/primitives.test.mjs`: Unit tests kiểm tra skeleton accessibility và CSS classes.
+5. `frontend/src/pages/Explore/ExploreSection.jsx`: Prop `loading`, render `StoreCardSkeleton`, chặn premature empty state.
+6. `frontend/src/components/SavedStoresSection.jsx`: Prop `loading`, render `StoreCardSkeleton`, chặn premature empty state.
+7. `frontend/src/components/drawers/StoreDetailDrawer.jsx`: Prop `isLoadingStore`, render drawer shell + `DetailDrawerSkeleton` cho deep links.
+8. `frontend/src/pages/Admin/AdminSection.jsx`: Props `loadingStores`, `loadingUsers`, `MetricCardSkeleton`, `TableSkeleton`, hoãn từ chối truy cập.
+9. `frontend/src/pages/Profile/ProfileSection.jsx`: Tích hợp `ProfileFormSkeleton`.
+10. `frontend/src/pages/MyStores/MyStoresSection.jsx`: Bảo vệ form khi fetch ngầm, thêm badge đồng bộ.
+11. `frontend/src/App.jsx`: `sessionGenerationRef`, 7 cờ loading cục bộ, gỡ bỏ global backdrop, bảo vệ bootstrap session, dọn sạch bộ nhớ khi logout.
+12. `frontend/e2e/spa-navigation-regression.spec.js`: Suite 14 test cases hồi quy tự động.
+
+### 19.4. Kết Quả Kiểm Thử Thực Nghiệm & Quality Gates
+- **Linter (`npm run lint`):** PASS (0 warnings, 0 errors trên 99 files).
+- **Unit & Contract Tests (`npm test`):** PASS (38/38 tests passing, bao gồm skeleton tests).
+- **Production Build Gate (`npm run build`):** PASS in 313ms, `verify-production-build.mjs` passed.
+- **Playwright Regression Suite (`e2e/spa-navigation-regression.spec.js`):** **14/14 PASS** in 14.8s.
+  - R1: 0 document reloads khi chuyển tab liên tiếp (PASS).
+  - R2: Tab switching Explore <-> About không kích hoạt global backdrop (PASS).
+  - R3: Delayed Explore API hiển thị `StoreCardSkeleton` và không hiển thị premature empty state (PASS).
+  - R4: Delayed Saved Stores hiển thị `StoreCardSkeleton` không chớp rỗng (PASS).
+  - R5: Deep link `/quan/:id` render Drawer Shell + `DetailDrawerSkeleton` lập tức (PASS).
+  - R6: Delayed Admin API hiển thị `MetricCardSkeleton` & `TableSkeleton`, không có false 0 metrics (PASS).
+  - R7: Logout reset triệt để và chặn request in-flight rò rỉ vào phiên mới (PASS).
+  - R8: Tắt shimmer khi bật `prefers-reduced-motion` (PASS).
+  - R9: 6 Viewports (320x568, 390x844, 768x1024, 1280x800, 1440x900, 1920x1080) không tràn ngang (PASS).
+- **Playwright Baseline Audit (`e2e/spa-navigation-audit.spec.js`):** **7/7 PASS** in 7.5s (Global spinner events = `[]`, Skeletons found = 90).
+
+### 19.5. Trạng Thái Batch 3G-B
+- **ĐÃ ĐƯỢC PRODUCT OWNER PHÊ DUYỆT NGHIỆM THU — CHO PHÉP BẮT ĐẦU BATCH 3G-C.**
+
+---
+
+## 20. Batch 3G-C: Final Acceptance & Cross-Module Regression Verification
+
+### 20.1. Mục Tiêu & Phạm Vi Kiểm Định
+- **Mục tiêu:** Xác minh độc lập toàn diện 10 bản sửa lỗi của Batch 3G-B, tính liên tục của SPA, an toàn phiên làm việc, khôi phục khi mạng chậm/lỗi máy chủ, và hồi quy chức năng chéo giữa các module.
+- **Ranh giới nghiêm ngặt:** Không phát triển tính năng mới, không redesign, không sửa backend, không commit/push, bảo toàn 100% screenshots untracked.
+
+### 20.2. Ma Trận Đánh Giá 10 Bản Sửa Lỗi Batch 3G-B (10/10 PASS)
+1. **Chuyển tab không gây document reload:** Đạt 0 document reloads trên hành trình liên tục 7 màn hình (`Explore → Saved → About → CS2 → Explore`).
+2. **Không còn global blocking backdrop khi điều hướng:** 0 sự kiện backdrop đen (`Global spinner events = []`).
+3. **Explore không hiển thị empty state sớm:** Skeletons hiển thị lập tức dưới độ trễ API 1000–3000ms; empty state count = 0.
+4. **Saved Stores có loading state thực sự:** Truyền prop `loading` chuẩn, hiển thị `StoreCardSkeleton`.
+5. **StoreDetailDrawer deep link render shell & skeleton lập tức:** Render trong 50ms đầu tiên, nút đóng hoạt động bình thường khi đang tải.
+6. **Admin không hiển thị KPI bằng 0 giả:** Hiển thị `MetricCardSkeleton` và `TableSkeleton` trong lúc chờ API `/admin/summary`.
+7. **About không gọi fetch dư thừa:** 0 network request thừa khi vào tab tĩnh.
+8. **Profile không lộ thông tin phiên cũ:** Dọn dẹp sạch sẽ 14 state nhạy cảm trong `handleLogout()`.
+9. **Request cũ không ghi đè state sau logout:** `sessionGenerationRef` chặn hoàn toàn các response in-flight cũ (2000ms).
+10. **Hỗ trợ prefers-reduced-motion:** Tắt toàn bộ animation shimmer gradient khi người dùng kích hoạt reduced motion.
+
+### 20.3. Bảng Tổng Hợp Quality Gates Toàn Diện
+- **Backend Unit & Service Tests (`mvn test`):** **103/103 PASS (2 skipped due to local DB missing)** — BUILD SUCCESS.
+- **Frontend Linter Gate (`npm run lint`):** **PASS (0 warnings, 0 errors trên 100 files)**.
+- **Frontend Unit & Contract Tests (`npm test`):** **38/38 PASS (100%)**.
+- **Frontend Production Build Gate (`npm run build`):** **PASS in 360ms**, artifact verification passed.
+- **E2E Final Acceptance Suite (`e2e/final-acceptance-3g-c.spec.js`):** **18/18 PASS in 29.5s**.
+- **E2E SPA Regression Suite (`e2e/spa-navigation-regression.spec.js`):** **14/14 PASS in 16.0s**.
+- **E2E SPA Baseline Audit Suite (`e2e/spa-navigation-audit.spec.js`):** **7/7 PASS**.
+- **E2E Shared Primitives Harness (`e2e/primitives.spec.js`):** **6/6 PASS**.
+- **E2E UX Quality Suite (`e2e/ux-quality.spec.js`):** **11/11 PASS (1 skipped)**.
+- **Kiểm tra Responsive trên 6 Viewports (320px, 390px, 768px, 1280px, 1440px, 1920px):** **0px horizontal overflow**.
+- **Bộ 10 Screenshots Nghiệm Thu Trực Quan (`frontend/e2e/screenshots/after-batch-3g-c/`):** Đã tạo đầy đủ 10/10 ảnh.
+
+### 20.4. Phân Loại Sự Cố Tồn Dư
+- **Sự cố P0 (Data leakage, privilege escalation, auth failure):** **0**.
+- **Sự cố P1 (Broken critical workflow, blocking UX, bad loading):** **0**.
+- **Sự cố P2 (Minor layout/spacing):** **0**.
+
+### 20.5. Trạng Thái Batch 3G-C
+- **ĐÃ ĐƯỢC PRODUCT OWNER PHÊ DUYỆT NGHIỆM THU — CHÍNH THỨC CHO PHÉP THỰC HIỆN BATCH 3G-D.**
+
+---
+
+## 21. Batch 3G-D: Final Git Checkpoint & Phase 3 Closure
+
+### 21.1. Mục Tiêu & Trách Nhiệm
+- **Mục tiêu:** Kiểm toán Git cuối cùng, tái kiểm tra toàn bộ Quality Gates, hoàn thiện hồ sơ nghiệm thu Phase 3, tạo local commit checkpoint duy nhất, và chính thức đóng Phase 3 ở phạm vi phát triển/kiểm thử local.
+- **Ranh giới:** Không push, không merge, không phát triển tính năng mới, không sửa backend, không tự động chuyển Phase 4.
+
+### 21.2. Mốc Checkpoints Được Xác Nhận
+- **Phase 3D Checkpoint:** Commit `d449c5f`
+- **Phase 3F Checkpoint:** Commit `c68fff1`
+- **Phase 3F-E Checkpoint:** Commit `5c50f64`
+- **Phase 3 Final Closure (Batch 3G-D):** Local commit duy nhất hoàn tất Phase 3.
+
+### 21.3. Tổng Hợp Kết Quả Quality Gates Lần Cuối
+- **Backend Tests (`mvn test`):** 103/103 PASS (2 skipped due to local DB missing) — BUILD SUCCESS.
+- **Frontend Linter (`npm run lint`):** PASS (0 warnings, 0 errors trên 100 files).
+- **Frontend Unit Tests (`npm test`):** 38/38 PASS (100%).
+- **Frontend Production Build (`npm run build`):** PASS in 360ms, verification script passed.
+- **E2E Playwright Suites:**
+  - `final-acceptance-3g-c.spec.js`: 18/18 PASS.
+  - `spa-navigation-regression.spec.js`: 14/14 PASS.
+  - `spa-navigation-audit.spec.js`: 7/7 PASS.
+  - `primitives.spec.js`: 6/6 PASS.
+  - `ux-quality.spec.js`: 11/11 PASS (1 skipped).
+- **Visual Acceptance Screenshots:** 10/10 ảnh đã được lưu trữ trong `frontend/e2e/screenshots/after-batch-3g-c/`.
+
+### 21.4. Trạng Thái Nghiệm Thu & Khóa Phase 3
+- **PHASE 3 CHÍNH THỨC HOÀN TẤT VÀ ĐƯỢC ĐÓNG TRÊN PHẠM VI DESKTOP UX REDESIGN & LOCAL QA.**
+- Đã tạo local Git checkpoint an toàn. Không push lên remote. Tạm dừng chờ chỉ đạo tiếp theo từ Product Owner.
 
 
 

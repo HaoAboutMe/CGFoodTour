@@ -12,3 +12,11 @@ export {
   DialogFooter
 } from './Dialog.jsx'
 export { DialogContext, useDialog } from './dialogContext.js'
+export {
+  Skeleton,
+  StoreCardSkeleton,
+  MetricCardSkeleton,
+  TableSkeleton,
+  DetailDrawerSkeleton,
+  ProfileFormSkeleton
+} from './Skeleton.jsx'

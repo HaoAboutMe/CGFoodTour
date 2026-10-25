@@ -15,10 +15,11 @@ import {
 } from 'lucide-react'
 import StoreCard from '@/components/common/StoreCard'
 import CategoryIcon from '@/components/common/CategoryIcon'
-import { Input, NativeSelect } from '@/components/ui'
+import { Input, NativeSelect, StoreCardSkeleton } from '@/components/ui'
 
 export default function ExploreSection({
-  stores,
+  stores = [],
+  loading = false,
   categories,
   selectedCategory,
   setSelectedCategory,
@@ -557,7 +558,38 @@ export default function ExploreSection({
           </div>
         </div>
 
-        {sortedStores.length === 0 ? (
+        {loading && stores.length === 0 ? (
+          <div
+            role="status"
+            aria-busy="true"
+            aria-label="Đang tải danh sách quán ăn"
+            className="space-y-4"
+          >
+            <span className="sr-only">Đang tải danh sách quán ăn...</span>
+            {/* 📱 Mobile Skeletons */}
+            <div className="md:hidden space-y-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <StoreCardSkeleton key={i} viewMode="mobile" />
+              ))}
+            </div>
+            {/* 💻 Desktop Skeletons */}
+            <div className="hidden md:block">
+              {viewMode === 'compact' ? (
+                <div className="space-y-3">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <StoreCardSkeleton key={i} viewMode="compact" />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                    <StoreCardSkeleton key={i} viewMode="grid" />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : sortedStores.length === 0 ? (
           <div className="brutalist-card bg-white p-8 sm:p-12 text-center text-neutral-600 space-y-3 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <Compass className="w-10 h-10 mx-auto text-[#ff3e3e] animate-pulse" />
             <p className="text-sm font-black text-black uppercase">Không tìm thấy quán ăn phù hợp</p>

@@ -33,7 +33,7 @@ import {
 import StoreActionModal from '@/components/modals/StoreActionModal'
 import AccountStatusModal from '@/components/modals/AccountStatusModal'
 import ConfirmActionModal from '@/components/modals/ConfirmActionModal'
-import { NativeSelect, Input } from '@/components/ui'
+import { NativeSelect, Input, MetricCardSkeleton, TableSkeleton } from '@/components/ui'
 import CategoryIcon from '@/components/common/CategoryIcon'
 import CategoryIconPicker from '@/components/common/CategoryIconPicker'
 import ImageViewerModal from '@/components/modals/ImageViewerModal'
@@ -84,6 +84,8 @@ export default function AdminSection({
   loadAdminUsers,
   loadAdminPendingStores,
   loadGlobalData,
+  loadingStores = false,
+  loadingUsers = false,
   adminUsersPage = { page: 0, totalPages: 1, totalElements: 0 },
   adminStoresPage = { page: 0, totalPages: 1, totalElements: 0 }
 }) {
@@ -238,6 +240,29 @@ export default function AdminSection({
             {p}
           </button>
         ))}
+      </div>
+    )
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="space-y-8 animate-fade-in-up" role="status" aria-busy="true" aria-label="Đang tải Admin Dashboard">
+        <div className="p-8 brutalist-card bg-neutral-900 text-white border-4 border-black rounded-3xl shadow-[6px_6px_0px_0px_#111] space-y-4">
+          <div className="h-8 w-64 brutalist-skeleton" />
+          <div className="h-4 w-96 brutalist-skeleton" />
+        </div>
+        <div
+          role="status"
+          aria-busy="true"
+          aria-label="Đang tải các chỉ số thống kê"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
+        >
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
+        </div>
+        <TableSkeleton rows={5} cols={4} />
       </div>
     )
   }
@@ -504,6 +529,20 @@ export default function AdminSection({
             </div>
 
             {/* Metric Stat Cards Grid */}
+            {loadingStores ? (
+              <div
+                role="status"
+                aria-busy="true"
+                aria-label="Đang tải các chỉ số thống kê"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
+              >
+                <span className="sr-only">Đang tải các chỉ số thống kê...</span>
+                <MetricCardSkeleton />
+                <MetricCardSkeleton />
+                <MetricCardSkeleton />
+                <MetricCardSkeleton />
+              </div>
+            ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
               {/* Card 1: Pending */}
               <div
@@ -590,6 +629,7 @@ export default function AdminSection({
                 </div>
               </div>
             </div>
+            )}
 
             {/* Needs Attention Table Panel */}
             <div className="brutalist-card bg-white p-6 border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-5">
@@ -610,7 +650,12 @@ export default function AdminSection({
                 </button>
               </div>
 
-              {pendingCount + recoveryCount === 0 ? (
+              {loadingStores ? (
+                <div role="status" aria-busy="true" className="space-y-3">
+                  <span className="sr-only">Đang tải tác vụ cần xử lý...</span>
+                  <TableSkeleton cols={4} rows={3} />
+                </div>
+              ) : pendingCount + recoveryCount === 0 ? (
                 <div className="bg-[#e6fcf5] border-2 border-black p-6 rounded-xl text-center space-y-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                   <CheckCircle2 className="w-8 h-8 text-[#0ca678] mx-auto" />
                   <p className="font-extrabold text-sm text-black">Không có tác vụ nào đang chờ xử lý!</p>
@@ -894,6 +939,15 @@ export default function AdminSection({
               })
               const totalStoresPages = Math.max(1, adminStoresPage.totalPages || 1)
               const currentPageStores = filteredStores
+
+              if (loadingStores) {
+                return (
+                  <div role="status" aria-busy="true" className="space-y-4">
+                    <span className="sr-only">Đang tải danh sách quán ăn...</span>
+                    <TableSkeleton cols={6} rows={5} />
+                  </div>
+                )
+              }
 
               if (currentPageStores.length === 0) {
                 return (
@@ -1419,6 +1473,15 @@ export default function AdminSection({
               })
               const totalUsersPages = Math.max(1, adminUsersPage.totalPages || 1)
               const currentPageUsers = filteredUsers
+
+              if (loadingUsers) {
+                return (
+                  <div role="status" aria-busy="true" className="space-y-4">
+                    <span className="sr-only">Đang tải danh sách tài khoản...</span>
+                    <TableSkeleton cols={5} rows={5} />
+                  </div>
+                )
+              }
 
               if (currentPageUsers.length === 0) {
                 return (

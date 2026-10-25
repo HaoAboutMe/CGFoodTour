@@ -517,9 +517,9 @@ export default function MyStoresSection({
     })
   }, [myStores, storeStatusFilter, storeSearchQuery])
 
-  if (loading) {
+  if (loading && myStores.length === 0 && !editingStore) {
     return (
-      <div className="space-y-8 animate-fade-in-up">
+      <div className="space-y-8 animate-fade-in-up" role="status" aria-busy="true" aria-label="Đang tải danh sách quán ăn">
         <div className="p-6 md:p-8 brutalist-card space-y-4">
           <div className="h-6 w-48 brutalist-skeleton" />
           <div className="h-10 w-full brutalist-skeleton" />
@@ -548,7 +548,14 @@ export default function MyStoresSection({
         </div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-2">
-            <span className="brutalist-badge bg-[#ff3e3e] text-white">Cổng Chủ Quán (Owner Portal)</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="brutalist-badge bg-[#ff3e3e] text-white">Cổng Chủ Quán (Owner Portal)</span>
+              {loading && (
+                <span className="text-[11px] font-black uppercase px-2 py-0.5 bg-[#ffe066] border-2 border-black rounded shadow-[2px_2px_0px_0px_#000] animate-pulse" role="status">
+                  Đang đồng bộ...
+                </span>
+              )}
+            </div>
             <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight">
               Quán Ăn Của Tôi
             </h2>
