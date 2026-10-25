@@ -144,10 +144,15 @@ Khi khởi chạy server, truy cập các địa chỉ sau:
 
 ## 💻 7. Hướng Dẫn Cài Đặt & Khởi Chạy Backend
 
-### Yêu Cầu Môi Trường
-- **JDK**: Java 17 trở lên (`java -version`)
-- **Maven**: 3.8+ (hoặc dùng `mvnw` đi kèm dự án)
-- **MySQL**: 8.0+ đang chạy tại `localhost:3306`
+### Yêu Cầu Môi Trường Chuẩn (Supported Toolchain)
+- **JDK**: **Java 17 LTS** (chuẩn canonical của dự án) hoặc **Java 21 LTS**.
+  > ⚠️ **Lưu ý**: Dự án chỉ hỗ trợ chính thức 2 bản LTS là Java 17 và Java 21; không hỗ trợ các bản interim (JDK 18, 19, 20) và JDK 22+ (bao gồm JDK 24). Maven Enforcer Plugin được cấu hình `[17,18),[21,22)` sẽ chặn build (`fail-fast`) nếu phát hiện phiên bản JDK không được hỗ trợ.
+  > - Thiết lập `JAVA_HOME` trên Windows: `$env:JAVA_HOME = "C:\Program Files\Java\jdk-17"; $env:Path = "$env:JAVA_HOME\bin;$env:Path"`
+  > - Thiết lập `JAVA_HOME` trên Linux/macOS: `export JAVA_HOME=/path/to/jdk-17; export PATH=$JAVA_HOME/bin:$PATH`
+- **Maven**: `3.8+` (hoặc sử dụng wrapper `.\mvnw.cmd` / `./mvnw` đi kèm).
+- **MySQL**: `8.0+` hoặc `8.4 LTS` đang chạy tại `localhost:3306`.
+- **Docker**: Docker Desktop (cần thiết nếu muốn chạy 2 bài test Testcontainers MySQL: `FlywayMigrationTest`, `FlywayJpaValidationTest`).
+- **Quy chuẩn kiểm thử**: Luôn dùng lệnh `mvn clean test` (hoặc `.\mvnw.cmd clean test`) để loại bỏ hoàn toàn cache `target/` cũ.
 
 ### Các Bước Khởi Chạy
 

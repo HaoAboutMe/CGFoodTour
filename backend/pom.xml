@@ -154,6 +154,44 @@
 				</configuration>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>3.5.0</version>
+				<executions>
+					<execution>
+						<id>enforce-supported-toolchain</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireJavaVersion>
+									<version>[17,18),[21,22)</version>
+									<message>
+================================================================================
+[ENFORCER ERROR] Unsupported Java Runtime Version detected!
+CG FoodTour strictly supports only Java 17 LTS (canonical baseline) and Java 21 LTS.
+Interim versions (JDK 18, 19, 20) and JDK 22+ (including JDK 24) are unsupported.
+Please configure your environment to use JDK 17 (recommended) or JDK 21:
+  - On Windows: set JAVA_HOME=C:\Path\To\jdk-17 (or jdk-21)
+  - On Linux/macOS: export JAVA_HOME=/path/to/jdk-17 (or jdk-21)
+================================================================================
+									</message>
+								</requireJavaVersion>
+								<requireMavenVersion>
+									<version>[3.8.0,)</version>
+									<message>
+================================================================================
+[ENFORCER ERROR] Maven 3.8.0 or newer is required to build CG FoodTour.
+================================================================================
+									</message>
+								</requireMavenVersion>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>

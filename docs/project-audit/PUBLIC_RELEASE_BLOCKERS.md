@@ -294,7 +294,7 @@ No source defect was confirmed at CRITICAL severity. One release-blocking data g
 - **Complexity:** S.
 - **Dependencies:** human decision whether to support 21.
 - **Verification:** unsupported JDK fails early with clear message; JDK 17 clean CI passes.
-- **Current status:** OPEN.
+- **Current status:** RESOLVED (Track A1: Maven Enforcer `[17,18),[21,22)` rule active, fail-fast verified on JDK 22/24, READMEs standardized).
 
 ### AUD-DOC-001 — Root documentation is stale relative to current contracts
 
