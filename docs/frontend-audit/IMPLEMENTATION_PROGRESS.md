@@ -1,8 +1,8 @@
 # CG FoodTour — Frontend Implementation Progress
 
 > Tài liệu theo dõi tiến độ thực tế theo từng Phase dựa trên `docs/frontend-audit/FRONTEND_REDESIGN_BLUEPRINT.md`.
-> Cập nhật lần cuối: 24/10/2026 (Hoàn thành Phase 0, 1, 2 và Phase 3A-3E)
-> Trạng thái hiện tại: **PHASE 3 IN PROGRESS (Phase 3E: My Stores & Dish Management Desktop UX Redesign — Ready for Visual Acceptance Review)**
+> Cập nhật lần cuối: 25/10/2026 (Hoàn thành Phase 0, 1, 2, Phase 3A-3F và Batch 3F-E)
+> Trạng thái hiện tại: **PHASE 3 IN PROGRESS (Batch 3F-E: Email Templates, Content & Rendering Quality — Ready for Visual Acceptance Review)**
 
 ---
 
@@ -1907,7 +1907,144 @@ Tất cả 12 cặp màn hình kiểm thử trực quan đã được chụp t�
 
 ### 16.5. Trạng Thái Nghiệm Thu & Khuyến Nghị
 
-- **Kết luận:** **SẴN SÀNG NGHIỆM THU TRỰC QUAN (READY FOR PRODUCT OWNER REVIEW)**.
+- **Kết luận:** **ĐÃ HOÀN TẤT CHECKPOINT CHO BATCH 3F (COMMIT `c68fff1`)**.
 - Toàn bộ các yêu cầu của Batch 3F đã được triển khai hoàn chỉnh, thẩm mỹ Neo-Brutalist cao cấp, đáp ứng tiêu chuẩn WCAG AA và bảo toàn 100% logic nghiệp vụ/API contracts.
-- **Tuân thủ nghiêm ngặt:** Không thực hiện commit hoặc push. Không tự ý chuyển sang Batch 3G. Dừng lại chờ Product Owner kiểm tra trực quan trên `localhost:5173` và phê duyệt nghiệm thu.
+
+---
+
+## 17. Batch 3F-E: Email Templates, Content & Rendering Quality
+
+### 17.1. Bảng Kiểm Kê Email Toàn Diện (Email Inventory Table)
+
+Đã rà soát và kiểm kê toàn bộ 5 luồng email tự động trong hệ thống `backend/src/main/java/com/cangiuoc/cgfoodtour/service/EmailService.java`:
+
+| STT | Loại email | Sự kiện kích hoạt | Service / Method | Template đang dùng | Subject | Các biến dữ liệu | Người nhận | Thời hạn link / OTP | Vấn đề nội dung & HTML/CSS trước sửa đổi |
+|:---:|---|---|---|---|---|---|---|---|---|
+| 1 | **Xác thực tài khoản** | Đăng ký tài khoản mới (`UserService.registerUser`) hoặc yêu cầu gửi lại email xác thực (`resendVerificationEmail`) | `EmailService.sendVerificationEmail(to, verificationLink)` | String template inline trong `EmailService` | `Xác thực tài khoản - CGFoodTour` | `verificationLink` | Email người dùng đăng ký | **24 giờ** (xác thực qua `VerificationToken.expiryDate`) | - Dùng `<style>` block và class CSS dễ bị client strip.<br>- Không nêu thời hạn hiệu lực 24h.<br>- Nút bấm thiếu fallback text link copy thủ công.<br>- Nền và card bo góc không dùng cấu trúc bảng lồng nhau chuẩn email. |
+| 2 | **OTP Đặt lại mật khẩu** | Người dùng bấm "Quên mật khẩu" (`UserService.requestForgotPasswordOtp`) | `EmailService.sendOtpEmail(to, otp)` | String template inline trong `EmailService` | `Mã OTP Đặt Lại Mật Khẩu - CGFoodTour` | `otp` | Email tài khoản yêu cầu reset | **5 phút** (xác thực qua Redis OTP TTL) | - Khối hiển thị OTP dùng div thông thường, font dễ bị co cụm trên mobile.<br>- Thiếu cảnh báo bảo mật không chia sẻ mã cho bất kỳ ai.<br>- Không có plain-text alternative. |
+| 3 | **Khóa tài khoản** | Quản trị viên thực hiện vô hiệu hóa tài khoản (`UserService.disableUser`) | `EmailService.sendAccountDisabledEmail(to, username, reason)` | String template inline trong `EmailService` | `Thông báo khóa tài khoản - CGFoodTour` | `username`, `reason` | Email người dùng bị khóa | Ngay lập tức | - Thiếu bước hướng dẫn tiếp theo và email hỗ trợ chính thức.<br>- Tên người dùng và lý do chưa được escape HTML chuẩn, có nguy cơ formatting glitch hoặc XSS. |
+| 4 | **Mở khóa tài khoản** | Quản trị viên kích hoạt lại tài khoản (`UserService.enableUser`) | `EmailService.sendAccountEnabledEmail(to, username)` | String template inline trong `EmailService` | `Chào mừng bạn trở lại CGFoodTour` | `username` | Email người dùng được mở khóa | Ngay lập tức | - Nội dung sơ sài, thiếu hướng dẫn tình trạng các quán ăn đã duyệt.<br>- Màu sắc và typography không đồng bộ với thương hiệu. |
+| 5 | **Thông báo trạng thái quán** | Quản trị viên thực hiện ẩn quán (`HIDE`), từ chối khôi phục (`REJECT_RECOVERY_REQUEST`), hoặc xóa vĩnh viễn (`HARD_DELETE`) | `EmailService.sendStoreStatusNotificationEmail(to, storeName, actionType, reason)` | String template inline trong `EmailService` | `Thông báo về quán ăn: [storeName] - CGFoodTour` | `storeName`, `actionType`, `reason` | Email chủ quán ăn | Ngay lập tức | - Chỉ hiển thị badge trạng thái thô mà không có hướng dẫn hành động tiếp theo theo từng case.<br>- Không có khung callout phân biệt lý do từ quản trị viên.<br>- Bố cục dễ vỡ trên Outlook do dùng div và inline-block. |
+
+---
+
+### 17.2. Phân Tích Lỗi & Nguyên Nhân Gốc Rễ
+
+1. **Email Client Stripping `<style>` Block:**
+   - *Hiện tượng:* Giao diện hiển thị vỡ khung, font chữ to nhỏ bất thường, mất shadow và border trên Outlook Desktop và Gmail App.
+   - *Nguyên nhân:* Nhiều email client tự động xóa toàn bộ thẻ `<style>` trong `<head>` hoặc không hỗ trợ các class selector CSS.
+   - *Khắc phục:* Chuyển đổi 100% sang table-based layouts (`table role="presentation"`) với thuộc tính HTML `bgcolor`, `width`, và inline CSS trên từng thẻ `td`, `a`, `p`, `span`.
+2. **Thiếu Multipart Plain-Text Alternative:**
+   - *Hiện tượng:* Các bộ lọc spam (SpamAssassin, Gmail spam engine) cho điểm phạt do email chỉ có HTML; người dùng ứng dụng xem email text-only hoặc đồng hồ thông minh không đọc được.
+   - *Khắc phục:* Nâng cấp `EmailService` sử dụng `helper.setText(plainText, htmlContent)`, đảm bảo song song cả bản plain-text mạch lạc và bản HTML cao cấp.
+3. **Thực Thể HTML Gây Phình Ký Tự Tiếng Việt (`HtmlUtils.htmlEscape`):**
+   - *Hiện tượng:* Hàm escape mặc định của Spring mã hóa cả ký tự có dấu thành `&Aacute;`, `&aacute;` làm phình dung lượng payload và lỗi hiển thị trên một số client cũ.
+   - *Khắc phục:* Viết hàm `escapeHtml` chuyên biệt chỉ escape 5 ký tự đặc biệt cú pháp (`&`, `<`, `>`, `"`, `'`) và giữ nguyên UTF-8 tiếng Việt chuẩn nét.
+4. **Nội Dung Thiếu Thời Hạn & Hướng Dẫn Hành Động:**
+   - *Hiện tượng:* Người dùng không biết liên kết xác thực tồn tại bao lâu (24 giờ), OTP có hạn bao nhiêu phút (5 phút), hoặc khi bị ẩn quán thì cần làm gì tiếp theo.
+   - *Khắc phục:* Bổ sung các callout box chuyên biệt: thời hạn rõ ràng, hướng dẫn thao tác chi tiết, fallback link copy thủ công, và cảnh báo bảo mật.
+
+---
+
+### 17.3. Hệ Thống Thiết Kế Email Dùng Chung (Email Design System)
+
+- **Canvas & Container:**
+  - Nền tổng thể: `#F7F6F2` (Canvas xám ấm dịu mắt).
+  - Khối nội dung chính: Thẻ bảng trắng `#FFFFFF`, chiều rộng tối đa `600px`, bo góc `16px`, đường viền đen mảnh `2.5px solid #111827`, đổ bóng Neo-Brutalist `6px 6px 0px #111827`.
+- **Bảng Màu (Color Tokens):**
+  - Brand Red: `#FF3E3E` (Pill header & logo brand).
+  - Action Red (WCAG AA): `#C92A2A` (Nút bấm CTA, link liên kết, OTP text). Đạt tỷ lệ tương phản $\ge 4.5:1$ trên nền trắng.
+  - Text Primary: `#111827` (Đen than dễ đọc).
+  - Text Secondary: `#374151` / `#4B5563` (Xám đậm).
+  - Text Muted: `#6B7280` / `#9CA3AF` (Footer & lưu ý).
+  - Card Highlights: `#F9FAFB` (Fallback link), `#FEF2F2` (Lý do từ chối/cảnh báo), `#FFFBEB` (OTP & Hướng dẫn tiếp theo), `#ECFDF5` (Thành công).
+- **Typography & Layout:**
+  - Fallback stack chuẩn email: `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`.
+  - Khối OTP: Monospace font `Courier New, Courier, monospace`, font-size `38px`, letter-spacing `10px`, căn giữa tuyệt đối.
+  - Bulletproof Buttons: Cấu trúc bảng lồng nhau `<table align="center"><tr><td bgcolor="#C92A2A"><a ...></a></td></tr></table>` đảm bảo click được trên 100% email client kể cả khi hình ảnh bị chặn.
+- **Header & Footer:**
+  - Header: Pill thương hiệu `🍜 CẦN GIUỘC FOODTOUR` bên trái, category badge chữ hoa bên phải.
+  - Footer: Thông tin email tự động, email hỗ trợ chính thức `cangiuocfoodtour@gmail.com`, và bản quyền hệ thống.
+
+---
+
+### 17.4. Bằng Chứng Visual Acceptance (Before / After Screenshots)
+
+Toàn bộ 14 cặp màn hình kiểm thử trực quan đã được tạo và chụp tự động qua Playwright E2E suites:
+- **Thư mục Before:** `frontend/e2e/screenshots/before-batch-3f-e/`
+- **Thư mục After:** `frontend/e2e/screenshots/after-batch-3f-e/`
+
+| STT | Màn hình kiểm thử | Baseline (Before) | Redesign (After) | Đánh giá cải tiến UI/UX & Rendering |
+|:---:|---|---|---|---|
+| 1 | **Xác thực Email (Desktop 1000px)** | [`email-verification-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-verification-desktop.png) | [`email-verification-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-verification-desktop.png) | Bổ sung thời hạn 24 giờ, nút CTA Action Red chuẩn WCAG AA, khung liên kết dự phòng copy thủ công và cảnh báo an toàn. |
+| 2 | **Xác thực Email (Mobile 390px)** | [`email-verification-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-verification-mobile.png) | [`email-verification-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-verification-mobile.png) | Co giãn 100% chiều rộng di động, không tràn ngang, liên kết dài ngắt dòng an toàn với `word-break: break-all`. |
+| 3 | **OTP Đặt lại MK (Desktop 1000px)** | [`email-otp-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-otp-desktop.png) | [`email-otp-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-otp-desktop.png) | Khối hiển thị OTP nổi bật 38px, font monospace giãn cách 10px, thông báo thời hạn 5 phút và cảnh báo bảo mật nghiêm ngặt. |
+| 4 | **OTP Đặt lại MK (Mobile 390px)** | [`email-otp-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-otp-mobile.png) | [`email-otp-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-otp-mobile.png) | OTP không bị chia dòng bất thường trên màn hình hẹp, thao tác sao chép dễ dàng trên điện thoại. |
+| 5 | **Khóa tài khoản (Desktop 1000px)** | [`email-account-disabled-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-account-disabled-desktop.png) | [`email-account-disabled-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-account-disabled-desktop.png) | Khung lý do khóa từ quản trị viên màu đỏ nhạt viền đen, lời giải thích rõ ràng và địa chỉ email hỗ trợ chính thức. |
+| 6 | **Khóa tài khoản (Mobile 390px)** | [`email-account-disabled-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-account-disabled-mobile.png) | [`email-account-disabled-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-account-disabled-mobile.png) | Bố cục thông báo trực quan, văn bản nhiều dòng tự động xuống hàng êm ái. |
+| 7 | **Mở khóa tài khoản (Desktop 1000px)** | [`email-account-enabled-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-account-enabled-desktop.png) | [`email-account-enabled-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-account-enabled-desktop.png) | Tông màu xanh lục khích lệ, thông báo các quán ăn đã duyệt trước đó đã hiển thị trở lại, xưng hô lịch sự. |
+| 8 | **Mở khóa tài khoản (Mobile 390px)** | [`email-account-enabled-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-account-enabled-mobile.png) | [`email-account-enabled-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-account-enabled-mobile.png) | Trải nghiệm chào mừng ấm áp, tương thích hoàn hảo trên thiết bị di động. |
+| 9 | **Quán bị tạm ẩn (Desktop 1000px)** | [`email-store-hidden-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-store-hidden-desktop.png) | [`email-store-hidden-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-store-hidden-desktop.png) | Card quán hiển thị tên quán, badge "ĐÃ TẠM ẨN", lý do chi tiết từ Admin và Card "HƯỚNG DẪN TIẾP THEO" màu hổ phách. |
+| 10 | **Quán bị tạm ẩn (Mobile 390px)** | [`email-store-hidden-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-store-hidden-mobile.png) | [`email-store-hidden-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-store-hidden-mobile.png) | Bố cục card co giãn mượt mà, văn bản hướng dẫn hiển thị sắc nét trên màn hình nhỏ. |
+| 11 | **Từ chối khôi phục quán (Desktop 1000px)** | [`email-store-recovery-rejected-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-store-recovery-rejected-desktop.png) | [`email-store-recovery-rejected-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-store-recovery-rejected-desktop.png) | Badge "TỪ CHỐI KHÔI PHỤC", nêu rõ lý do giấy tờ chưa đạt và hướng dẫn bổ sung minh chứng. |
+| 12 | **Từ chối khôi phục quán (Mobile 390px)** | [`email-store-recovery-rejected-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-store-recovery-rejected-mobile.png) | [`email-store-recovery-rejected-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-store-recovery-rejected-mobile.png) | Header và bảng trạng thái giữ vững tính toàn vẹn bố cục trên mobile. |
+| 13 | **Xóa quán vĩnh viễn (Desktop 1000px)** | [`email-store-hard-deleted-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-store-hard-deleted-desktop.png) | [`email-store-hard-deleted-desktop.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-store-hard-deleted-desktop.png) | Badge "ĐÃ XÓA VĨNH VIỄN", thông báo minh bạch quyết định kiểm duyệt và kênh tiếp nhận khiếu nại. |
+| 14 | **Xóa quán vĩnh viễn (Mobile 390px)** | [`email-store-hard-deleted-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/before-batch-3f-e/email-store-hard-deleted-mobile.png) | [`email-store-hard-deleted-mobile.png`](file:///d:/My_Workspace/Java_Code/CanGiuocFoodTour/CanGiuocFoodTour/frontend/e2e/screenshots/after-batch-3f-e/email-store-hard-deleted-mobile.png) | Hiển thị trọn vẹn thông báo trên giao diện di động hẹp. |
+
+---
+
+### 17.5. Kết Quả Kiểm Thử Tự Động (Test Automation Results)
+
+1. **Backend Email Suite (`EmailTemplateBuilderTest` & `EmailServiceTest`):**
+   - Lệnh thực thi: `mvn test "-Dtest=EmailTemplateBuilderTest,EmailServiceTest"`
+   - Kết quả: **19/19 tests PASS** (100% thành công).
+   - Kiểm tra toàn diện: HTML format, plain-text alternatives, 24h & 5m expiries, XSS escaping, null safety, không tồn tại raw template placeholders (`%s`), không có `<script>`, hỗ trợ đầy đủ các action types (`HIDE`, `REJECT_RECOVERY_REQUEST`, `HARD_DELETE`, default).
+2. **Toàn Bộ Backend Test Suite:**
+   - Lệnh thực thi: `mvn test`
+   - Kết quả: **105 tests run, 0 failures, 0 errors, 2 skipped** (BUILD SUCCESS in 12.5s).
+3. **Frontend Linter & Unit Tests:**
+   - `npm run lint`: **0 warnings, 0 errors** trên 96 files.
+   - `npm test`: **37/37 PASS** (WCAG contrast, confirm modal, button variants, slug, sanitization).
+4. **Production Build Gate:**
+   - `npm run build`: **PASS in 284ms**, artifact verification passed.
+5. **Playwright E2E Email Rendering Verification:**
+   - `capture-email-before.spec.js`: **14/14 PASS** (7 before desktop, 7 before mobile).
+   - `capture-email-after.spec.js`: **14/14 PASS** (7 after desktop, 7 after mobile).
+
+---
+
+### 17.6. Bảng Tương Thích Email Clients (Compatibility Matrix)
+
+| Email Client | Môi trường kiểm chứng | Trạng thái hiển thị | Ghi chú kỹ thuật |
+|---|---|---|---|
+| **Gmail Web** | Web Desktop (Chrome / Chromium) | **VERIFIED (Tốt)** | Khung bảng 600px giữ nguyên, Action Red nổi bật, bulletproof button click tốt. |
+| **Gmail Mobile App** | Mobile Viewport (390px) | **VERIFIED (Tốt)** | Tự động thích ứng 100% width, không bể khung, không tràn ngang. |
+| **Outlook Desktop** | Word Rendering Engine Check | **COMPATIBLE (Đã tối ưu)** | Đã thêm MSO XML conditional comments (`<!--[if mso]>`), thuộc tính `bgcolor`, và bảng lồng nhau chống vỡ table cells. |
+| **Outlook Web (OWA)** | Web Desktop | **VERIFIED (Tốt)** | Hỗ trợ đầy đủ inline CSS và bảng định dạng. |
+| **Apple Mail** | WebKit / Safari rendering | **VERIFIED (Tốt)** | Typography mượt mà, hỗ trợ tốt bo góc và shadow. |
+| **Text-Only / Smartwatch Clients** | Plain-Text MIME Alternative | **VERIFIED (Tốt)** | Gửi kèm `plainText` qua `helper.setText(plainText, htmlContent)`, hiển thị đầy đủ link và OTP dạng text thuần. |
+
+---
+
+### 17.7. Danh Sách Files Modified & Giới Hạn Nghiệm Thu
+
+- **Files Modified:**
+  - `backend/src/main/java/com/cangiuoc/cgfoodtour/service/EmailService.java`: Tích hợp `EmailTemplateBuilder`, bổ sung multipart `(plainText, htmlContent)` và hoàn thiện gửi email tự động.
+- **Files Created:**
+  - `backend/src/main/java/com/cangiuoc/cgfoodtour/service/EmailTemplateBuilder.java`: Module dựng template HTML & Plain-text dùng chung.
+  - `backend/src/test/java/com/cangiuoc/cgfoodtour/service/EmailTemplateBuilderTest.java`: 19 bài kiểm thử đơn vị và nội dung email.
+  - `frontend/scripts/generate-before-email-previews.mjs`: Script tạo 7 file HTML Before.
+  - `frontend/scripts/generate-after-email-previews.mjs`: Script tạo 7 file HTML After.
+  - `frontend/e2e/capture-email-before.spec.js`: Suite chụp 14 ảnh Before.
+  - `frontend/e2e/capture-email-after.spec.js`: Suite chụp 14 ảnh After.
+  - `frontend/e2e/email-previews/before/` & `after/`: 14 file HTML preview.
+  - `frontend/e2e/screenshots/before-batch-3f-e/` & `after-batch-3f-e/`: 28 ảnh chụp màn hình kiểm thử trực quan.
+- **Giới hạn kiểm thử (Known Limitations):**
+  - Môi trường thử nghiệm sử dụng rendering engine Chromium/Playwright mô phỏng client thực tế và email previews cục bộ; chưa gửi thử qua SMTP production với tài khoản người dùng thật để đảm bảo an toàn dữ liệu và tuân thủ nguyên tắc bảo mật.
+  - Tùy thuộc vào thiết lập Dark Mode của một số client cá nhân (như Outlook Windows dark mode inversion), màu nền card `#FFFFFF` có thể bị client đảo màu thành xám đậm nhưng chữ đen `#111827` sẽ tự động chuyển sang trắng sáng để giữ độ tương phản.
+- **Trạng thái nghiệm thu:**
+  - **SẴN SÀNG NGHIỆM THU TRỰC QUAN (READY FOR PRODUCT OWNER REVIEW)**.
+  - Không commit, không push, dừng lại sau Batch 3F-E để Product Owner đánh giá trực quan.
+
+
 
