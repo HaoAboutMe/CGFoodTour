@@ -1,0 +1,19 @@
+{
+  "@@locale": "en",
+  "appTitle": "CG FoodTour Admin",
+  "adminOnlyNotice": "Administrators only",
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "loginAction": "Sign in",
+  "foundationNotice": "Secure sign-in will be implemented in F1.",
+  "dashboardLabel": "Overview",
+  "storesLabel": "Stores",
+  "usersLabel": "Users",
+  "categoriesLabel": "Categories",
+  "retryAction": "Retry",
+  "cancelAction": "Cancel",
+  "confirmAction": "Confirm",
+  "loadingLabel": "Loading",
+  "emptyTitle": "No data yet",
+  "errorTitle": "Unable to load data"
+}

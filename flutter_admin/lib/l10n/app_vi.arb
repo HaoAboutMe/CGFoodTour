@@ -1,0 +1,19 @@
+{
+  "@@locale": "vi",
+  "appTitle": "CG FoodTour Admin",
+  "adminOnlyNotice": "Chỉ dành cho quản trị viên",
+  "emailLabel": "Email",
+  "passwordLabel": "Mật khẩu",
+  "loginAction": "Đăng nhập",
+  "foundationNotice": "Đăng nhập an toàn sẽ được triển khai ở F1.",
+  "dashboardLabel": "Tổng quan",
+  "storesLabel": "Quán",
+  "usersLabel": "Người dùng",
+  "categoriesLabel": "Danh mục",
+  "retryAction": "Thử lại",
+  "cancelAction": "Hủy",
+  "confirmAction": "Xác nhận",
+  "loadingLabel": "Đang tải",
+  "emptyTitle": "Chưa có dữ liệu",
+  "errorTitle": "Không thể tải dữ liệu"
+}

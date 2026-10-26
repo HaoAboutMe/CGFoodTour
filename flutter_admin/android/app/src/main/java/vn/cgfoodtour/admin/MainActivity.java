@@ -1,4 +1,4 @@
-package com.example.flutter_admin;
+package vn.cgfoodtour.admin;
 
 import io.flutter.embedding.android.FlutterActivity;
 
