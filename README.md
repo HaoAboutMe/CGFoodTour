@@ -61,10 +61,17 @@ CanGiuocFoodTour/
 
 ## 💻 4. Hướng Dẫn Khởi Chạy Nhanh (Quick Start)
 
-### Yêu Cầu Môi Trường
-- **Node.js**: `v18.0.0` trở lên
-- **Java Development Kit (JDK)**: Java 17 trở lên
-- **MySQL Database**: `8.0+` chạy tại `localhost:3306`
+### Yêu Cầu Môi Trường Chuẩn (Supported Toolchain)
+- **Java Development Kit (JDK)**: **Java 17 LTS** (chuẩn canonical của dự án, đồng bộ với Dockerfile và CI) hoặc **Java 21 LTS**.
+  > ⚠️ **Lưu ý quan trọng**: Dự án chỉ hỗ trợ chính thức 2 bản LTS là Java 17 và Java 21. Các phiên bản interim (JDK 18, 19, 20) và JDK 22+ (bao gồm JDK 24) **không được hỗ trợ**. Maven Enforcer Plugin được cấu hình `[17,18),[21,22)` sẽ chặn build ngay từ đầu (`fail-fast`) nếu phát hiện phiên bản JDK không được hỗ trợ.
+  > - Kiểm tra phiên bản: `java -version`
+  > - Thiết lập biến môi trường `JAVA_HOME` trỏ về JDK 17 (khuyến nghị) hoặc JDK 21:
+  >   - Windows (PowerShell): `$env:JAVA_HOME = "C:\Program Files\Java\jdk-17"; $env:Path = "$env:JAVA_HOME\bin;$env:Path"`
+  >   - Linux/macOS: `export JAVA_HOME=/path/to/jdk-17; export PATH=$JAVA_HOME/bin:$PATH`
+- **Maven**: `3.8+` (hoặc sử dụng sẵn Maven Wrapper `.\mvnw.cmd` / `./mvnw` đi kèm thư mục `backend/`).
+- **Node.js**: **`v22 LTS`** (tối thiểu `v22.12.0` theo ràng buộc của Vite 8 và Oxlint, đồng bộ hoàn toàn với Dockerfile `node:22-alpine` và CI workflow `node-version: '22'`; Node 18 không còn tương thích).
+- **MySQL Database**: `8.0+` hoặc `8.4 LTS` chạy tại `localhost:3306`.
+- **Docker & Docker Compose**: Khuyến nghị Docker Desktop để thực thi bộ integration test (Testcontainers MySQL 8.4) và chạy staging/rehearsal stack.
 
 ---
 
