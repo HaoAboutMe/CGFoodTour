@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
+import React, { useState } from 'react'
 import {
   Sparkles,
   RefreshCw,
@@ -10,8 +9,7 @@ import {
   MapPin,
   Clock,
   ArrowDown,
-  X,
-  SlidersHorizontal
+  X
 } from 'lucide-react'
 import StoreCard from '@/components/common/StoreCard'
 import CategoryIcon from '@/components/common/CategoryIcon'
@@ -34,40 +32,50 @@ export default function ExploreSection({
   totalStoreCount = 0,
   onServerFiltersChange,
   categoryFacets = {},
+  publicFilters,
+  onOpenSearch
 }) {
   const [viewMode, setViewMode] = useState('grid') // 'grid' or 'compact'
-  const [nearMeActive, setNearMeActive] = useState(false)
-  const [openNowActive, setOpenNowActive] = useState(false)
-  const [userCoords, setUserCoords] = useState(null)
   const [locationLoading, setLocationLoading] = useState(false)
   const [locationError, setLocationError] = useState('')
   const [visibleCount, setVisibleCount] = useState(9) // Infinite batching starting at 9
-  const [showCategorySheet, setShowCategorySheet] = useState(false)
-  const [categorySearch, setCategorySearch] = useState('')
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState([])
 
-  const categorySheetScrollPos = useRef(0)
+  // Fallback local states if publicFilters is not provided
+  const [localCategoryIds, setLocalCategoryIds] = useState([])
+  const [localNearMe, setLocalNearMe] = useState(false)
+  const [localOpenNow, setLocalOpenNow] = useState(false)
+  const [localUserCoords, setLocalUserCoords] = useState(null)
 
-  // Prevent background body scroll when Category Sheet is open while preserving scroll position
-  useEffect(() => {
-    if (showCategorySheet) {
-      categorySheetScrollPos.current = window.scrollY || window.pageYOffset || 0
-      document.body.style.overflow = 'hidden'
+  const selectedCategoryIds = publicFilters?.categoryIds !== undefined ? publicFilters.categoryIds : localCategoryIds
+  const openNowActive = publicFilters?.openNow !== undefined ? Boolean(publicFilters.openNow) : localOpenNow
+  const nearMeActive = publicFilters?.nearMe !== undefined ? Boolean(publicFilters.nearMe) : localNearMe
+  const userCoords = (publicFilters?.latitude != null && publicFilters?.longitude != null)
+    ? { lat: publicFilters.latitude, lng: publicFilters.longitude }
+    : localUserCoords
+
+  const updateFilters = (patch) => {
+    if (onServerFiltersChange) {
+      onServerFiltersChange({
+        categoryIds: patch.categoryIds !== undefined ? patch.categoryIds : selectedCategoryIds,
+        openNow: patch.openNow !== undefined ? patch.openNow : openNowActive,
+        nearMe: patch.nearMe !== undefined ? patch.nearMe : nearMeActive,
+        latitude: patch.latitude !== undefined ? patch.latitude : (patch.nearMe === false ? null : (userCoords?.lat ?? null)),
+        longitude: patch.longitude !== undefined ? patch.longitude : (patch.nearMe === false ? null : (userCoords?.lng ?? null)),
+      })
     } else {
-      document.body.style.overflow = ''
-      if (categorySheetScrollPos.current) {
-        window.scrollTo(0, categorySheetScrollPos.current)
+      if (patch.categoryIds !== undefined) setLocalCategoryIds(patch.categoryIds)
+      if (patch.openNow !== undefined) setLocalOpenNow(patch.openNow)
+      if (patch.nearMe !== undefined) setLocalNearMe(patch.nearMe)
+      if (patch.latitude !== undefined && patch.longitude !== undefined) {
+        setLocalUserCoords(patch.latitude != null ? { lat: patch.latitude, lng: patch.longitude } : null)
       }
     }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [showCategorySheet])
+  }
 
   // Clear all category selection helper
   function clearCategoryFilter() {
-    setSelectedCategoryIds([])
     setSelectedCategory(null)
+    updateFilters({ categoryIds: [] })
   }
 
   // Single-select category handler for Desktop NativeSelect
@@ -79,8 +87,8 @@ export default function ExploreSection({
     }
     const catId = isNaN(Number(val)) ? val : Number(val)
     const found = categories.find((c) => c.id === catId || String(c.id) === String(val))
-    setSelectedCategoryIds([catId])
     setSelectedCategory(found || null)
+    updateFilters({ categoryIds: [catId] })
   }
 
   const currentSelectValue =
@@ -98,21 +106,18 @@ export default function ExploreSection({
       clearCategoryFilter()
       return
     }
-    setSelectedCategoryIds((prev) => {
-      let currentList = prev
-      if (currentList.length === 0 && selectedCategory && selectedCategory.id) {
-        currentList = [selectedCategory.id]
-      }
-      const exists = currentList.includes(catId)
-      const next = exists ? currentList.filter((id) => id !== catId) : [...currentList, catId]
-      if (next.length === 1) {
-        const found = categories.find((c) => c.id === next[0])
-        setSelectedCategory(found || null)
-      } else {
-        setSelectedCategory(null)
-      }
-      return next
-    })
+    const currentList = selectedCategoryIds.length === 0 && selectedCategory && selectedCategory.id
+      ? [selectedCategory.id]
+      : selectedCategoryIds
+    const exists = currentList.includes(catId)
+    const next = exists ? currentList.filter((id) => id !== catId) : [...currentList, catId]
+    if (next.length === 1) {
+      const found = categories.find((c) => c.id === next[0])
+      setSelectedCategory(found || null)
+    } else {
+      setSelectedCategory(null)
+    }
+    updateFilters({ categoryIds: next })
   }
 
   const approvedStores = stores.filter((st) => st.status === 'APPROVED')
@@ -120,13 +125,13 @@ export default function ExploreSection({
   // GPS Location Trigger
   function handleToggleNearMe() {
     if (nearMeActive) {
-      setNearMeActive(false)
+      updateFilters({ nearMe: false, latitude: null, longitude: null })
       setLocationError('')
       return
     }
 
     if (userCoords) {
-      setNearMeActive(true)
+      updateFilters({ nearMe: true, latitude: userCoords.lat, longitude: userCoords.lng })
       return
     }
 
@@ -139,30 +144,23 @@ export default function ExploreSection({
     setLocationLoading(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
-        setNearMeActive(true)
+        updateFilters({
+          nearMe: true,
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude
+        })
         setLocationError('')
         setLocationLoading(false)
       },
       (err) => {
         console.warn('Geolocation was not available:', err)
         setLocationError('Không thể lấy vị trí. Vui lòng cấp quyền GPS rồi thử lại.')
-        setNearMeActive(false)
+        updateFilters({ nearMe: false, latitude: null, longitude: null })
         setLocationLoading(false)
       },
       { timeout: 8000 }
     )
   }
-
-  useEffect(() => {
-    onServerFiltersChange?.({
-      categoryIds: selectedCategoryIds,
-      openNow: openNowActive,
-      nearMe: nearMeActive,
-      latitude: userCoords?.lat ?? null,
-      longitude: userCoords?.lng ?? null,
-    })
-  }, [selectedCategoryIds, openNowActive, nearMeActive, userCoords, onServerFiltersChange])
 
   // Search, category, open-now, radius and distance sorting are already applied by the backend.
   const sortedStores = approvedStores
@@ -233,20 +231,20 @@ export default function ExploreSection({
 
       {/* Control Panel: Integrated Search & Interactive Category Control Deck */}
       <div className="brutalist-card bg-white p-4 sm:p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-4">
-        {/* Row 1: Search Bar & Desktop Category Select */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+        {/* Row 1: Desktop Search Bar & Category Select (Hidden on Mobile/Tablet < 1024px) */}
+        <div className="hidden lg:flex items-center gap-3">
           <div className="flex-1 min-w-0">
             <Input
               type="text"
-              placeholder="Tìm tên món ăn, quán ăn, tên đường tại Cần Giuộc..."
-              aria-label="Tìm kiếm món ăn, quán ăn, tên đường tại Cần Giuộc"
+              placeholder="Tìm tên quán ăn, địa chỉ, khu vực tại Cần Giuộc..."
+              aria-label="Tìm kiếm quán ăn, địa chỉ tại Cần Giuộc"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               leftAdornment={<Search className="w-4 h-4 text-neutral-500" />}
             />
           </div>
           {/* Desktop Category Select (Native Neo-Brutalist Select) */}
-          <div className="hidden md:block w-72 shrink-0">
+          <div className="w-72 shrink-0">
             <NativeSelect
               id="explore-category-select"
               aria-label="Lọc theo danh mục món ăn"
@@ -269,18 +267,19 @@ export default function ExploreSection({
           </div>
         </div>
 
-        {/* Row 2: Fast Chips Filter Deck */}
+        {/* Row 2: Fast Chips Filter Deck & Applied Filter Indicators */}
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t-2 border-neutral-100">
           <span className="text-[10px] font-black uppercase text-neutral-500 shrink-0">Lọc Nhanh:</span>
-          
+
           {/* 📍 Gần Tôi Chip */}
           <button
             type="button"
+            id="filter-near-me-btn"
             onClick={handleToggleNearMe}
             disabled={locationLoading}
             aria-pressed={nearMeActive}
             aria-label="Lọc quán ăn gần vị trí của tôi"
-            className={`px-3.5 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 border-2 border-black transition-all cursor-pointer select-none ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 border-2 border-black transition-all cursor-pointer select-none min-h-[38px] ${
               nearMeActive
                 ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
                 : 'bg-white text-black hover:bg-neutral-50'
@@ -294,10 +293,11 @@ export default function ExploreSection({
           {/* 🟢 Đang Mở Cửa Chip */}
           <button
             type="button"
-            onClick={() => setOpenNowActive(!openNowActive)}
+            id="filter-open-now-btn"
+            onClick={() => updateFilters({ openNow: !openNowActive })}
             aria-pressed={openNowActive}
             aria-label="Lọc quán đang mở cửa phục vụ"
-            className={`px-3.5 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 border-2 border-black transition-all cursor-pointer select-none ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 border-2 border-black transition-all cursor-pointer select-none min-h-[38px] ${
               openNowActive
                 ? 'bg-[#e6fcf5] text-[#0ca678] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
                 : 'bg-white text-black hover:bg-neutral-50'
@@ -307,50 +307,69 @@ export default function ExploreSection({
             <span>Đang Mở Cửa</span>
           </button>
 
-          {/* Mobile Category Trigger (md:hidden) */}
-          {(() => {
-            const hasCategoryFilter = selectedCategoryIds.length > 0 || selectedCategory !== null
-            return (
+
+          {/* Applied Search Query Badge */}
+          {Boolean(searchQuery) && (
+            <span
+              id="applied-query-badge"
+              className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-black border-2 border-black rounded-full text-xs font-bold shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)]"
+            >
+              <Search className="w-3 h-3 text-neutral-600" />
+              <span className="truncate max-w-[120px] sm:max-w-[200px]">"{searchQuery}"</span>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  setShowCategorySheet(true)
-                }}
-                aria-label="Mở danh sách tất cả các danh mục món ăn"
-                className={`md:hidden px-3.5 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 border-2 border-black transition-all cursor-pointer select-none shrink-0 ${
-                  hasCategoryFilter
-                    ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                    : 'bg-[#fff9db] hover:bg-amber-100 text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                }`}
+                onClick={() => setSearchQuery('')}
+                aria-label="Xóa từ khóa tìm kiếm"
+                className="ml-1 text-black hover:text-[#ff3e3e] font-black cursor-pointer"
               >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>
-                  {selectedCategoryIds.length > 1
-                    ? `Đã Chọn (${selectedCategoryIds.length})`
-                    : selectedCategory
-                    ? `Đã Chọn (${selectedCategory.name})`
-                    : selectedCategoryIds.length === 1
-                    ? `Đã Chọn (1)`
-                    : `Tất Cả Danh Mục (${categories.length})`}
-                </span>
-                <span className="text-[10px] font-black ml-0.5">▾</span>
+                ✕
               </button>
-            )
-          })()}
+            </span>
+          )}
+
+          {/* Applied Category Filter Badge */}
+          {(selectedCategoryIds.length > 0 || selectedCategory !== null) && (
+            <span
+              id="applied-category-badge"
+              className="inline-flex items-center gap-1 px-3 py-1 bg-rose-100 text-black border-2 border-black rounded-full text-xs font-bold shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)]"
+            >
+              <span className="truncate max-w-[140px] sm:max-w-[220px]">
+                {selectedCategory
+                  ? selectedCategory.name
+                  : selectedCategoryIds.length === 1
+                  ? (categories.find((c) => c.id === selectedCategoryIds[0])?.name || '1 danh mục')
+                  : `${selectedCategoryIds.length} danh mục`}
+              </span>
+              <button
+                type="button"
+                onClick={clearCategoryFilter}
+                aria-label="Xóa bộ lọc danh mục"
+                className="ml-1 text-black hover:text-[#ff3e3e] font-black cursor-pointer"
+              >
+                ✕
+              </button>
+            </span>
+          )}
 
           {/* Clear Filters Button */}
           {(nearMeActive || openNowActive || selectedCategoryIds.length > 0 || selectedCategory !== null || Boolean(searchQuery)) && (
             <button
               type="button"
+              id="clear-all-filters-btn"
               onClick={() => {
-                setNearMeActive(false)
-                setOpenNowActive(false)
-                clearCategoryFilter()
+                updateFilters({
+                  categoryIds: [],
+                  openNow: false,
+                  nearMe: false,
+                  latitude: null,
+                  longitude: null
+                })
+                setSelectedCategory(null)
                 setSearchQuery('')
+                setLocationError('')
               }}
               aria-label="Xóa tất cả các bộ lọc hiện tại"
-              className="px-3 py-1 rounded-full text-xs font-black text-white bg-[#c92a2a] hover:bg-[#b02525] border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1 shrink-0 ml-auto"
+              className="px-3 py-1 rounded-full text-xs font-black text-white bg-[#c92a2a] hover:bg-[#b02525] border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1 shrink-0 ml-auto min-h-[38px]"
             >
               <X className="w-3.5 h-3.5" />
               <span>Xóa lọc ✕</span>
@@ -367,8 +386,8 @@ export default function ExploreSection({
           </div>
         )}
 
-        {/* Complete Category Badges */}
-        <div className="pt-2 border-t-2 border-neutral-100">
+        {/* Complete Category Badges (Desktop Only >= 1024px; mobile/tablet uses dedicated SearchFilterModal) */}
+        <div className="hidden lg:block pt-2 border-t-2 border-neutral-100">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] uppercase font-black tracking-wider text-neutral-500">
               Danh Mục Món Ăn ({categories.length + 1}):
@@ -385,7 +404,7 @@ export default function ExploreSection({
           </div>
 
           {/* 💻 Desktop Categories: Clean wrapped pill grid */}
-          <div className="hidden md:flex flex-wrap items-center gap-2 py-1">
+          <div className="flex flex-wrap items-center gap-2 py-1">
             <button
               type="button"
               onClick={(e) => {
@@ -433,67 +452,12 @@ export default function ExploreSection({
             {categories.length > 10 && (
               <button
                 type="button"
-                onClick={() => setShowCategorySheet(true)}
+                onClick={() => {
+                  if (onOpenSearch) onOpenSearch()
+                }}
                 className="px-3.5 py-1.5 border-2 border-dashed border-black rounded-full text-xs font-black flex items-center gap-1.5 whitespace-nowrap shrink-0 bg-neutral-100 hover:bg-neutral-200 text-black cursor-pointer transition-all"
               >
                 <span>+ Xem thêm {categories.length - 10} danh mục ↗</span>
-              </button>
-            )}
-          </div>
-
-          {/* 📱 Mobile Categories: Horizontal Scroll Row (Intact) */}
-          <div className="md:hidden flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault()
-                handleToggleCategory(null)
-              }}
-              className={`px-3.5 py-1.5 border-2 border-black rounded-full text-xs font-black flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
-                selectedCategoryIds.length === 0 && selectedCategory === null
-                  ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
-                  : 'bg-white text-black hover:bg-neutral-50'
-              }`}
-            >
-              <span>Tất Cả Món</span>
-              <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-extrabold ${selectedCategoryIds.length === 0 && selectedCategory === null ? 'bg-white text-[#ff3e3e]' : 'bg-neutral-100 text-black'}`}>
-                {approvedStores.length}
-              </span>
-            </button>
-
-            {categories.slice(0, 6).map((cat) => {
-              const count = categoryStoreCount(cat.id)
-              const isSelected = selectedCategoryIds.includes(cat.id) || selectedCategory?.id === cat.id
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    handleToggleCategory(cat.id)
-                  }}
-                  className={`px-3.5 py-1.5 border-2 border-black rounded-full text-xs font-black flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
-                      : 'bg-white text-black hover:bg-neutral-50'
-                  }`}
-                >
-                  <CategoryIcon icon={cat.icon || cat.iconUrl} name={cat.name} />
-                  <span>{cat.name}</span>
-                  <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-extrabold ${isSelected ? 'bg-white text-[#ff3e3e]' : 'bg-[#f7f6f2] text-black border border-black'}`}>
-                    {count}
-                  </span>
-                </button>
-              )
-            })}
-
-            {categories.length > 6 && (
-              <button
-                type="button"
-                onClick={() => setShowCategorySheet(true)}
-                className="px-3.5 py-1.5 border-2 border-dashed border-black rounded-full text-xs font-black flex items-center gap-1.5 whitespace-nowrap shrink-0 bg-neutral-100 hover:bg-neutral-200 text-black cursor-pointer transition-all"
-              >
-                <span>+ Xem thêm {categories.length - 6} danh mục ↗</span>
               </button>
             )}
           </div>
@@ -657,142 +621,6 @@ export default function ExploreSection({
           </div>
         )}
       </div>
-
-      {/* ========================================================================= */}
-      {/* 🏷️ CATEGORY PICKER BOTTOM SHEET / MODAL (FOR >= 50 CATEGORIES) */}
-      {/* ========================================================================= */}
-      {showCategorySheet &&
-        createPortal(
-          <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-            <div
-              className="fixed inset-0 bg-black/60 cursor-pointer"
-              onClick={() => setShowCategorySheet(false)}
-            />
-
-            <div className="relative z-10 bg-white border-t-4 sm:border-4 border-black w-full max-w-2xl max-h-[85vh] rounded-t-3xl sm:rounded-2xl p-4 sm:p-6 shadow-2xl flex flex-col gap-3.5 animate-slide-in-right sm:animate-scale-up mb-0 sm:mb-auto">
-              {/* Drag handle for mobile */}
-              <div className="w-12 h-1.5 bg-neutral-300 rounded-full mx-auto sm:hidden shrink-0" />
-
-              {/* Modal Header */}
-              <div className="flex items-center justify-between gap-2 pb-2 border-b-2 border-black">
-                <div className="flex items-center gap-2">
-                  <div>
-                    <h3 className="font-black text-base sm:text-lg uppercase text-black">Bộ Lọc Tất Cả Danh Mục ({categories.length})</h3>
-                    <p className="text-[10px] sm:text-xs font-semibold text-neutral-500">
-                      {selectedCategoryIds.length > 0
-                        ? `Đã chọn ${selectedCategoryIds.length} danh mục (Có thể chọn nhiều)`
-                        : 'Chọn 1 hoặc nhiều danh mục ẩm thực để lọc nhanh'}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowCategorySheet(false)}
-                  className="p-1.5 rounded-full border-2 border-black bg-white hover:bg-[#ff3e3e] hover:text-white transition-all shadow-[2px_2px_0px_0px_#111] cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Instant Search input inside category sheet (No autoFocus to prevent auto-scrolling page) */}
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500" />
-                <input
-                  type="text"
-                  placeholder="Gõ tìm danh mục (VD: cơm, phở, bún, chè, hải sản, trà sữa...)"
-                  value={categorySearch}
-                  onChange={(e) => setCategorySearch(e.target.value)}
-                  className="brutalist-input brutalist-input-has-icon text-xs py-2"
-                />
-                {categorySearch && (
-                  <button
-                    onClick={() => setCategorySearch('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-neutral-400 hover:text-black cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-
-              {/* Categories Grid List (Multi-Select Chips) */}
-              <div className="overflow-y-auto max-h-[45vh] pr-1 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
-                {/* Option: Tất Cả Món */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    handleToggleCategory(null)
-                  }}
-                  className={`p-2.5 rounded-xl border-2 border-black flex items-center justify-between gap-2 transition-all cursor-pointer text-left ${
-                    selectedCategoryIds.length === 0
-                      ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_#111] font-black'
-                      : 'bg-[#f7f6f2] hover:bg-neutral-200 text-black font-bold'
-                  }`}
-                >
-                  <span className="text-xs truncate">Tất Cả Món</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${selectedCategoryIds.length === 0 ? 'bg-white text-[#ff3e3e]' : 'bg-white text-black border border-black'}`}>
-                    {approvedStores.length}
-                  </span>
-                </button>
-
-                {/* Filtered categories */}
-                {categories
-                  .filter((cat) => !categorySearch || cat.name.toLowerCase().includes(categorySearch.toLowerCase()))
-                  .map((cat) => {
-                    const count = categoryStoreCount(cat.id)
-                    const isSelected = selectedCategoryIds.includes(cat.id)
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          handleToggleCategory(cat.id)
-                        }}
-                        className={`p-2.5 rounded-xl border-2 border-black flex items-center justify-between gap-2 transition-all cursor-pointer text-left ${
-                          isSelected
-                            ? 'bg-[#ff3e3e] text-white shadow-[2px_2px_0px_0px_#111] font-black'
-                            : 'bg-white hover:bg-neutral-100 text-black font-bold'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <CategoryIcon icon={cat.icon || cat.iconUrl} name={cat.name} />
-                          <span className="text-xs truncate">{cat.name}</span>
-                        </div>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black shrink-0 ${isSelected ? 'bg-white text-[#ff3e3e]' : 'bg-[#f7f6f2] text-black border border-black'}`}>
-                          {count}
-                        </span>
-                      </button>
-                    )
-                  })}
-              </div>
-
-              {/* Apply & Clear Actions Footer */}
-              <div className="pt-2 border-t-2 border-black flex items-center justify-between gap-3">
-                <button
-                  onClick={() => handleToggleCategory(null)}
-                  className="text-xs font-black text-[#ff3e3e] hover:underline cursor-pointer"
-                >
-                  Xóa Bộ Lọc (Tất Cả)
-                </button>
-                <button
-                  onClick={() => setShowCategorySheet(false)}
-                  className="brutalist-btn-red py-2 px-5 text-xs font-black"
-                >
-                  {selectedCategoryIds.length > 0
-                    ? `Áp Dụng (${selectedCategoryIds.length} danh mục) ↗`
-                    : 'Xem Kết Quả ↗'}
-                </button>
-              </div>
-
-              {categories.filter((cat) => !categorySearch || cat.name.toLowerCase().includes(categorySearch.toLowerCase())).length === 0 && (
-                <div className="text-center py-6 text-neutral-500 text-xs font-bold">
-                  Không tìm thấy danh mục nào với từ khóa "{categorySearch}"
-                </div>
-              )}
-            </div>
-          </div>,
-          document.body
-        )}
     </div>
   )
 }

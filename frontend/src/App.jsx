@@ -11,6 +11,7 @@ import './App.css'
 import Header from '@/layouts/Header'
 import BottomNav from '@/layouts/BottomNav'
 import AuthModal from '@/components/modals/AuthModal'
+import SearchFilterModal from '@/components/modals/SearchFilterModal'
 import StoreDetailDrawer from '@/components/drawers/StoreDetailDrawer'
 import ProfileSection from '@/pages/Profile/ProfileSection'
 import ExploreSection from '@/pages/Explore/ExploreSection'
@@ -107,6 +108,7 @@ export default function App() {
   const [publicFilters, setPublicFilters] = useState({
     categoryIds: [], openNow: false, nearMe: false, latitude: null, longitude: null
   })
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
   const [storeFacets, setStoreFacets] = useState({})
 
   // Form Fields - Auth
@@ -244,7 +246,7 @@ export default function App() {
         if (token) loadSavedStores()
         return
       }
-      
+
       setActiveTab(tab)
       setActiveStore(null)
       detailOpenedFromAppRef.current = false
@@ -720,12 +722,12 @@ export default function App() {
         logEvent(method, endpoint, body, data, false)
 
         // Check if unauthorized and try to auto-refresh token
-        if (response.status === 401 && 
-            endpoint !== '/auth/token' && 
-            endpoint !== '/auth/refresh' && 
-            endpoint !== '/auth/google-login' && 
+        if (response.status === 401 &&
+            endpoint !== '/auth/token' &&
+            endpoint !== '/auth/refresh' &&
+            endpoint !== '/auth/google-login' &&
             endpoint !== '/auth/facebook-login') {
-          
+
           if (hasSession) {
             console.log('Attempting automatic token refresh...')
             try {
@@ -1018,7 +1020,7 @@ export default function App() {
 
     if (res.success && res.data.result) {
       persistSession(res.data.result, true)
-      
+
       showToast('Chào mừng bạn quay trở lại Cần Giuộc FoodTour!', 'success')
       setShowAuthModal(false)
       setLoginEmail('')
@@ -1627,7 +1629,7 @@ export default function App() {
       setStorePriceMin(0)
       setStorePriceMax(0)
       setStoreBannerUrl('')
-      
+
       if (createdStore.id) {
         setFoodStoreId(createdStore.id.toString())
       }
@@ -2236,11 +2238,12 @@ export default function App() {
           handleLogout={handleLogout}
           setShowAuthModal={setShowAuthModal}
           setAuthMode={setAuthMode}
+          onOpenSearch={() => setIsMobileSearchOpen(true)}
         />
       )}
 
       {/* Main Container */}
-      <main className={activeTab === 'admin' ? 'h-full w-full p-0 pb-20 md:pb-0 animate-fade-in-up' : 'max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1536px] mx-auto px-4 md:px-6 lg:px-8 pt-24 sm:pt-28 md:pt-32 pb-24 md:pb-8 animate-fade-in-up'}>
+      <main className={activeTab === 'admin' ? 'h-full w-full p-0 pb-20 lg:pb-0 animate-fade-in-up' : 'max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1536px] mx-auto px-4 md:px-6 lg:px-8 pt-24 sm:pt-28 md:pt-32 pb-24 lg:pb-8 animate-fade-in-up'}>
 
         {/* LOADING INDICATOR */}
         {loading && (
@@ -2279,6 +2282,8 @@ export default function App() {
             totalStoreCount={storePage.totalElements || stores.length}
             onServerFiltersChange={setPublicFilters}
             categoryFacets={storeFacets}
+            publicFilters={publicFilters}
+            onOpenSearch={() => setIsMobileSearchOpen(true)}
             loading={loadingPublicStores}
           />
         )}
@@ -2622,11 +2627,26 @@ export default function App() {
           </div>
         ))}
       </div>
+      <SearchFilterModal
+        isOpen={isMobileSearchOpen}
+        onClose={() => setIsMobileSearchOpen(false)}
+        categories={categories}
+        appliedQuery={searchQuery}
+        appliedFilters={publicFilters}
+        onApply={(committedQuery, committedFilters) => {
+          setSearchQuery(committedQuery)
+          setPublicFilters(committedFilters)
+          if (activeTab !== 'explore') {
+            switchTab('explore')
+          }
+        }}
+      />
       <BottomNav
         activeTab={activeTab}
         switchTab={switchTab}
         currentUser={currentUser}
         isUserAdmin={isAdmin()}
+        handleLogout={handleLogout}
         setShowAuthModal={setShowAuthModal}
         setAuthMode={setAuthMode}
       />

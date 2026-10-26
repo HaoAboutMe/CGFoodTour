@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { Shield, LogOut, User, Store, ChevronDown, Bookmark, Compass, Dices, Info } from 'lucide-react'
+import { Shield, LogOut, User, Store, ChevronDown, Bookmark, Compass, Dices, Search, Info } from 'lucide-react'
 import logo128 from '@/assets/logo-128.webp'
 import { AVATAR_FALLBACK_IMAGE } from '@/utils/imageAssets'
 
@@ -10,7 +10,8 @@ export default function Header({
   isAdmin,
   handleLogout,
   setShowAuthModal,
-  setAuthMode
+  setAuthMode,
+  onOpenSearch
 }) {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -51,20 +52,20 @@ export default function Header({
   const isUserAdmin = typeof isAdmin === 'function' ? isAdmin() : !!isAdmin
 
   const navItems = [
-    { id: 'explore', label: 'Khám Phá Ẩm Thực', icon: Compass },
-    { id: 'cs2-spinner', label: 'Vòng Xoay Quán Ăn', icon: Dices },
-    { id: 'saved', label: 'Quán Đã Lưu', icon: Bookmark },
-    { id: 'about', label: 'Về Chúng Tôi', icon: Info }
+    { id: 'explore', label: 'Khám Phá Ẩm Thực', shortLabel: 'Khám Phá', icon: Compass },
+    { id: 'cs2-spinner', label: 'Vòng Xoay Quán Ăn', shortLabel: 'Vòng Xoay', icon: Dices },
+    { id: 'saved', label: 'Quán Đã Lưu', shortLabel: 'Đã Lưu', icon: Bookmark },
+    { id: 'about', label: 'Về Chúng Tôi', shortLabel: 'Về Chúng Tôi', icon: Info }
   ]
 
   return (
     <header className="fixed top-0 inset-x-0 z-40 px-3 sm:px-6 py-2.5 sm:py-3 bg-white border-b-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 lg:gap-4">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3 lg:gap-4">
         {/* Brand Logo & Name (Left) */}
         <button
           type="button"
           onClick={() => handleNavClick('explore')}
-          className="flex items-center gap-2.5 cursor-pointer shrink-0 text-left bg-transparent border-0 p-0 focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-4 rounded-xl transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          className="flex items-center gap-2 sm:gap-2.5 cursor-pointer shrink-0 text-left bg-transparent border-0 p-0 focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-4 rounded-xl transition-transform hover:scale-[1.02] active:scale-[0.98]"
           aria-label="Trang chủ Cần Giuộc Food Tour"
         >
           <img
@@ -73,11 +74,11 @@ export default function Header({
             height="40"
             alt=""
             aria-hidden="true"
-            className="w-9 h-9 sm:w-10 sm:h-10 border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] object-cover bg-white select-none shrink-0"
+            className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] object-cover bg-white select-none shrink-0"
           />
-          <span className="font-black text-black tracking-tight text-lg sm:text-xl flex items-center">
+          <span className="font-black text-black tracking-tight text-base sm:text-xl flex items-center">
             CầnGiuộc
-            <span className="text-[#c92a2a] font-black text-[10px] sm:text-xs ml-1.5 px-2 py-0.5 border-2 border-black rounded-full bg-white shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)] tracking-wider uppercase">
+            <span className="hidden min-[360px]:inline text-[#c92a2a] font-black text-[10px] sm:text-xs ml-1 sm:ml-1.5 px-1.5 sm:px-2 py-0.5 border-2 border-black rounded-full bg-white shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)] tracking-wider uppercase">
               FoodTour
             </span>
           </span>
@@ -85,7 +86,7 @@ export default function Header({
 
         {/* Desktop Center Navigation Links */}
         <nav
-          className="hidden md:flex items-center justify-center gap-2 lg:gap-3 shrink-0"
+          className="hidden lg:flex items-center justify-center gap-2 xl:gap-3 shrink-0"
           aria-label="Điều hướng chính"
         >
           {navItems.map((item) => {
@@ -97,23 +98,37 @@ export default function Header({
                 type="button"
                 onClick={() => handleNavClick(item.id)}
                 aria-current={isActive ? 'page' : undefined}
-                className={`cursor-pointer px-4 lg:px-5 py-2 text-xs font-black tracking-wide rounded-full border-2 border-black transition-all flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-2 ${
+                className={`cursor-pointer px-2.5 lg:px-4 xl:px-5 py-1.5 lg:py-2 text-xs font-black tracking-wide rounded-full border-2 border-black transition-all flex items-center gap-1 lg:gap-1.5 focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-2 shrink-0 ${
                   isActive
                     ? 'bg-[#c92a2a] text-white shadow-[2.5px_2.5px_0px_0px_#111111] -translate-x-[1px] -translate-y-[1px]'
                     : 'bg-white text-black hover:bg-neutral-100 shadow-[1.5px_1.5px_0px_0px_#111111] active:translate-x-[1px] active:translate-y-[1px]'
                 }`}
               >
                 {Icon && <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-neutral-700'}`} />}
-                <span>{item.label}</span>
+                <span className="hidden xl:inline">{item.label}</span>
+                <span className="xl:hidden">{item.shortLabel}</span>
               </button>
             )
           })}
         </nav>
 
-        {/* Right Actions (User Avatar & Dropdown / Login Button) */}
-        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+        {/* Right Actions (Header Search / Desktop Avatar / Login Button) */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          {/* Quick Search Button: Always visible on Mobile & Tablet (< 1024px) */}
+          <button
+            type="button"
+            id="header-search-btn"
+            onClick={onOpenSearch}
+            aria-label="Tìm kiếm quán ăn"
+            title="Tìm kiếm quán ăn"
+            className="lg:hidden flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 rounded-full border-2 border-black bg-white hover:bg-[#fff9db] text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer shrink-0 transition-all focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)]"
+          >
+            <Search className="w-5 h-5 text-black" aria-hidden="true" />
+          </button>
+
           {currentUser ? (
-            <div className="relative" ref={dropdownRef}>
+            /* Desktop Profile Dropdown (Hidden on < 1024px - Mobile uses Account Sheet via BottomNav) */
+            <div className="hidden lg:block relative" ref={dropdownRef}>
               {/* Avatar Pill Button */}
               <button
                 ref={triggerRef}
@@ -122,7 +137,7 @@ export default function Header({
                 aria-haspopup="true"
                 aria-expanded={userDropdownOpen}
                 aria-label={`Menu tài khoản của ${fullName}`}
-                className={`flex items-center gap-2 bg-[#f7f6f2] hover:bg-neutral-100 border-2 border-black px-2.5 py-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] rounded-full cursor-pointer transition-all focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-2 ${
+                className={`flex items-center gap-1.5 sm:gap-2 bg-[#f7f6f2] hover:bg-neutral-100 border-2 border-black min-h-[44px] min-w-[44px] px-2 sm:px-2.5 py-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] rounded-full cursor-pointer transition-all focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-2 shrink-0 ${
                   activeTab === 'profile' || activeTab === 'my-stores'
                     ? 'ring-2 ring-black bg-neutral-100'
                     : ''
@@ -135,7 +150,7 @@ export default function Header({
                   height="28"
                   className="w-7 h-7 border-2 border-black object-cover rounded-full shrink-0"
                 />
-                <span className="hidden sm:inline font-black text-xs text-black max-w-[120px] lg:max-w-[140px] truncate">
+                <span className="hidden sm:inline font-black text-xs text-black max-w-[70px] md:max-w-[100px] lg:max-w-[140px] truncate">
                   {fullName}
                 </span>
                 {isUserAdmin && (
@@ -144,7 +159,7 @@ export default function Header({
                   </span>
                 )}
                 <ChevronDown
-                  className={`w-4 h-4 text-black transition-transform duration-200 ${
+                  className={`w-4 h-4 text-black transition-transform duration-200 shrink-0 ${
                     userDropdownOpen ? 'rotate-180' : ''
                   }`}
                   aria-hidden="true"
@@ -262,17 +277,39 @@ export default function Header({
               )}
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => {
-                setShowAuthModal(true)
-                setAuthMode('login')
-              }}
-              className="brutalist-btn-red text-xs py-2 px-4 font-black flex items-center gap-1.5 rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
-            >
-              <span>Đăng Nhập</span>
-              <span aria-hidden="true">↗</span>
-            </button>
+            <>
+              {/* Responsive About Button: On < 1024px, replaces login button for anonymous visitors. Tapping navigates to About */}
+              <button
+                type="button"
+                id="header-about-btn"
+                onClick={() => handleNavClick('about')}
+                aria-label="Về chúng tôi"
+                title="Về chúng tôi"
+                className={`lg:hidden flex items-center justify-center min-h-[44px] min-w-[44px] px-2.5 sm:px-3.5 py-2 rounded-full border-2 border-black font-black text-xs shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer shrink-0 transition-all focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] ${
+                  activeTab === 'about'
+                    ? 'bg-[#c92a2a] text-white shadow-[2px_2px_0px_0px_#111]'
+                    : 'bg-white text-black hover:bg-neutral-100'
+                }`}
+              >
+                <Info className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span className="hidden sm:inline">Về Chúng Tôi</span>
+              </button>
+
+              {/* Desktop Login Button: Only visible on desktop (>= 1024px) */}
+              <button
+                type="button"
+                id="login-btn"
+                onClick={() => {
+                  setShowAuthModal(true)
+                  setAuthMode('login')
+                }}
+                aria-label="Đăng nhập tài khoản"
+                className="!hidden lg:!flex brutalist-btn-red text-xs min-h-[44px] min-w-[44px] py-2 px-3 sm:px-4 font-black items-center justify-center gap-1.5 rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer shrink-0"
+              >
+                <span>Đăng Nhập</span>
+                <span aria-hidden="true">↗</span>
+              </button>
+            </>
           )}
         </div>
       </div>
