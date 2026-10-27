@@ -36,6 +36,39 @@ void main() {
     expect(debugManifest, contains('usesCleartextTraffic="true"'));
   });
 
+  test('Android backup and device transfer are disabled', () {
+    final manifest = File(
+      'android/app/src/main/AndroidManifest.xml',
+    ).readAsStringSync();
+    final extractionRules = File(
+      'android/app/src/main/res/xml/data_extraction_rules.xml',
+    ).readAsStringSync();
+
+    expect(manifest, contains('android:allowBackup="false"'));
+    expect(manifest, contains('android:fullBackupContent="false"'));
+    expect(
+      manifest,
+      contains('android:dataExtractionRules="@xml/data_extraction_rules"'),
+    );
+    expect(extractionRules, contains('<cloud-backup>'));
+    expect(extractionRules, contains('<device-transfer>'));
+    for (final domain in <String>[
+      'root',
+      'file',
+      'database',
+      'sharedpref',
+      'external',
+    ]) {
+      expect(
+        RegExp(
+          '<exclude domain="$domain" path="\\."\\s*/>',
+        ).allMatches(extractionRules),
+        hasLength(2),
+        reason: '$domain must be excluded from cloud backup and transfer',
+      );
+    }
+  });
+
   test('iOS cleartext exception uses a debug-only Info.plist', () {
     final releaseInfo = File('ios/Runner/Info.plist').readAsStringSync();
     final debugInfo = File('ios/Runner/Info-Debug.plist').readAsStringSync();

@@ -42,6 +42,7 @@ src/main/resources/application-dev.yaml
 .env.*
 *.env
 *.env.*
+!auth-rehearsal.env.example
 !.env*.example
 
 # Local developer testing web interface

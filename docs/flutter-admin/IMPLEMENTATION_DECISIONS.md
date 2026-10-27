@@ -106,6 +106,8 @@ Chỉ bundle upright variable TTF vì F0 không định nghĩa italic typography
 
 ### DEC-01 — Native authentication compatibility spike
 
+**Trạng thái F1.1: IN PROGRESS — PARTIAL, chưa nghiệm thu native.**
+
 Khuyến nghị phê duyệt đúng sequence trong blueprint:
 
 1. kiểm thử contract cookie hiện tại không đổi;
@@ -113,9 +115,47 @@ Khuyến nghị phê duyệt đúng sequence trong blueprint:
 3. chứng minh USER/disabled/role-revoked bị từ chối;
 4. nếu cookie/Origin không tương thích native thì dừng, cung cấp bằng chứng và xin phê duyệt backend contract mới.
 
+Kết quả ngày 2026-10-26:
+
+- Source Backend hiện hành vẫn triển khai đúng mô hình access JWT + HttpOnly refresh cookie + readable CSRF cookie + exact Origin.
+- Đã tạo harness Android test-only có transport cookie thủ công, origin lock, secure persistence và các negative cases. Đây không phải SessionCoordinator production và không phải F1.2.
+- Source inspection và 15 Backend tests hiện hữu không phát hiện yêu cầu phải đổi contract Backend.
+- Chưa có Android run với tài khoản test nên DEC-01 chưa thể chuyển sang VERIFIED/PASS. Quyết định tiếp tục F1.2 bị giữ lại.
+
 ### DEC-07 — CSRF Origin theo môi trường
 
 Cần cung cấp exact HTTPS Origin cho staging/production và Origin local được backend allowlist. Origin là cấu hình triển khai, không phải secret; client chỉ được gửi nó đến đúng API host đã cấu hình.
+
+**Trạng thái F1.1D: REHEARSAL RUNTIME VERIFIED.** Product Owner đã phê duyệt `http://localhost:5173` chỉ cho rehearsal. Backend rehearsal cấu hình exact allowlist, tắt implicit local origins; positive preflight trả 200/đúng allow-origin và Origin giả trả 403. Quyết định này không áp dụng cho staging/production và Origin không được coi là credential.
+
+### F1.1-ADR-001 — Harness tách biệt khỏi production authentication
+
+- Thêm `integration_test` từ Flutter SDK và đặt toàn bộ probe/cookie vault trong `integration_test/auth/`.
+- Không đưa cookie vault thử nghiệm vào `lib/`, không thay router/login placeholder và không triển khai refresh interceptor/session lifecycle production.
+- Access token chỉ tồn tại trong memory của test. Refresh/CSRF cookie chỉ được lưu dưới một key riêng qua `SecureSessionStore`; không dùng SharedPreferences hoặc file cookie plaintext.
+- Credential không có default và không nằm trong source/fixture/report. Test thật chỉ bật khi có `AUTH_SPIKE_RUN_REAL=true` và credential disposable được cấp ngoài repository.
+- `--dart-define` được biên dịch vào debug test artifact; vì vậy chỉ được dùng tài khoản test ngắn hạn, file define phải nằm ngoài repository và APK test phải được gỡ bỏ sau kiểm chứng.
+
+### F1.1-DEC-ANDROID-BACKUP — Chính sách backup cho secure storage
+
+**Trạng thái: APPROVED và IMPLEMENTED trong F1.1D.**
+
+- F1.1B quan sát native log `EncryptedSharedPreferences initialization failed` khi dữ liệu và key cũ không còn đồng bộ; `flutter_secure_storage` 10.3.4 fallback sang custom ciphers và phép thử vẫn PASS.
+- Tài liệu package xác nhận Android Auto Backup có thể restore encrypted preferences mà không restore Android Keystore key, gây lỗi unwrap/decrypt.
+- Hai lựa chọn an toàn cần quyết định: tắt backup cho toàn bộ ứng dụng Admin, hoặc cấu hình Android backup/data-extraction rules để loại trừ toàn bộ secure-storage preferences và key material.
+- Khuyến nghị cho ứng dụng Admin là không backup session secret; ưu tiên exclude/tắt backup rõ ràng trước khi triển khai session production.
+- Product Owner chọn tắt backup toàn ứng dụng Admin. Manifest đặt `allowBackup=false`, legacy `fullBackupContent=false`; Android 12+ data-extraction rules loại trừ toàn bộ root/file/database/sharedpref/external cho cả cloud backup và device-to-device transfer.
+- Unit test và debug APK merged-manifest inspection đã xác minh policy/resource được đóng gói. Ứng dụng không tự khôi phục dữ liệu local khi cài lại/chuyển máy; người dùng phải đăng nhập lại.
+
+### F1.1D-ADR-002 — Isolated authentication rehearsal
+
+**Trạng thái: APPROVED và APPLIED.**
+
+- ENV-01: Compose project `cgft-auth-rehearsal`, MySQL 8.4/volume/network riêng; tuyệt đối không dùng database dev `cgfoodtour`.
+- ACCOUNT-01: bootstrap Admin bằng env; USER và disabled ADMIN được tạo/verify/promote/disable qua API hợp lệ và Mailpit, không seed trực tiếp bảng nghiệp vụ.
+- CREDENTIAL-01: sinh ngẫu nhiên, inject từ file ACL-restricted ngoài Git; giữ tạm cho F1.1E rồi xóa cùng test artifacts.
+- Backend profile `rehearsal` dùng Flyway migrate/validate, Hibernate validate, Mailpit nội bộ và JWT/pepper riêng. Không thay đổi authentication controller/service/security contract.
+- Rehearsal stack được giữ chạy cho F1.1E; teardown chỉ được nhắm đúng resource có Compose project label sau khi nghiệm thu.
 
 ## Các điểm cố ý chưa quyết định trong F0
 

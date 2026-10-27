@@ -1,0 +1,124 @@
+name: cgft-auth-rehearsal
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: cgft-auth-rehearsal-mysql
+    restart: "no"
+    environment:
+      MYSQL_DATABASE: ${REHEARSAL_MYSQL_DATABASE:?required}
+      MYSQL_USER: ${REHEARSAL_MYSQL_USER:?required}
+      MYSQL_PASSWORD: ${REHEARSAL_MYSQL_PASSWORD:?required}
+      MYSQL_ROOT_PASSWORD: ${REHEARSAL_MYSQL_ROOT_PASSWORD:?required}
+      TZ: Asia/Ho_Chi_Minh
+    volumes:
+      - auth_rehearsal_mysql:/var/lib/mysql
+    networks:
+      - auth_rehearsal
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    labels:
+      vn.cgfoodtour.purpose: auth-rehearsal
+
+  mailpit:
+    image: axllent/mailpit:v1.27.8
+    container_name: cgft-auth-rehearsal-mailpit
+    restart: "no"
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: "false"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "false"
+    volumes:
+      - auth_rehearsal_mailpit:/data
+    ports:
+      - "127.0.0.1:18025:8025"
+    networks:
+      - auth_rehearsal
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    labels:
+      vn.cgfoodtour.purpose: auth-rehearsal
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cgft-auth-rehearsal-backend:local
+    container_name: cgft-auth-rehearsal-backend
+    restart: "no"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: rehearsal
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${REHEARSAL_MYSQL_DATABASE:?required}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+      SPRING_DATASOURCE_USERNAME: ${REHEARSAL_MYSQL_USER:?required}
+      SPRING_DATASOURCE_PASSWORD: ${REHEARSAL_MYSQL_PASSWORD:?required}
+      SPRING_MAIL_HOST: mailpit
+      SPRING_MAIL_PORT: "1025"
+      SPRING_MAIL_USERNAME: rehearsal
+      SPRING_MAIL_PASSWORD: rehearsal
+      APP_BASE_URL: http://localhost:18081/api
+      APP_CORS_ALLOWED_ORIGINS: ${REHEARSAL_CSRF_ORIGIN:?required}
+      APP_ADMIN_DEFAULT_EMAIL: ${REHEARSAL_ADMIN_EMAIL:?required}
+      APP_ADMIN_DEFAULT_PASSWORD: ${REHEARSAL_ADMIN_PASSWORD:?required}
+      JWT_SIGNER_KEY: ${REHEARSAL_JWT_SIGNER_KEY:?required}
+      REGISTRATION_IP_PEPPER: ${REHEARSAL_REGISTRATION_IP_PEPPER:?required}
+      OTP_PEPPER: ${REHEARSAL_OTP_PEPPER:?required}
+      GOOGLE_CLIENT_ID: rehearsal-google-client
+      FACEBOOK_APP_ID: rehearsal-facebook-app
+      FACEBOOK_APP_SECRET: rehearsal-facebook-secret
+      CLOUDINARY_CLOUD_NAME: rehearsal-cloud
+      CLOUDINARY_API_KEY: rehearsal-key
+      CLOUDINARY_API_SECRET: rehearsal-secret
+      LOGGING_LEVEL_COM_CANGIUOC_CGFOODTOUR: WARN
+    ports:
+      - "127.0.0.1:18081:8080"
+    networks:
+      - auth_rehearsal
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "--fail",
+          "--silent",
+          "http://127.0.0.1:8080/api/actuator/health",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      vn.cgfoodtour.purpose: auth-rehearsal
+
+networks:
+  auth_rehearsal:
+    name: cgft-auth-rehearsal-network
+    labels:
+      vn.cgfoodtour.purpose: auth-rehearsal
+
+volumes:
+  auth_rehearsal_mysql:
+    name: cgft-auth-rehearsal-mysql-data
+    labels:
+      vn.cgfoodtour.purpose: auth-rehearsal
+  auth_rehearsal_mailpit:
+    name: cgft-auth-rehearsal-mailpit-data
+    labels:
+      vn.cgfoodtour.purpose: auth-rehearsal
